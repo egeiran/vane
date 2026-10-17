@@ -1,0 +1,94 @@
+# Bygger appen i skyen med EAS. Start den fra GitHub: Actions → «Bygg til iPhone» → Run workflow.
+#
+# Engangsoppsett:
+#   1. Lag en token på https://expo.dev/settings/access-tokens
+#   2. Legg den inn i repoet som secret: Settings → Secrets and variables → Actions → New repository secret
+#      Navn: EXPO_TOKEN
+#   3. Kjør første bygg interaktivt fra en terminal (se README), så EAS får laget Apple-sertifikatene.
+name: Bygg til iPhone
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'production = TestFlight, preview = intern installasjon på registrerte enheter'
+        type: choice
+        default: production
+        options:
+          - production
+          - preview
+      submit:
+        description: 'Send til TestFlight når bygget er ferdig (bare for production)'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: eas-ios-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: EAS Build (iOS)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sjekk at EXPO_TOKEN er lagt inn
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Mangler EXPO_TOKEN. Lag en token på https://expo.dev/settings/access-tokens og legg den inn under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Installer avhengigheter
+        run: npm ci
+
+      - name: Sjekk koden
+        run: |
+          npm run lint
+          npm run typecheck
+          npm test -- --ci
+
+      - name: Koble til EAS-prosjektet (bare første gang)
+        run: |
+          if node -e "process.exit(require('./app.json').expo?.extra?.eas?.projectId ? 0 : 1)"; then
+            echo "Appen er allerede koblet til EAS."
+          else
+            eas project:init --non-interactive --force
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add app.json
+            git commit -m "Koble appen til EAS-prosjektet"
+            git push
+          fi
+
+      - name: Start bygget
+        env:
+          PROFILE: ${{ inputs.profile }}
+          SUBMIT: ${{ inputs.submit }}
+        run: |
+          args="--platform ios --profile $PROFILE --non-interactive --no-wait"
+          if [ "$PROFILE" = "production" ] && [ "$SUBMIT" = "true" ]; then
+            if node -e "process.exit(require('./eas.json').submit?.production?.ios?.ascAppId ? 0 : 1)"; then
+              args="$args --auto-submit"
+            else
+              echo "::warning::Sender ikke til TestFlight automatisk ennå: ascAppId mangler i eas.json (se README)."
+            fi
+          fi
+          eas build $args
+          echo "Bygget kjører nå hos EAS. Følg det på https://expo.dev under prosjektet «vane»."

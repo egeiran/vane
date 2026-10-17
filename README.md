@@ -12,32 +12,43 @@ Små vaner, i ro og mak. En rolig vaneapp for iPhone, uten streaks, poeng eller 
 
 ## Bygge og installere uten Mac
 
-Appen bygges i skyen med [EAS](https://expo.dev/eas). Du trenger Node 20 eller nyere, en Expo-konto og en betalt Apple Developer-konto (widgetene og installasjon på egen telefon krever det).
+Appen bygges i skyen med [EAS](https://expo.dev/eas) og installeres via TestFlight. Du trenger en Expo-konto og en betalt Apple Developer-konto. Xcode trengs ikke.
+
+### Engangsoppsett
+
+**1. Første bygg fra en terminal.** Dette trengs bare én gang. EAS må logge inn hos Apple for å lage sertifikatet og registrere appen i App Store Connect, og det går ikke an fra en automatisk jobb. Det tar 5–10 minutter, og PC-en gjør ingen tung jobb.
 
 ```bash
+git clone https://github.com/egeiran/vane && cd vane
 npm install
 npx eas-cli@latest login
-npx eas-cli@latest init            # kobler prosjektet til Expo-kontoen din
-npx eas-cli@latest device:create   # registrer iPhonen din (åpne lenken på telefonen)
-npx eas-cli@latest build --profile development --platform ios
+npx eas-cli@latest build --platform ios --profile production --auto-submit
 ```
 
-EAS spør om Apple-innloggingen din og ordner sertifikater, App Group og varsler automatisk. Når bygget er ferdig, installerer du det fra lenken/QR-koden på telefonen. Slå på *Utviklermodus* på iPhonen hvis den ber om det (Innstillinger → Personvern og sikkerhet → Utviklermodus).
+Svar ja når EAS spør om å opprette prosjektet, logge inn hos Apple, lage sertifikater og lage en App Store Connect API-nøkkel. Push-varsler fra server trengs ikke, så det kan du hoppe over. Når bygget er ferdig, sendes det til TestFlight.
 
-Etterpå kan du utvikle fra PC-en:
+**2. Legg inn App Store Connect-ID-en.** Du finner den i App Store Connect → appen → *App-informasjon* → *Apple-ID*, et tall. Legg den inn i `eas.json`:
 
-```bash
-npx expo start          # samme Wi-Fi som telefonen
-npx expo start --tunnel # hvis telefonen ikke finner PC-en
+```json
+"submit": { "production": { "ios": { "ascAppId": "1234567890" } } }
 ```
 
-Åpne Vane på telefonen, så lastes koden fra PC-en. Et nytt `eas build` trengs bare når du endrer native ting: pakker, `app.json` eller widgetene.
+**3. Gi GitHub tilgang til EAS.** Lag en token på [expo.dev/settings/access-tokens](https://expo.dev/settings/access-tokens) og legg den inn i repoet: *Settings → Secrets and variables → Actions → New repository secret*, med navnet `EXPO_TOKEN`.
 
-### Til TestFlight
+### Nye bygg: én knapp
+
+På GitHub går du til **Actions → Bygg til iPhone → Run workflow**. Det fungerer også fra GitHub-appen på mobilen.
+
+Jobben sjekker koden (lint, typer og tester) og starter bygget hos EAS. Ferdig bygg havner i TestFlight av seg selv, vanligvis etter 15–30 minutter. Installer TestFlight-appen på iPhonen første gang. Etterpå oppdateres Vane der.
+
+### Utvikle med hot reload (valgfritt)
+
+Vil du se endringer på telefonen med en gang, uten nye bygg, trenger du et utviklingsbygg:
 
 ```bash
-npx eas-cli@latest build --profile production --platform ios
-npx eas-cli@latest submit --platform ios
+npx eas-cli@latest device:create   # registrer iPhonen (åpne lenken på telefonen)
+npx eas-cli@latest build --platform ios --profile development
+npx expo start --tunnel
 ```
 
 ### Bundle-ID
