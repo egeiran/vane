@@ -15,7 +15,9 @@
       },
       "infoPlist": {
         "CFBundleDevelopmentRegion": "nb",
-        "CFBundleLocalizations": ["nb"]
+        "CFBundleLocalizations": [
+          "nb"
+        ]
       }
     },
     "android": {
@@ -49,7 +51,11 @@
               "displayName": "I dag",
               "description": "Huk av dagens vaner rett fra hjemskjermen.",
               "ios": {
-                "supportedFamilies": ["systemSmall", "systemMedium", "systemLarge"],
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium",
+                  "systemLarge"
+                ],
                 "initialLayout": "src/widgets/TodayWidget.tsx"
               }
             },
@@ -58,7 +64,11 @@
               "displayName": "Vane",
               "description": "Dagens vaner og mål på låseskjermen.",
               "ios": {
-                "supportedFamilies": ["accessoryCircular", "accessoryRectangular", "accessoryInline"],
+                "supportedFamilies": [
+                  "accessoryCircular",
+                  "accessoryRectangular",
+                  "accessoryInline"
+                ],
                 "initialLayout": "src/widgets/LockWidget.tsx"
               }
             }
@@ -69,6 +79,33 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "ExpoWidgetsTarget",
+                  "bundleIdentifier": "no.egeiran.vane.ExpoWidgetsTarget",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.no.egeiran.vane"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "2c5905dd-5719-47d1-a8be-0822949bb2e6"
+      }
     }
   }
 }
