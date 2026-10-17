@@ -48,6 +48,8 @@ export type Data = {
   habits: Habit[];
   logs: Record<DateKey, DayLog>;
   goals: Record<DateKey, Goal[]>;
+  /** Dager der man har svart «Ikke i dag» på dagens mål – da spør vi ikke mer. */
+  goalsSkipped: Record<DateKey, true>;
   settings: Settings;
 };
 
@@ -61,5 +63,6 @@ export const EMPTY_DATA: Data = {
   habits: [],
   logs: {},
   goals: {},
+  goalsSkipped: {},
   settings: DEFAULT_SETTINGS,
 };

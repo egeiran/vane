@@ -36,7 +36,14 @@ export function useAppEffects() {
     });
 
     const unsubscribe = useStore.subscribe((state, prev) => {
-      if (state.habits === prev.habits && state.logs === prev.logs && state.goals === prev.goals && state.settings === prev.settings) return;
+      if (
+        state.habits === prev.habits &&
+        state.logs === prev.logs &&
+        state.goals === prev.goals &&
+        state.goalsSkipped === prev.goalsSkipped &&
+        state.settings === prev.settings
+      )
+        return;
       schedulePushWidgets();
       scheduleNotificationSync();
     });

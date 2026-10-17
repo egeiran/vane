@@ -16,10 +16,20 @@ const NO_GOALS: Goal[] = [];
 export function GoalsCard({ day, isToday }: { day: DateKey; isToday: boolean }) {
   const t = useTheme();
   const goals = useStore((s) => s.goals[day] ?? NO_GOALS);
+  const skipped = useStore((s) => !!s.goalsSkipped[day]);
   const toggleGoal = useStore((s) => s.toggleGoal);
 
   if (!goals.length) {
     if (!isToday) return <Text style={[styles.note, { color: t.sub }]}>Ingen mål satt i går.</Text>;
+    if (skipped) {
+      // Man har sagt «Ikke i dag» – bare en stille linje, ingen invitasjon.
+      return (
+        <View style={styles.skipped}>
+          <Text style={{ flex: 1, fontSize: 14, color: t.sub }}>Ingen mål i dag.</Text>
+          <TextButton label="Legg til likevel" color={t.sub} onPress={() => router.push('/goals')} />
+        </View>
+      );
+    }
     return (
       <Pressable
         onPress={() => router.push('/goals')}
@@ -70,6 +80,7 @@ export function GoalsCard({ day, isToday }: { day: DateKey; isToday: boolean }) 
 
 const styles = StyleSheet.create({
   note: { fontSize: 14, paddingHorizontal: 4 },
+  skipped: { flexDirection: 'row', alignItems: 'center', paddingLeft: 4, marginVertical: -6 },
   prompt: {
     minHeight: 68,
     borderRadius: 20,

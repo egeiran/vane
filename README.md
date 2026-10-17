@@ -7,7 +7,7 @@ Små vaner, i ro og mak. En rolig vaneapp for iPhone, uten streaks, poeng eller 
 - **Rett i går**: trykk på i går i ukestripen for å rette. Eldre dager er låst.
 - **Oversikt**: rutenett der fargestyrken viser hvor mye som ble gjort. Uke, 4 uker eller år, for alt samlet og for hver vane.
 - **Påminnelser**: per vane, med knappene *Gjort*, *+1* og *Om 1 time* rett i varselet. Kommer ikke hvis vanen allerede er gjort.
-- **Widgets**: «I dag» på hjemskjermen (huk av rett fra widgeten) og «Vane» på låseskjermen.
+- **Widgets**: «I dag» på hjemskjermen (huk av rett fra widgeten) og «Vane» på låseskjermen. Uten mål viser låseskjermen «Hva vil du få til i dag?» fram til kl. 12, og neste vane resten av dagen. Svarer du «Ikke i dag», spør den ikke mer den dagen.
 - Ingen konto, ingen server. Alt lagres lokalt på telefonen.
 
 ## Bygge og installere uten Mac

@@ -1,4 +1,4 @@
-import { Button, HStack, Image, Spacer, Text, VStack } from '@expo/ui/swift-ui';
+import { Button, HStack, Image, Link, Spacer, Text, VStack } from '@expo/ui/swift-ui';
 import {
   buttonStyle,
   containerBackground,
@@ -73,6 +73,19 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
 
   const root = [containerBackground(bg, 'widget'), widgetURL('vane://')];
 
+  // Uten mål for dagen: en rolig lenke som åpner målskjermen (bare der det er plass).
+  const prompt =
+    props.goalPrompt && family !== 'systemSmall' ? (
+      <Link destination="vane://goals">
+        <HStack spacing={6}>
+          <Image systemName="sunrise" color={sub} size={14} />
+          <Text modifiers={[font({ size: 13, weight: 'semibold' }), foregroundStyle(text)]}>Sett dagens mål</Text>
+          <Spacer />
+          <Image systemName="chevron.right" color={sub} size={11} />
+        </HStack>
+      </Link>
+    ) : null;
+
   if (!props.hasHabits || all.length === 0) {
     return (
       <VStack alignment="leading" spacing={6} modifiers={root}>
@@ -81,16 +94,20 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
         <Text modifiers={[font({ size: 13 }), foregroundStyle(sub)]}>
           {props.hasHabits ? 'Ingen vaner i dag.' : 'Legg til en vane i appen.'}
         </Text>
+        {prompt}
       </VStack>
     );
   }
 
   if (family === 'systemMedium' && shown.length > 3) {
-    const left = shown.filter((_, i) => i % 2 === 0);
-    const right = shown.filter((_, i) => i % 2 === 1);
+    // Med mål-lenken er det plass til to rader vaner, ellers tre.
+    const cut = props.goalPrompt ? 4 : 6;
+    const left = shown.slice(0, cut).filter((_, i) => i % 2 === 0);
+    const right = shown.slice(0, cut).filter((_, i) => i % 2 === 1);
     return (
       <VStack alignment="leading" spacing={8} modifiers={root}>
         {header}
+        {prompt}
         <HStack alignment="top" spacing={14}>
           <VStack alignment="leading" spacing={8} modifiers={[frame({ maxWidth: Infinity, alignment: 'leading' })]}>
             {left.map(row)}
@@ -107,12 +124,11 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
   return (
     <VStack alignment="leading" spacing={family === 'systemLarge' ? 12 : 8} modifiers={root}>
       {header}
-      {shown.map(row)}
+      {prompt}
+      {(prompt ? shown.slice(0, family === 'systemMedium' ? 2 : 8) : shown).map(row)}
       <Spacer />
-      {family === 'systemLarge' && props.goalsTotal > 0 ? (
-        <Text modifiers={[font({ size: 13 }), foregroundStyle(sub), padding({ top: 4 })]}>
-          {`Dagens mål: ${props.goalsDone} av ${props.goalsTotal}`}
-        </Text>
+      {family === 'systemLarge' && props.goalLine ? (
+        <Text modifiers={[font({ size: 13 }), foregroundStyle(sub), lineLimit(1), padding({ top: 4 })]}>{props.goalLine}</Text>
       ) : null}
     </VStack>
   );
@@ -121,7 +137,7 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
 export default createWidget<TodayWidgetProps>('TodayWidget', TodayWidget, {
   day: '',
   items: [],
-  goalsDone: 0,
-  goalsTotal: 0,
+  goalPrompt: false,
+  goalLine: '',
   hasHabits: false,
 });

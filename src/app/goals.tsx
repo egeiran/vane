@@ -29,6 +29,7 @@ export default function GoalsScreen() {
   const habits = useStore((s) => s.habits);
   const addGoal = useStore((s) => s.addGoal);
   const removeGoal = useStore((s) => s.removeGoal);
+  const skipGoals = useStore((s) => s.skipGoals);
   const [draft, setDraft] = useState('');
 
   const habitCount = dailyHabitsOn(habits, today).length;
@@ -114,7 +115,14 @@ export default function GoalsScreen() {
         <PrimaryButton label="Ferdig" onPress={finish} disabled={empty && goals.length === 0} />
         {goals.length === 0 ? (
           <View style={{ alignItems: 'center', marginTop: 4 }}>
-            <TextButton label="Ikke i dag" color={t.sub} onPress={close} />
+            <TextButton
+              label="Ikke i dag"
+              color={t.sub}
+              onPress={() => {
+                skipGoals(today);
+                close();
+              }}
+            />
           </View>
         ) : null}
       </ScrollView>

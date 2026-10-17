@@ -101,6 +101,11 @@ export function removeGoal(data: Data, day: DateKey, id: string): Data {
   return { ...data, goals };
 }
 
+/** «Ikke i dag»: ingen mål denne dagen, og ingen flere spørsmål om det. */
+export function skipGoals(data: Data, day: DateKey): Data {
+  return { ...data, goalsSkipped: { ...data.goalsSkipped, [day]: true } };
+}
+
 export function updateSettings(data: Data, patch: Partial<Settings>): Data {
   return { ...data, settings: { ...data.settings, ...patch } };
 }

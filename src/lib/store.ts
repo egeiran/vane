@@ -18,6 +18,7 @@ type Actions = {
   addGoal: (day: DateKey, text: string) => void;
   toggleGoal: (day: DateKey, id: string) => void;
   removeGoal: (day: DateKey, id: string) => void;
+  skipGoals: (day: DateKey) => void;
   updateSettings: (patch: Partial<Settings>) => void;
 };
 
@@ -36,6 +37,7 @@ export const pickData = (s: Data): Data => ({
   habits: s.habits,
   logs: s.logs,
   goals: s.goals,
+  goalsSkipped: s.goalsSkipped,
   settings: s.settings,
 });
 
@@ -59,6 +61,7 @@ export const useStore = create<Store>()(
         addGoal: (day, text) => apply((d) => S.addGoal(d, day, text)),
         toggleGoal: (day, id) => apply((d) => S.toggleGoal(d, day, id)),
         removeGoal: (day, id) => apply((d) => S.removeGoal(d, day, id)),
+        skipGoals: (day) => apply((d) => S.skipGoals(d, day)),
         updateSettings: (patch) => apply((d) => S.updateSettings(d, patch)),
       };
     },
@@ -72,6 +75,7 @@ export const useStore = create<Store>()(
         return {
           ...current,
           ...p,
+          goalsSkipped: p.goalsSkipped ?? {},
           settings: { ...DEFAULT_SETTINGS, ...(p.settings ?? {}) },
         };
       },
