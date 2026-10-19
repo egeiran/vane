@@ -10,7 +10,7 @@ import {
   syncNotifications,
 } from './notifications';
 import { useStore } from './store';
-import { listenToWidgetTaps, pullWidgetChanges, pushWidgets, schedulePushWidgets } from './widgetSync';
+import { listenToWidgetTaps, scheduleSyncWidgets, syncWidgets } from './widgetSync';
 
 /**
  * Alt som skjer i bakgrunnen mens appen kjører: varsler, svar på varsler og synk med widgetene.
@@ -27,9 +27,7 @@ export function useAppEffects() {
       Notifications.clearLastNotificationResponse();
     }
 
-    // Hent eventuelle trykk fra widgeten først, så de ikke overskrives av appens tilstand.
-    pullWidgetChanges().finally(() => {
-      pushWidgets();
+    syncWidgets().finally(() => {
       requestPermission()
         .then(() => syncNotifications())
         .catch(() => {});
@@ -44,16 +42,17 @@ export function useAppEffects() {
         state.settings === prev.settings
       )
         return;
-      schedulePushWidgets();
+      scheduleSyncWidgets();
       scheduleNotificationSync();
     });
 
     const appStateSub = AppState.addEventListener('change', (status) => {
-      if (status !== 'active') return;
-      pullWidgetChanges().finally(() => {
-        pushWidgets();
-        scheduleNotificationSync(0);
-      });
+      if (status === 'active') {
+        syncWidgets().finally(() => scheduleNotificationSync(0));
+      } else if (status === 'background') {
+        // Send siste endring før appen legges bort, så widgeten viser det du nettopp gjorde.
+        syncWidgets();
+      }
     });
 
     const stopWidgetTaps = listenToWidgetTaps();

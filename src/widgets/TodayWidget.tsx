@@ -46,12 +46,15 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
   const open = [...timed, ...daily.filter((i) => !isDone(i) && !i.time)];
   const colors = (i: TodayWidgetItem) => (dark ? i.dark : i.light);
 
-  const withValue = (id: string, value: number) => ({
-    items: items.map((i) => (i.id === id ? { ...i, value } : i)),
-  });
-  const withGoalDone = (id: string) => ({
-    goals: goals.map((g) => (g.id === id ? { ...g, done: true } : g)),
-  });
+  // Trykk gjelder bare dagens oppslag. Et utdatert oppslag (i går etter midnatt, eller morgendagens
+  // rett etter at appen har sendt nye) skal ikke endres, ellers havner trykket på feil dag.
+  const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+  const now = new Date();
+  const isToday = props.day === `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const withValue = (id: string, value: number) =>
+    isToday ? { items: items.map((i) => (i.id === id ? { ...i, value } : i)) } : {};
+  const withGoalDone = (id: string) =>
+    isToday ? { goals: goals.map((g) => (g.id === id ? { ...g, done: true } : g)) } : {};
   const nextValue = (i: TodayWidgetItem) => (i.kind === 'count' ? Math.min(i.value + 1, i.target) : isDone(i) ? 0 : 1);
 
   const goal: TodayWidgetGoal | undefined = openGoals[0];

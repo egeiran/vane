@@ -80,7 +80,7 @@ npm run lint
 
 - **Lagring:** `zustand` med SQLite-basert nøkkel/verdi-lager (`expo-sqlite/kv-store`). Ren logikk ligger i `src/lib/state.ts` og `src/lib/habits.ts` og er testet.
 - **Varsler:** Morgenvarselet gjentas daglig. Påminnelser for vaner legges inn sju dager fram og fylles på hver gang appen åpnes. Vaner som allerede er gjort, får ingen påminnelse.
-- **Widgets:** Appen sender dagens vaner og mål til widgetene, pluss et oppslag som tar over ved midnatt. Hjemskjerm-widgeten velger selv hva den viser fram, så et trykk oppdaterer den med en gang, uten at appen kjører. Når appen åpnes, leser den trykkene tilbake. Bare verdier widgeten selv har endret tas inn, så nyere endringer i appen ikke overskrives.
+- **Widgets:** Appen sender dagens vaner og mål til widgetene, pluss et oppslag som tar over ved midnatt. Hjemskjerm-widgeten velger selv hva den viser fram, så et trykk oppdaterer den med en gang, uten at appen kjører. Hver gang appen synker (`syncWidgets`), leser den først trykkene fra widgeten og sender deretter sin egen tilstand. Det skjer i kø, så appen aldri overskriver trykk den ikke har lest. Bare det widgeten selv har endret, tas inn, og som en endring oppå appens verdi (`applyWidgetTaps`). Widgeten tar bare imot trykk på dagens oppslag. Appen synker når den åpnes, når noe endres, og når den legges bort.
 
 ### Regler for widget-kode
 

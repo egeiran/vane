@@ -2,7 +2,8 @@ import { getTheme } from '@/theme';
 import type { LockWidgetMode, LockWidgetProps, TodayWidgetItem, TodayWidgetProps } from '@/widgets/types';
 
 import { addDays, atTime, fromKey, todayKey, type DateKey } from './dates';
-import { amountText, dailyHabitsOn, goalsOn, isDone, isWeekly, openHabitsOn, valueOn, weeklyHabitsOn } from './habits';
+import { amountText, dailyHabitsOn, goalsOn, isDone, isEditable, isWeekly, openHabitsOn, valueOn, weeklyHabitsOn } from './habits';
+import { setValue, toggleGoal } from './state';
 import type { Data } from './types';
 
 /** Fram til dette klokkeslettet inviterer widgetene til å sette dagens mål. */
@@ -114,4 +115,46 @@ export function lockEntryTimes(now: Date): Date[] {
   if (now.getTime() < noon.getTime()) times.push(noon);
   times.push(fromKey(tomorrow), atTime(tomorrow, GOAL_PROMPT_UNTIL));
   return times;
+}
+
+/** Verdiene appen sist sendte til hjemskjerm-widgeten, per dag: vane-id → verdi, `goal:<id>` → 1 eller 0. */
+export type Pushed = Record<DateKey, Record<string, number>>;
+
+const goalKey = (id: string) => `goal:${id}`;
+
+export function pushedValues(entries: TodayWidgetProps[]): Pushed {
+  const pushed: Pushed = {};
+  for (const p of entries) {
+    pushed[p.day] = Object.fromEntries([
+      ...p.items.map((i) => [i.id, i.value]),
+      ...p.goals.map((g) => [goalKey(g.id), g.done ? 1 : 0]),
+    ]);
+  }
+  return pushed;
+}
+
+/**
+ * Tar inn trykk gjort i widgeten. Bare det widgeten selv har endret siden appen sist sendte
+ * (`pushed`) tas med, og som en endring oppå appens verdi: har vannet gått fra 5 til 6 i widgeten
+ * og fra 5 til 6 i et varsel, blir det 7. Bare i dag og i går kan endres.
+ */
+export function applyWidgetTaps(data: Data, entries: Partial<TodayWidgetProps>[], pushed: Pushed, today: DateKey): Data {
+  let next = data;
+  for (const props of entries) {
+    if (!props.day || !isEditable(props.day, today)) continue;
+    const day = props.day;
+    const sent = pushed[day] ?? {};
+    for (const item of props.items ?? []) {
+      const before = sent[item.id];
+      if (before === undefined || before === item.value) continue;
+      next = setValue(next, item.id, day, valueOn(next, item.id, day) + item.value - before);
+    }
+    for (const goal of props.goals ?? []) {
+      const before = sent[goalKey(goal.id)];
+      if (before === undefined || before === (goal.done ? 1 : 0)) continue;
+      const current = goalsOn(next, day).find((g) => g.id === goal.id);
+      if (current && current.done !== goal.done) next = toggleGoal(next, day, goal.id);
+    }
+  }
+  return next;
 }

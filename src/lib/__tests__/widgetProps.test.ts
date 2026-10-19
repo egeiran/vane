@@ -1,9 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { nextHabit } from '../habits';
-import { addGoal, addHabit, setValue, skipGoals, toggleGoal, toggleHabit } from '../state';
+import { goalsOn, nextHabit, valueOn } from '../habits';
+import { addGoal, addHabit, incrementHabit, setValue, skipGoals, toggleGoal, toggleHabit } from '../state';
 import { EMPTY_DATA, type Data, type HabitInput } from '../types';
-import { buildLockProps, buildTodayProps, lockEntryTimes, lockMode } from '../widgetProps';
+import { applyWidgetTaps, buildLockProps, buildTodayProps, lockEntryTimes, lockMode, pushedValues } from '../widgetProps';
 
 const DAY = '2026-10-17';
 const at = (h: number, m = 0) => new Date(2026, 9, 17, h, m);
@@ -120,5 +120,78 @@ describe('hjemskjermen', () => {
   it('merker ukentlige vaner', () => {
     const d = addHabit(setup(), { ...base, name: 'Svømme', schedule: { kind: 'weekly', times: 2 } }, '2026-10-01', 'swim');
     expect(buildTodayProps(d, DAY, at(8)).items.find((i) => i.id === 'swim')).toMatchObject({ weekly: true, time: null });
+  });
+});
+
+describe('trykk i widgeten', () => {
+  const YESTERDAY = '2026-10-16';
+  const TOMORROW = '2026-10-18';
+
+  function withWater(): Data {
+    return addHabit(setup(), { ...base, name: 'Vann', type: 'count', target: 8, unit: 'glass' }, '2026-10-01', 'water');
+  }
+
+  /** Det appen sender, og widgeten etter at `tap` har endret dagens oppslag. */
+  function sent(d: Data, tap: (p: ReturnType<typeof buildTodayProps>) => void) {
+    const props = buildTodayProps(d, DAY, at(9));
+    const pushed = pushedValues([props]);
+    const widget = structuredClone(props);
+    tap(widget);
+    return { pushed, widget };
+  }
+
+  it('tar inn det som er huket av i widgeten', () => {
+    const d = setup();
+    const { pushed, widget } = sent(d, (w) => (w.items.find((i) => i.id === 'walk')!.value = 1));
+    expect(valueOn(applyWidgetTaps(d, [widget], pushed, DAY), 'walk', DAY)).toBe(1);
+  });
+
+  it('lar appen vinne når widgeten ikke er rørt', () => {
+    const d = setup();
+    const { pushed, widget } = sent(d, () => {});
+    const changedInApp = toggleHabit(d, 'walk', DAY);
+    expect(applyWidgetTaps(changedInApp, [widget], pushed, DAY)).toBe(changedInApp);
+  });
+
+  it('legger endringer sammen i stedet for å overskrive', () => {
+    const d = setValue(withWater(), 'water', DAY, 5);
+    const { pushed, widget } = sent(d, (w) => (w.items.find((i) => i.id === 'water')!.value = 6));
+    const fromNotification = incrementHabit(d, 'water', DAY, 1);
+    expect(valueOn(applyWidgetTaps(fromNotification, [widget], pushed, DAY), 'water', DAY)).toBe(7);
+  });
+
+  it('kan angre en avhuking', () => {
+    const d = toggleHabit(setup(), 'read', DAY);
+    const { pushed, widget } = sent(d, (w) => (w.items.find((i) => i.id === 'read')!.value = 0));
+    expect(valueOn(applyWidgetTaps(d, [widget], pushed, DAY), 'read', DAY)).toBe(0);
+  });
+
+  it('huker av mål, men ikke to ganger', () => {
+    const d = addGoal(setup(), DAY, 'Rydde boden', 'g1');
+    const { pushed, widget } = sent(d, (w) => (w.goals[0].done = true));
+    const once = applyWidgetTaps(d, [widget], pushed, DAY);
+    expect(goalsOn(once, DAY)[0].done).toBe(true);
+    expect(goalsOn(applyWidgetTaps(toggleGoal(d, DAY, 'g1'), [widget], pushed, DAY), DAY)[0].done).toBe(true);
+  });
+
+  it('tar bare inn i dag og i går', () => {
+    const d = setup();
+    const tap = (day: string) => {
+      const props = { ...buildTodayProps(d, day, at(9)), day };
+      const pushed = pushedValues([props]);
+      const widget = structuredClone(props);
+      widget.items.find((i) => i.id === 'walk')!.value = 1;
+      return valueOn(applyWidgetTaps(d, [widget], pushed, DAY), 'walk', day);
+    };
+    expect(tap(YESTERDAY)).toBe(1);
+    expect(tap(TOMORROW)).toBe(0);
+    expect(tap('2026-10-15')).toBe(0);
+  });
+
+  it('hopper over vaner som er slettet', () => {
+    const d = setup();
+    const { pushed, widget } = sent(d, (w) => w.items.push({ ...w.items[0], id: 'gone', value: 1 }));
+    pushed[DAY].gone = 0;
+    expect(applyWidgetTaps(d, [widget], pushed, DAY)).toEqual(d);
   });
 });
