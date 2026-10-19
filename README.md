@@ -7,7 +7,7 @@ Små vaner, i ro og mak. En rolig vaneapp for iPhone, uten streaks, poeng eller 
 - **Rett i går**: trykk på i går i ukestripen for å rette. Eldre dager er låst.
 - **Oversikt**: rutenett der fargestyrken viser hvor mye som ble gjort. Uke, 4 uker eller år, for alt samlet og for hver vane.
 - **Påminnelser**: per vane, med knappene *Gjort*, *+1* og *Om 1 time* rett i varselet. Kommer ikke hvis vanen allerede er gjort.
-- **Widgets**: «I dag» på hjemskjermen (huk av rett fra widgeten) og «Vane» på låseskjermen. Uten mål viser låseskjermen «Hva vil du få til i dag?» fram til kl. 12, og neste vane resten av dagen. Svarer du «Ikke i dag», spør den ikke mer den dagen.
+- **Widgets**: «I dag» på hjemskjermen viser én ting om gangen med én knapp: om morgenen «Hva vil du få til i dag?», så første uferdige mål, så neste vane. Huk av rett fra widgeten. «Vane» på låseskjermen viser en ring med vanene som er gjort, og det viktigste akkurat nå ved siden av. Uten mål spør begge fram til kl. 12. Svarer du «Ikke i dag», spør de ikke mer den dagen.
 - Ingen konto, ingen server. Alt lagres lokalt på telefonen.
 
 ## Bygge og installere uten Mac
@@ -40,6 +40,12 @@ Svar ja når EAS spør om å opprette prosjektet, logge inn hos Apple, lage sert
 På GitHub går du til **Actions → Bygg til iPhone → Run workflow**. Det fungerer også fra GitHub-appen på mobilen.
 
 Jobben sjekker koden (lint, typer og tester) og starter bygget hos EAS. Ferdig bygg havner i TestFlight av seg selv, vanligvis etter 15–30 minutter. Installer TestFlight-appen på iPhonen første gang. Etterpå oppdateres Vane der.
+
+### Oppdateringer uten nytt bygg (OTA)
+
+Endringer i JavaScript-koden, også i widgetene, kan sendes rett til telefonen: **Actions → Send oppdatering → Run workflow**. Det tar et par minutter. Åpne Vane, lukk den helt og åpne den igjen, så er oppdateringen i bruk.
+
+Dette virker ikke når en endring trenger ny native kode, som en ny pakke med native kode, eller endringer i `app.json`. Da må du bygge på nytt. Appen sjekker selv at en oppdatering passer bygget på telefonen (`runtimeVersion` med `fingerprint`), så en oppdatering som ikke passer, blir bare ikke brukt.
 
 ### Utvikle med hot reload (valgfritt)
 
@@ -74,7 +80,7 @@ npm run lint
 
 - **Lagring:** `zustand` med SQLite-basert nøkkel/verdi-lager (`expo-sqlite/kv-store`). Ren logikk ligger i `src/lib/state.ts` og `src/lib/habits.ts` og er testet.
 - **Varsler:** Morgenvarselet gjentas daglig. Påminnelser for vaner legges inn sju dager fram og fylles på hver gang appen åpnes. Vaner som allerede er gjort, får ingen påminnelse.
-- **Widgets:** Appen sender dagens tilstand til widgetene, pluss et oppslag som tar over ved midnatt. Trykk i widgeten oppdaterer widgeten med en gang, uten at appen kjører. Når appen åpnes, leser den trykkene tilbake. Bare verdier widgeten selv har endret tas inn, så nyere endringer i appen ikke overskrives.
+- **Widgets:** Appen sender dagens vaner og mål til widgetene, pluss et oppslag som tar over ved midnatt. Hjemskjerm-widgeten velger selv hva den viser fram, så et trykk oppdaterer den med en gang, uten at appen kjører. Når appen åpnes, leser den trykkene tilbake. Bare verdier widgeten selv har endret tas inn, så nyere endringer i appen ikke overskrives.
 
 ### Regler for widget-kode
 
@@ -84,7 +90,7 @@ Koden i `src/widgets/*Widget.tsx` med `'widget'` øverst kjører i widgetens ege
 - ingen hooks, ingen async og ingen imports av egen kode
 - alt den trenger må ligge inne i funksjonen eller komme inn som props
 
-Endringer der krever et nytt `eas build`.
+Appen lagrer widget-koden på telefonen hver gang den starter, og widgetene bruker den foran det som ble bygget inn. Derfor kan endringer her sendes som OTA-oppdatering.
 
 ## Kjente begrensninger
 

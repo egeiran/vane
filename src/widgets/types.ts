@@ -8,37 +8,46 @@ export type TodayWidgetItem = {
   kind: 'check' | 'count';
   target: number;
   value: number;
+  /** Ukentlige vaner vises bare i den store widgeten og teller ikke med i «2 av 5». */
+  weekly: boolean;
+  /** Påminnelsen ('HH:MM'). Vaner med påminnelse tas først, etter klokkeslett. */
+  time: string | null;
+  /** «glass» i «5 av 8 glass». */
+  unit: string;
   light: WidgetColors;
   dark: WidgetColors;
 };
+
+export type TodayWidgetGoal = { id: string; text: string; done: boolean };
 
 export type TodayWidgetProps = {
   /** Dagen innholdet gjelder ('YYYY-MM-DD'). Appen leser det tilbake for å fange opp trykk. */
   day: string;
   items: TodayWidgetItem[];
-  /** Ingen mål satt (og ikke svart «Ikke i dag»): vis en lenke for å sette mål. */
+  goals: TodayWidgetGoal[];
+  /** Ingen mål satt ennå om morgenen: widgeten spør «Hva vil du få til i dag?». */
   goalPrompt: boolean;
-  /** «Ringe bestemor + 1 til · 0 av 2», eller tom når det ikke finnes mål. */
-  goalLine: string;
   hasHabits: boolean;
 };
 
 /**
  * Låseskjermen har tre tilstander:
- * - `goals`: dagens mål finnes – vis målet
+ * - `goals`: dagens mål finnes – vis første uferdige mål
  * - `prompt`: morgen uten mål – inviter til å sette ett (trykk åpner målskjermen)
- * - `habits`: resten av dagen uten mål – vis neste vane i stedet
+ * - `habits`: ellers – vis det som er igjen av vanene
  */
 export type LockWidgetMode = 'goals' | 'prompt' | 'habits';
 
 export type LockWidgetProps = {
   day: string;
   mode: LockWidgetMode;
+  /** Daglige vaner gjort og totalt, til ringen. */
   done: number;
   total: number;
-  title: string;
-  line: string;
-  detail: string;
+  /** Hovedlinja ved siden av ringen: «Rydde boden», «2 igjen», «Sett dagens mål». */
+  main: string;
+  /** Linja under: «1 av 2 mål», «Lese, Skjermfri kveld». */
+  sub: string;
   inline: string;
   url: string;
 };

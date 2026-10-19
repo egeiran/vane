@@ -7,6 +7,12 @@
     "icon": "./assets/images/icon.png",
     "scheme": "vane",
     "userInterfaceStyle": "automatic",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/2c5905dd-5719-47d1-a8be-0822949bb2e6"
+    },
     "ios": {
       "bundleIdentifier": "no.egeiran.vane",
       "supportsTablet": false,

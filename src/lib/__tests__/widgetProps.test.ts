@@ -40,46 +40,48 @@ describe('neste vane', () => {
 describe('låseskjermen', () => {
   it('inviterer til mål om morgenen når ingen mål er satt', () => {
     const p = buildLockProps(setup(), DAY, at(8));
-    expect(p.mode).toBe('prompt');
-    expect(p.line).toBe('Hva vil du få til i dag?');
-    expect(p.url).toBe('vane://goals');
+    expect(p).toMatchObject({ mode: 'prompt', main: 'Sett dagens mål', sub: '3 vaner i dag', url: 'vane://goals' });
   });
 
-  it('viser neste vane etter kl. 12 når ingen mål er satt', () => {
+  it('viser det som er igjen etter kl. 12 når ingen mål er satt', () => {
     const p = buildLockProps(setup(), DAY, at(12));
-    expect(p.mode).toBe('habits');
-    expect(p.title).toBe('NESTE');
-    expect(p.line).toBe('Strekke ut · 07:30');
-    expect(p.detail).toBe('0 av 3 vaner');
-    expect(p.url).toBe('vane://');
+    expect(p).toMatchObject({ mode: 'habits', main: '3 igjen', sub: 'Strekke ut, Lese, Gå en tur', done: 0, total: 3, url: 'vane://' });
   });
 
   it('slutter å spørre når man har sagt «Ikke i dag»', () => {
     const d = skipGoals(setup(), DAY);
     expect(lockMode(d, DAY, at(8))).toBe('habits');
-    expect(buildTodayProps(d, DAY).goalPrompt).toBe(false);
+    expect(buildTodayProps(d, DAY, at(8)).goalPrompt).toBe(false);
   });
 
   it('viser første uferdige mål når mål finnes', () => {
     let d = setup();
     d = addGoal(d, DAY, 'Ringe bestemor', 'g1');
     d = addGoal(d, DAY, 'Rydde boden', 'g2');
-    d = addGoal(d, DAY, 'Svare Kari', 'g3');
     d = toggleGoal(d, DAY, 'g1');
-    const p = buildLockProps(d, DAY, at(8));
-    expect(p.mode).toBe('goals');
-    expect(p.line).toBe('Rydde boden + 1 til');
-    expect(p.inline).toBe('0/3 vaner · 1/3 mål');
-    d = toggleGoal(toggleGoal(d, DAY, 'g2'), DAY, 'g3');
-    expect(buildLockProps(d, DAY, at(15)).line).toBe('3 av 3 mål gjort');
+    const p = buildLockProps(toggleHabit(d, 'walk', DAY), DAY, at(8));
+    expect(p).toMatchObject({ mode: 'goals', main: 'Rydde boden', sub: '1 av 2 mål', done: 1, total: 3 });
+    expect(p.inline).toBe('Rydde boden · 1/3');
+  });
+
+  it('går over til vanene når målene er gjort', () => {
+    let d = setup();
+    d = toggleGoal(addGoal(d, DAY, 'Ringe bestemor', 'g1'), DAY, 'g1');
+    d = toggleHabit(toggleHabit(d, 'walk', DAY), 'stretch', DAY);
+    expect(buildLockProps(d, DAY, at(21))).toMatchObject({ main: 'Lese', sub: 'kl. 21:00', inline: 'Igjen: Lese' });
   });
 
   it('sier rett ut når alt er gjort, uten feiring', () => {
     let d = setup();
     for (const id of ['walk', 'read', 'stretch']) d = toggleHabit(d, id, DAY);
-    const p = buildLockProps(d, DAY, at(18));
-    expect(p.title).toBe('I DAG');
-    expect(p.line).toBe('Alt er gjort i dag');
+    expect(buildLockProps(d, DAY, at(18))).toMatchObject({ main: 'Alt er gjort', sub: '3 vaner', done: 3, total: 3 });
+  });
+
+  it('viser mengden for en tellevane som er den siste', () => {
+    let d = setup();
+    for (const id of ['walk', 'read', 'stretch']) d = toggleHabit(d, id, DAY);
+    d = addHabit(d, { ...base, name: 'Vann', type: 'count', target: 8, unit: 'glass' }, '2026-10-01', 'water');
+    expect(buildLockProps(setValue(d, 'water', DAY, 5), DAY, at(18))).toMatchObject({ main: 'Vann', sub: '5 av 8 glass' });
   });
 
   it('bytter innhold kl. 12 og ved midnatt', () => {
@@ -91,17 +93,32 @@ describe('låseskjermen', () => {
 });
 
 describe('hjemskjermen', () => {
-  it('har mål-lenke bare når mål mangler, og en mållinje når de finnes', () => {
+  it('spør etter mål om morgenen, og sender målene når de finnes', () => {
     let d = setup();
-    expect(buildTodayProps(d, DAY)).toMatchObject({ goalPrompt: true, goalLine: '' });
+    expect(buildTodayProps(d, DAY, at(8))).toMatchObject({ goalPrompt: true, goals: [] });
+    expect(buildTodayProps(d, DAY, at(13)).goalPrompt).toBe(false);
     d = addGoal(d, DAY, 'Ringe bestemor', 'g1');
-    expect(buildTodayProps(d, DAY)).toMatchObject({ goalPrompt: false, goalLine: 'Mål: Ringe bestemor · 0 av 1' });
+    expect(buildTodayProps(d, DAY, at(8))).toMatchObject({
+      goalPrompt: false,
+      goals: [{ id: 'g1', text: 'Ringe bestemor', done: false }],
+    });
   });
 
-  it('sender med verdier og farger for hver vane', () => {
+  it('spør om morgenen i oppslaget for i morgen, selv om det lages om kvelden', () => {
+    const tomorrow = '2026-10-18';
+    expect(buildTodayProps(setup(), tomorrow, new Date(2026, 9, 18)).goalPrompt).toBe(true);
+  });
+
+  it('sender med verdier, påminnelse og farger for hver vane', () => {
     const d = setValue(addHabit(setup(), { ...base, name: 'Vann', type: 'count', target: 8, unit: 'glass' }, '2026-10-01', 'water'), 'water', DAY, 5);
-    const water = buildTodayProps(d, DAY).items.find((i) => i.id === 'water');
-    expect(water).toMatchObject({ kind: 'count', target: 8, value: 5 });
-    expect(water?.light.solid).toMatch(/^#/);
+    const props = buildTodayProps(d, DAY, at(8));
+    expect(props.items.find((i) => i.id === 'water')).toMatchObject({ kind: 'count', target: 8, value: 5, unit: 'glass', weekly: false });
+    expect(props.items.find((i) => i.id === 'read')).toMatchObject({ kind: 'check', time: '21:00' });
+    expect(props.items[0].light.solid).toMatch(/^#/);
+  });
+
+  it('merker ukentlige vaner', () => {
+    const d = addHabit(setup(), { ...base, name: 'Svømme', schedule: { kind: 'weekly', times: 2 } }, '2026-10-01', 'swim');
+    expect(buildTodayProps(d, DAY, at(8)).items.find((i) => i.id === 'swim')).toMatchObject({ weekly: true, time: null });
   });
 });

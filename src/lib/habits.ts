@@ -68,11 +68,16 @@ export function goalsOn(data: Pick<Data, 'goals'>, day: DateKey): Goal[] {
   return data.goals[day] ?? [];
 }
 
-/** Neste daglige vane som ikke er gjort: de med påminnelse først, etter klokkeslett. */
-export function nextHabit(data: Data, day: DateKey): Habit | null {
+/** Daglige vaner som ikke er gjort, i den rekkefølgen de bør tas: de med påminnelse først, etter klokkeslett. */
+export function openHabitsOn(data: Data, day: DateKey): Habit[] {
   const open = dailyHabitsOn(data.habits, day).filter((h) => !isDone(h, valueOn(data, h.id, day)));
   const timed = open.filter((h) => h.reminder).sort((a, b) => compareKeys(a.reminder!, b.reminder!));
-  return timed[0] ?? open[0] ?? null;
+  return [...timed, ...open.filter((h) => !h.reminder)];
+}
+
+/** Neste daglige vane som ikke er gjort. */
+export function nextHabit(data: Data, day: DateKey): Habit | null {
+  return openHabitsOn(data, day)[0] ?? null;
 }
 
 export type DayStats = { done: number; total: number; average: number | null };

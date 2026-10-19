@@ -1,0 +1,64 @@
+# Sender endringer i appen (og widgetene) rett til telefonen, uten nytt bygg.
+# Start den fra GitHub: Actions → «Send oppdatering» → Run workflow.
+#
+# Virker bare for endringer i JavaScript-koden. Har du lagt til en ny pakke med native kode, eller
+# endret app.json, må du bygge på nytt med «Bygg til iPhone». Oppdateringen blir da liggende urørt,
+# fordi den ikke passer noe bygg på telefonen.
+name: Send oppdatering
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Kort beskrivelse av endringen'
+        type: string
+        default: 'Oppdatering'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eas-ios-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: EAS Update (iOS)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sjekk at EXPO_TOKEN er lagt inn
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Mangler EXPO_TOKEN. Lag en token på https://expo.dev/settings/access-tokens og legg den inn under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Installer avhengigheter
+        run: npm ci
+
+      - name: Sjekk koden
+        run: |
+          npm run lint
+          npm run typecheck
+          npm test -- --ci
+
+      - name: Send oppdateringen
+        env:
+          MESSAGE: ${{ inputs.message }}
+        run: |
+          eas update --channel production --environment production --platform ios --message "$MESSAGE" --non-interactive
+          echo "Oppdateringen er sendt. Åpne Vane, lukk den helt og åpne den igjen, så er den i bruk."

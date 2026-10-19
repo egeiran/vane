@@ -11,10 +11,12 @@ import { getData, useStore } from './store';
 import { buildLockProps, buildTodayProps, lockEntryTimes } from './widgetProps';
 
 const supported = Platform.OS === 'ios';
-/** Verdiene appen sist sendte til widgeten, per dag og vane. */
+/** Verdiene appen sist sendte til widgeten, per dag: vane-id → verdi og `goal:<id>` → 1 eller 0. */
 const PUSHED_KEY = 'vane-widget-pushed';
 
 type Pushed = Record<DateKey, Record<string, number>>;
+
+const goalKey = (id: string) => `goal:${id}`;
 
 function readPushed(): Pushed {
   try {
@@ -34,8 +36,8 @@ export function pushWidgets() {
   const now = new Date();
   const today = todayKey(now);
   const tomorrow = addDays(today, 1);
-  const todayProps = buildTodayProps(data, today);
-  const tomorrowProps = buildTodayProps(data, tomorrow);
+  const todayProps = buildTodayProps(data, today, now);
+  const tomorrowProps = buildTodayProps(data, tomorrow, fromKey(tomorrow));
   try {
     TodayWidget.updateTimeline([
       { date: now, props: todayProps },
@@ -46,7 +48,10 @@ export function pushWidgets() {
     );
     const pushed: Pushed = {};
     for (const p of [todayProps, tomorrowProps]) {
-      pushed[p.day] = Object.fromEntries(p.items.map((i) => [i.id, i.value]));
+      pushed[p.day] = Object.fromEntries([
+        ...p.items.map((i) => [i.id, i.value]),
+        ...p.goals.map((g) => [goalKey(g.id), g.done ? 1 : 0]),
+      ]);
     }
     Storage.setItemSync(PUSHED_KEY, JSON.stringify(pushed));
   } catch (e) {
@@ -90,6 +95,14 @@ export async function pullWidgetChanges(): Promise<boolean> {
       if (sent === undefined || sent === item.value) continue;
       if (!store.habits.some((h) => h.id === item.id)) continue;
       store.setValue(item.id, props.day, item.value);
+      changed = true;
+    }
+    for (const goal of props.goals ?? []) {
+      const sent = pushed[props.day]?.[goalKey(goal.id)];
+      if (sent === undefined || sent === (goal.done ? 1 : 0)) continue;
+      const current = store.goals[props.day]?.find((g) => g.id === goal.id);
+      if (!current || current.done === goal.done) continue;
+      store.toggleGoal(props.day, goal.id);
       changed = true;
     }
   }
