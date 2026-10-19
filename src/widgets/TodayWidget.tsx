@@ -166,7 +166,7 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
           : mode === 'habit' && habit
             ? habit.kind === 'count'
               ? `${habit.value}/${habit.target}`
-              : habit.time ?? `${doneCount}/${daily.length}`
+              : habit.time || `${doneCount}/${daily.length}`
             : '';
     return (
       <VStack alignment="leading" spacing={4} modifiers={root}>
@@ -220,7 +220,7 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
   const rest = [...(mode === 'habit' ? open.slice(1) : open), ...items.filter((i) => i.weekly && !isDone(i))].slice(0, 4);
   const row = (i: TodayWidgetItem) => {
     const c = colors(i);
-    const right = i.kind === 'count' ? `${i.value}/${i.target}` : i.weekly ? 'denne uka' : i.time ?? '';
+    const right = i.kind === 'count' ? `${i.value}/${i.target}` : i.weekly ? 'denne uka' : i.time;
     return (
       <Button key={i.id} target={`tap:${i.id}`} onPress={() => withValue(i.id, nextValue(i))} modifiers={[buttonStyle('plain')]}>
         <HStack spacing={10}>

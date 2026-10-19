@@ -119,7 +119,7 @@ describe('hjemskjermen', () => {
 
   it('merker ukentlige vaner', () => {
     const d = addHabit(setup(), { ...base, name: 'Svømme', schedule: { kind: 'weekly', times: 2 } }, '2026-10-01', 'swim');
-    expect(buildTodayProps(d, DAY, at(8)).items.find((i) => i.id === 'swim')).toMatchObject({ weekly: true, time: null });
+    expect(buildTodayProps(d, DAY, at(8)).items.find((i) => i.id === 'swim')).toMatchObject({ weekly: true, time: '' });
   });
 });
 
@@ -193,5 +193,28 @@ describe('trykk i widgeten', () => {
     const { pushed, widget } = sent(d, (w) => w.items.push({ ...w.items[0], id: 'gone', value: 1 }));
     pushed[DAY].gone = 0;
     expect(applyWidgetTaps(d, [widget], pushed, DAY)).toEqual(d);
+  });
+});
+
+/** Stier til felt som er `null` eller `undefined`. iOS kan ikke lagre dem i widget-lagringen. */
+function missing(value: unknown, path = 'props'): string[] {
+  if (value === null || value === undefined) return [path];
+  if (typeof value !== 'object') return [];
+  return Object.entries(value).flatMap(([k, v]) => missing(v, `${path}.${k}`));
+}
+
+describe('det som sendes til widgetene', () => {
+  it('har aldri null eller undefined, uansett tilstand', () => {
+    let d = setup();
+    d = addHabit(d, { ...base, name: 'Svømme', schedule: { kind: 'weekly', times: 2 } }, '2026-10-01', 'swim');
+    // Eldre lagrede vaner kan mangle felt.
+    d = { ...d, habits: [...d.habits, { ...d.habits[0], id: 'old', type: 'count', target: 3, unit: undefined as unknown as string }] };
+    const states = [d, addGoal(d, DAY, 'Rydde boden', 'g1'), skipGoals(d, DAY), EMPTY_DATA];
+    for (const s of states) {
+      for (const hour of [8, 13, 21]) {
+        expect(missing(buildTodayProps(s, DAY, at(hour)))).toEqual([]);
+        expect(missing(buildLockProps(s, DAY, at(hour)))).toEqual([]);
+      }
+    }
   });
 });

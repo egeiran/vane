@@ -1,4 +1,7 @@
-/** Data widgetene får fra appen. Fargene sendes med, fordi widget-koden ikke kan importere noe. */
+/**
+ * Data widgetene får fra appen. Fargene sendes med, fordi widget-koden ikke kan importere noe.
+ * Ingen felt kan være `null` eller `undefined`: iOS kan ikke lagre det, og da feiler hele sendingen.
+ */
 
 export type WidgetColors = { solid: string; soft: string; ink: string };
 
@@ -10,8 +13,8 @@ export type TodayWidgetItem = {
   value: number;
   /** Ukentlige vaner vises bare i den store widgeten og teller ikke med i «2 av 5». */
   weekly: boolean;
-  /** Påminnelsen ('HH:MM'). Vaner med påminnelse tas først, etter klokkeslett. */
-  time: string | null;
+  /** Påminnelsen ('HH:MM'), eller '' uten påminnelse. Vaner med påminnelse tas først, etter klokkeslett. */
+  time: string;
   /** «glass» i «5 av 8 glass». */
   unit: string;
   light: WidgetColors;

@@ -37,8 +37,8 @@ export function buildTodayProps(data: Data, day: DateKey, at: Date): TodayWidget
       target: kind === 'count' ? h.target : 1,
       value: valueOn(data, h.id, day),
       weekly,
-      time: weekly ? null : h.reminder,
-      unit: kind === 'count' ? h.unit : '',
+      time: weekly ? '' : (h.reminder ?? ''),
+      unit: kind === 'count' ? (h.unit ?? '') : '',
       light: { solid: light[h.color].solid, soft: light[h.color].soft, ink: light[h.color].ink },
       dark: { solid: dark[h.color].solid, soft: dark[h.color].soft, ink: dark[h.color].ink },
     };

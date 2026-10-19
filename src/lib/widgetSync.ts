@@ -47,12 +47,17 @@ function push() {
     { date: now, props: buildTodayProps(data, today, now) },
     { date: fromKey(tomorrow), props: buildTodayProps(data, tomorrow, fromKey(tomorrow)) },
   ];
+  // Hver widget for seg, så en feil i den ene ikke stopper den andre.
   try {
     TodayWidget.updateTimeline(todayEntries);
-    LockWidget.updateTimeline(lockEntryTimes(now).map((at) => ({ date: at, props: buildLockProps(data, todayKey(at), at) })));
     Storage.setItemSync(PUSHED_KEY, JSON.stringify(pushedValues(todayEntries.map((e) => e.props))));
   } catch (e) {
-    console.warn('[vane] Kunne ikke oppdatere widgetene', e);
+    console.warn('[vane] Kunne ikke oppdatere hjemskjerm-widgeten', e);
+  }
+  try {
+    LockWidget.updateTimeline(lockEntryTimes(now).map((at) => ({ date: at, props: buildLockProps(data, todayKey(at), at) })));
+  } catch (e) {
+    console.warn('[vane] Kunne ikke oppdatere låseskjerm-widgeten', e);
   }
 }
 
