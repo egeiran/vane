@@ -1,5 +1,14 @@
 import { AccessoryWidgetBackground, Gauge, HStack, Image, Text, VStack, ZStack } from '@expo/ui/swift-ui';
-import { containerBackground, font, foregroundStyle, frame, gaugeStyle, lineLimit, widgetURL } from '@expo/ui/swift-ui/modifiers';
+import {
+  containerBackground,
+  font,
+  foregroundStyle,
+  frame,
+  gaugeStyle,
+  lineLimit,
+  monospacedDigit,
+  widgetURL,
+} from '@expo/ui/swift-ui/modifiers';
 import { createWidget, type WidgetEnvironment } from 'expo-widgets';
 
 import type { LockWidgetProps } from './types';
@@ -15,6 +24,15 @@ const LockWidget = (props: LockWidgetProps, environment: WidgetEnvironment) => {
   const fraction = props.total > 0 ? props.done / props.total : 0;
   const count = `${props.done}/${props.total}`;
 
+  // Ring med tallet i midten. Tallet legges oppå i en ZStack: Gauge sine egne etiketter
+  // (`currentValueLabel`) blir ikke tegnet i widgets (expo-widgets 58 sender dem ikke videre).
+  const ring = (size: number) => (
+    <ZStack>
+      <Gauge value={fraction} modifiers={[gaugeStyle('circularCapacity')]} />
+      <Text modifiers={[font({ size, weight: 'semibold' }), monospacedDigit()]}>{count}</Text>
+    </ZStack>
+  );
+
   if (family === 'accessoryCircular') {
     if (props.mode === 'prompt') {
       return (
@@ -27,16 +45,7 @@ const LockWidget = (props: LockWidgetProps, environment: WidgetEnvironment) => {
         </ZStack>
       );
     }
-    return (
-      <ZStack modifiers={root}>
-        <AccessoryWidgetBackground />
-        <Gauge
-          value={fraction}
-          modifiers={[gaugeStyle('circularCapacity')]}
-          currentValueLabel={<Text modifiers={[font({ size: 14, weight: 'semibold' })]}>{count}</Text>}
-        />
-      </ZStack>
-    );
+    return <ZStack modifiers={root}>{ring(15)}</ZStack>;
   }
 
   if (family === 'accessoryInline') {
@@ -45,11 +54,7 @@ const LockWidget = (props: LockWidgetProps, environment: WidgetEnvironment) => {
 
   return (
     <HStack spacing={10} modifiers={[...root, frame({ maxWidth: Infinity, alignment: 'leading' })]}>
-      <Gauge
-        value={fraction}
-        modifiers={[gaugeStyle('circularCapacity')]}
-        currentValueLabel={<Text modifiers={[font({ size: 13, weight: 'semibold' })]}>{count}</Text>}
-      />
+      {ring(13)}
       <VStack alignment="leading" spacing={1}>
         <Text modifiers={[font({ size: 15, weight: 'semibold' }), lineLimit(2)]}>{props.main}</Text>
         {props.sub ? (
