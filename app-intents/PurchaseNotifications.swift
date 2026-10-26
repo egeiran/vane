@@ -1,8 +1,9 @@
-import ExpoNotifications
 import Foundation
 import UserNotifications
 import WidgetKit
+// Expo-moduler må importeres som `internal`: ExpoModulesProvider.swift i app-målet gjør det.
 internal import ExpoAppIntents
+internal import ExpoNotifications
 
 /// Varselet etter et kjøp, og svarene på knappene i det.
 ///
