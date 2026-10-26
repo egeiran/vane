@@ -77,14 +77,32 @@
                 ],
                 "initialLayout": "src/widgets/LockWidget.tsx"
               }
+            },
+            {
+              "name": "PengerWidget",
+              "displayName": "Penger",
+              "description": "Kjøp som venter på kategori, eller legg inn et nytt.",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall"
+                ],
+                "initialLayout": "src/widgets/PengerWidget.tsx"
+              }
             }
           ]
         }
-      ]
+      ],
+      "expo-app-intents",
+      "./plugins/withPurchaseNotifications"
     ],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true
+      "reactCompiler": true,
+      "inlineModules": {
+        "watchedDirectories": [
+          "app-intents"
+        ]
+      }
     },
     "extra": {
       "router": {

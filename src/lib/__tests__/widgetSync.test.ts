@@ -2,6 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 
 import { todayKey } from '../dates';
 import { valueOn } from '../habits';
+import { EMPTY_MONEY } from '../money';
+import { importPurchase } from '../moneyState';
+import { useMoney } from '../moneyStore';
 import { useStore } from '../store';
 import { EMPTY_DATA } from '../types';
 import { scheduleSyncWidgets, syncWidgets } from '../widgetSync';
@@ -38,6 +41,16 @@ jest.mock('@/widgets/TodayWidget', () => ({
   },
 }));
 jest.mock('@/widgets/LockWidget', () => ({ __esModule: true, default: { updateTimeline: (e: Entry[]) => mockAssertStorable(e) } }));
+const mockPenger = { timeline: [] as Entry[] };
+jest.mock('@/widgets/PengerWidget', () => ({
+  __esModule: true,
+  default: {
+    updateTimeline: (entries: Entry[]) => {
+      mockAssertStorable(entries);
+      mockPenger.timeline = structuredClone(entries);
+    },
+  },
+}));
 
 /** Det widgeten gjør ved et trykk: endrer verdien i oppslaget som vises. */
 function tapInWidget(id: string, value: number) {
@@ -87,5 +100,15 @@ describe('synk med widgeten', () => {
     useStore.getState().toggle(id, today);
     await wait(150);
     expect(mockWidget.timeline[0].props.items[0].value).toBe(1);
+  });
+
+  it('sender antall kjøp som venter til widgetene', async () => {
+    useMoney.setState(importPurchase(EMPTY_MONEY, { id: 'k', amountText: '149', merchant: 'Kiwi', at: new Date() }));
+    await syncWidgets();
+    expect(mockPenger.timeline[0].props).toEqual({ waiting: 1 });
+    expect(mockWidget.timeline[0].props.waiting).toBe(1);
+    useMoney.setState(EMPTY_MONEY);
+    await syncWidgets();
+    expect(mockPenger.timeline[0].props).toEqual({ waiting: 0 });
   });
 });

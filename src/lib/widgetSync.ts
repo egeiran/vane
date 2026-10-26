@@ -3,9 +3,12 @@ import { addUserInteractionListener } from 'expo-widgets';
 import { Platform } from 'react-native';
 
 import LockWidget from '@/widgets/LockWidget';
+import PengerWidget from '@/widgets/PengerWidget';
 import TodayWidget from '@/widgets/TodayWidget';
 
 import { addDays, fromKey, todayKey } from './dates';
+import { pendingPurchases } from './money';
+import { getMoney } from './moneyStore';
 import { getData, useStore } from './store';
 import { applyWidgetTaps, buildLockProps, buildTodayProps, lockEntryTimes, pushedValues, type Pushed } from './widgetProps';
 
@@ -40,12 +43,13 @@ async function pull() {
  */
 function push() {
   const data = getData();
+  const waiting = pendingPurchases(getMoney()).length;
   const now = new Date();
   const today = todayKey(now);
   const tomorrow = addDays(today, 1);
   const todayEntries = [
-    { date: now, props: buildTodayProps(data, today, now) },
-    { date: fromKey(tomorrow), props: buildTodayProps(data, tomorrow, fromKey(tomorrow)) },
+    { date: now, props: buildTodayProps(data, today, now, waiting) },
+    { date: fromKey(tomorrow), props: buildTodayProps(data, tomorrow, fromKey(tomorrow), waiting) },
   ];
   // Hver widget for seg, så en feil i den ene ikke stopper den andre.
   try {
@@ -58,6 +62,11 @@ function push() {
     LockWidget.updateTimeline(lockEntryTimes(now).map((at) => ({ date: at, props: buildLockProps(data, todayKey(at), at) })));
   } catch (e) {
     console.warn('[vane] Kunne ikke oppdatere låseskjerm-widgeten', e);
+  }
+  try {
+    PengerWidget.updateTimeline([{ date: now, props: { waiting } }]);
+  } catch (e) {
+    console.warn('[vane] Kunne ikke oppdatere penger-widgeten', e);
   }
 }
 

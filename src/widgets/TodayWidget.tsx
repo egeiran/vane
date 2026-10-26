@@ -62,6 +62,7 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
   const mode = props.goalPrompt ? 'prompt' : goal ? 'goal' : habit ? 'habit' : daily.length || goals.length ? 'done' : 'empty';
 
   const amount = (i: TodayWidgetItem) => `${i.value} av ${i.target}${i.unit ? ` ${i.unit}` : ''}`;
+  const waiting = props.waiting ?? 0;
   const vaner = (n: number) => `${n} ${n === 1 ? 'vane' : 'vaner'}`;
 
   let label = 'I DAG';
@@ -132,6 +133,17 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
     return null;
   };
 
+  // Lite merke nede i hjørnet når kjøp venter på kategori. Den lille widgeten er ett trykkområde,
+  // så der vises det bare.
+  const waitingContent = (
+    <HStack spacing={3}>
+      <Image systemName="creditcard" size={11} color={sub} />
+      <Text modifiers={[font({ size: 12, weight: 'semibold' }), foregroundStyle(sub), monospacedDigit()]}>{`${waiting}`}</Text>
+    </HStack>
+  );
+  const waitingLink = <Link destination="vane://money">{waitingContent}</Link>;
+  const waitingMark = waiting > 0 ? (small ? waitingContent : waitingLink) : null;
+
   const labelText = (
     <Text modifiers={[font({ size: 11, weight: 'bold' }), kerning(0.6), foregroundStyle(sub), lineLimit(1)]}>{label}</Text>
   );
@@ -179,6 +191,7 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
             <Text modifiers={[font({ size: 12, weight: 'medium' }), foregroundStyle(sub), lineLimit(2)]}>{smallFoot}</Text>
           ) : null}
           <Spacer />
+          {waitingMark}
         </HStack>
       </VStack>
     );
@@ -202,6 +215,7 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
         <Text modifiers={[font({ size: 12 }), foregroundStyle(sub), monospacedDigit(), lineLimit(1), padding({ leading: 4 })]}>{foot}</Text>
       ) : null}
       <Spacer />
+      {waitingMark}
     </HStack>
   );
 
@@ -258,4 +272,5 @@ export default createWidget<TodayWidgetProps>('TodayWidget', TodayWidget, {
   goals: [],
   goalPrompt: true,
   hasHabits: false,
+  waiting: 0,
 });

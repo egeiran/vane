@@ -22,8 +22,9 @@ export function lockMode(data: Data, day: DateKey, at: Date): LockWidgetMode {
 /**
  * Det hjemskjerm-widgeten trenger for dagen `day`, sett fra tidspunktet `at`. Widgeten velger selv
  * hva den viser fram (målet, neste vane osv.), så den kan oppdatere seg etter trykk uten appen.
+ * `waiting` er antall kjøp som venter på kategori.
  */
-export function buildTodayProps(data: Data, day: DateKey, at: Date): TodayWidgetProps {
+export function buildTodayProps(data: Data, day: DateKey, at: Date, waiting = 0): TodayWidgetProps {
   const light = getTheme(false).colors;
   const dark = getTheme(true).colors;
   const habits = [...dailyHabitsOn(data.habits, day), ...weeklyHabitsOn(data.habits, day)];
@@ -49,6 +50,7 @@ export function buildTodayProps(data: Data, day: DateKey, at: Date): TodayWidget
     goals: goalsOn(data, day).map((g) => ({ id: g.id, text: g.text, done: g.done })),
     goalPrompt: lockMode(data, day, at) === 'prompt',
     hasHabits: data.habits.length > 0,
+    waiting,
   };
 }
 

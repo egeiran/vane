@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, AppState, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -85,6 +86,24 @@ export default function SettingsScreen() {
         <Text style={[styles.footnote, { color: t.sub }]}>
           Påminnelser kommer bare for vaner som ikke er gjort ennå. Tidspunktet velger du på hver vane.
         </Text>
+      </View>
+
+      <View style={styles.section}>
+        <SectionLabel>Penger</SectionLabel>
+        <Card style={{ overflow: 'hidden' }}>
+          <Pressable onPress={() => router.push('/categories')} accessibilityRole="button">
+            <Row first>
+              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>Kategorier</Text>
+              <Icon name="chevron.right" size={14} color={t.sub} />
+            </Row>
+          </Pressable>
+          <Pressable onPress={() => router.push('/money-setup')} accessibilityRole="button">
+            <Row>
+              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>Kjøp fra Apple Pay</Text>
+              <Icon name="chevron.right" size={14} color={t.sub} />
+            </Row>
+          </Pressable>
+        </Card>
       </View>
 
       <View style={styles.section}>

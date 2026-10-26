@@ -30,6 +30,11 @@ export default function RootLayout() {
         <Stack.Screen name="habit/[id]" />
         <Stack.Screen name="goals" options={{ presentation: 'modal' }} />
         <Stack.Screen name="habit-form" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="purchases" />
+        <Stack.Screen name="categories" />
+        <Stack.Screen name="purchase-form" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="category-form" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="money-setup" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
   );
