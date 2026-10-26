@@ -80,6 +80,8 @@ describe('beløp fra Snarveier', () => {
   it('gir null uten tall', () => {
     expect(parseAmount('')).toBeNull();
     expect(parseAmount('kr')).toBeNull();
+    expect(parseAmount('1234567890123456 kr')).toBeNull();
+    expect(parseAmount('123456789012345 kr')).toEqual({ amount: 12345678901234500, currency: 'NOK' });
   });
 
   it('skriver beløp slik appen viser dem', () => {

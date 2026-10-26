@@ -141,7 +141,8 @@ function currencyIn(s: string): string {
 /**
  * Leser et beløp slik Snarveier eller et tekstfelt gir det: «kr 149,00», «1 234,50 kr», «149,-»,
  * «€12.50», «149». Tre siffer etter siste skilletegn er tusenskille («1.234»), ellers desimaler.
- * Gir beløpet i øre og valutaen (kroner hvis ingen er nevnt), eller null uten tall.
+ * Gir beløpet i øre og valutaen (kroner hvis ingen er nevnt), eller null uten tall eller med over
+ * 15 siffer i kronene.
  */
 export function parseAmount(text: string): { amount: number; currency: string } | null {
   const s = nfkc(text);
@@ -155,7 +156,10 @@ export function parseAmount(text: string): { amount: number; currency: string } 
     whole = num.slice(0, sep);
     frac = num.slice(sep + 1);
   }
-  const kroner = Number(whole.replace(/[.,]/g, '') || '0');
+  const digits = whole.replace(/[.,]/g, '');
+  // Over 15 siffer er ikke et beløp (og Swift ville fått overflyt).
+  if (digits.length > 15) return null;
+  const kroner = Number(digits || '0');
   const ore = frac ? Math.round(Number(`0.${frac}`) * 100) : 0;
   return { amount: kroner * 100 + ore, currency: currencyIn(s) };
 }

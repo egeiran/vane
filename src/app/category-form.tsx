@@ -105,7 +105,7 @@ export default function CategoryFormScreen() {
                   accessibilityRole="radio"
                   accessibilityLabel={i}
                   accessibilityState={{ selected: on }}
-                  style={[styles.iconHit, { backgroundColor: on ? c.solid : t.field }]}>
+                  style={[styles.iconHit, { backgroundColor: on ? c.ink : t.field }]}>
                   <Icon name={i} size={20} color={on ? t.card : t.text} />
                 </Pressable>
               );

@@ -26,7 +26,7 @@ enum PurchaseText {
         s = after
       }
     }
-    var words = s.split(separator: " ").map(String.init).filter { (word: String) -> Bool in
+    var words = s.split(separator: " ").map { String($0) }.filter { (word: String) -> Bool in
       if word.count >= 5 && isAsciiDigits(word) {
         return false
       }
@@ -49,7 +49,8 @@ enum PurchaseText {
     return trimmed.isEmpty ? "Ukjent sted" : trimmed
   }
 
-  /// «kr 149,00», «1 234,50 kr», «149,-», «€12.50». Gir øre og valuta, eller nil uten tall.
+  /// «kr 149,00», «1 234,50 kr», «149,-», «€12.50». Gir øre og valuta, eller nil uten tall
+  /// eller med over 15 siffer i kronene.
   static func parseAmount(_ text: String) -> (amount: Int, currency: String)? {
     let s = text.precomposedStringWithCompatibilityMapping
     guard let start = s.firstIndex(where: { $0.isASCII && $0.isNumber }) else {
@@ -79,8 +80,14 @@ enum PurchaseText {
         fraction = after
       }
     }
-    let kroner = Int(whole.filter { $0 != "," && $0 != "." }) ?? 0
-    let ore = fraction.isEmpty ? 0 : Int(((Double("0." + fraction) ?? 0) * 100).rounded())
+    let digits = whole.filter { $0 != "," && $0 != "." }
+    // Over 15 siffer er ikke et beløp, og ville gitt overflyt.
+    if digits.count > 15 {
+      return nil
+    }
+    let kroner = Int(digits) ?? 0
+    let fractionValue = Double("0." + fraction) ?? 0
+    let ore = fraction.isEmpty ? 0 : Int((fractionValue * 100).rounded())
     return (amount: kroner * 100 + ore, currency: currency(in: s))
   }
 

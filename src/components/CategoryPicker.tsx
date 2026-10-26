@@ -34,7 +34,7 @@ export function CategoryPicker({
             accessibilityState={{ selected: on }}
             style={({ pressed }) => [
               styles.chip,
-              { backgroundColor: on ? color.solid : color.soft, opacity: pressed ? 0.7 : 1 },
+              { backgroundColor: on ? color.ink : color.soft, opacity: pressed ? 0.7 : 1 },
             ]}>
             <Icon name={c.icon} size={15} color={on ? t.card : color.ink} />
             <Text style={[styles.label, { color: on ? t.card : color.ink }]} numberOfLines={1}>

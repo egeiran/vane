@@ -80,11 +80,11 @@ final class PurchaseNotifications: NotificationDelegate {
       }
       let categoryId = String(content.categoryIdentifier.dropFirst(Self.suggestPrefix.count))
       Self.finishInBackground {
+        WaitingCount.adjust(by: -1)
         await AppIntentDispatcher.shared.dispatch(
           name: "categorizePurchase",
           params: ["purchaseId": .string(purchaseId), "categoryId": .string(categoryId)]
         )
-        WaitingCount.adjust(by: -1)
       }
       return true
     case Self.laterAction:

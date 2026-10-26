@@ -23,12 +23,13 @@ struct LogPurchaseIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult {
+    // Før kjøpet legges i køen: kjører appen, synker den widgetene med riktig tall straks etterpå.
+    WaitingCount.adjust(by: 1)
     let purchaseId = await AppIntentDispatcher.shared.dispatch(
       name: "logPurchase",
       params: ["amount": .string(amount), "merchant": .string(merchant)]
     )
     await PurchaseNotifications.notify(purchaseId: purchaseId, amount: amount, merchant: merchant, at: Date())
-    WaitingCount.adjust(by: 1)
     return .result()
   }
 }
