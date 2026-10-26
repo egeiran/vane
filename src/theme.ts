@@ -19,6 +19,7 @@ const LIGHT_COLORS: Record<ColorKey, HabitColor> = {
   fersken: { label: 'Fersken', solid: '#C7835A', soft: '#F5E4D8', ink: '#7A3F1C' },
   sand: { label: 'Sand', solid: '#AE9142', soft: '#F1EAD3', ink: '#5E4C14' },
   rose: { label: 'Rose', solid: '#C27383', soft: '#F3E1E4', ink: '#7A2E3E' },
+  skifer: { label: 'Skifer', solid: '#7D8590', soft: '#E6E8EB', ink: '#3A4049' },
 };
 
 const DARK_COLORS: Record<ColorKey, HabitColor> = {
@@ -28,9 +29,13 @@ const DARK_COLORS: Record<ColorKey, HabitColor> = {
   fersken: { label: 'Fersken', solid: '#D08F67', soft: '#36261C', ink: '#EBC3A8' },
   sand: { label: 'Sand', solid: '#BCA052', soft: '#332D1A', ink: '#E0D09E' },
   rose: { label: 'Rose', solid: '#CC8190', soft: '#36222A', ink: '#E9BCC6' },
+  skifer: { label: 'Skifer', solid: '#8E96A1', soft: '#262A30', ink: '#C3C9D1' },
 };
 
+/** Fargene en vane kan få. */
 export const COLOR_KEYS: ColorKey[] = ['salvie', 'himmel', 'lavendel', 'fersken', 'sand', 'rose'];
+/** Kategorier kan også være grå. */
+export const CATEGORY_COLOR_KEYS: ColorKey[] = [...COLOR_KEYS, 'skifer'];
 
 const LIGHT = {
   dark: false,

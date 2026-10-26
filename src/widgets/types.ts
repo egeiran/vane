@@ -31,6 +31,16 @@ export type TodayWidgetProps = {
   /** Ingen mål satt ennå om morgenen: widgeten spør «Hva vil du få til i dag?». */
   goalPrompt: boolean;
   hasHabits: boolean;
+  /** Kjøp som venter på kategori. Vises som et lite merke i hjørnet når det er noen. */
+  waiting: number;
+};
+
+/**
+ * «Penger» på hjemskjermen. Swift-koden i app-intents/ teller `waiting` opp og ned i oppslaget
+ * når kjøp kommer inn eller godkjennes i varselet uten at appen kjører.
+ */
+export type PengerWidgetProps = {
+  waiting: number;
 };
 
 /**

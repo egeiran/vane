@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { Platform } from 'react-native';
 
 import { parseTime } from './dates';
+import { handlePurchaseResponse } from './purchases';
 import {
   ACTION_DONE,
   ACTION_INC,
@@ -144,6 +145,7 @@ type ResponseData = { kind?: string; habitId?: string; day?: string };
 
 export function handleNotificationResponse(r: Notifications.NotificationResponse) {
   if (!markHandled(r)) return;
+  if (handlePurchaseResponse(r)) return;
   const content = r.notification.request.content;
   const data = (content.data ?? {}) as ResponseData;
   const opened = r.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER;

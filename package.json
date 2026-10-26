@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
-    "@expo/ui": "~58.0.20",
+    "@expo/ui": "~58.0.23",
     "expo": "~58.0.14",
+    "expo-app-intents": "~0.5.9",
     "expo-constants": "~58.0.12",
     "expo-dev-client": "~58.0.14",
     "expo-font": "~58.0.8",

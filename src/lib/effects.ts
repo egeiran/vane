@@ -9,17 +9,23 @@ import {
   scheduleNotificationSync,
   syncNotifications,
 } from './notifications';
+import { useMoney } from './moneyStore';
+import { dismissResolvedNotifications, syncPurchaseNative, usePurchaseIntents } from './purchases';
 import { useStore } from './store';
 import { listenToWidgetTaps, scheduleSyncWidgets, syncWidgets } from './widgetSync';
 
 /**
- * Alt som skjer i bakgrunnen mens appen kjører: varsler, svar på varsler og synk med widgetene.
+ * Alt som skjer i bakgrunnen mens appen kjører: varsler, svar på varsler, kjøp fra Snarveier og
+ * synk med widgetene.
  */
 export function useAppEffects() {
+  usePurchaseIntents();
+
   useEffect(() => {
     if (Platform.OS === 'web') return;
 
     configureNotifications();
+    syncPurchaseNative();
     const responseSub = Notifications.addNotificationResponseReceivedListener(handleNotificationResponse);
     const last = Notifications.getLastNotificationResponse();
     if (last) {
@@ -46,6 +52,14 @@ export function useAppEffects() {
       scheduleNotificationSync();
     });
 
+    const unsubscribeMoney = useMoney.subscribe((state, prev) => {
+      if (state.categories !== prev.categories || state.merchants !== prev.merchants) syncPurchaseNative();
+      if (state.purchases !== prev.purchases) {
+        dismissResolvedNotifications(prev, state);
+        scheduleSyncWidgets();
+      }
+    });
+
     const appStateSub = AppState.addEventListener('change', (status) => {
       if (status === 'active') {
         syncWidgets().finally(() => scheduleNotificationSync(0));
@@ -60,6 +74,7 @@ export function useAppEffects() {
     return () => {
       responseSub.remove();
       unsubscribe();
+      unsubscribeMoney();
       appStateSub.remove();
       stopWidgetTaps();
     };
