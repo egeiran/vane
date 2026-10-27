@@ -8,7 +8,7 @@ Vane is a calm, iOS-first habit tracker with a small spending log («Penger»). 
 - `src/lib/store.ts` wraps the pure reducers in a persisted zustand store; use `useData()` when a component needs the whole data object. Money has its own store in `src/lib/moneyStore.ts` (`useMoneyData()`).
 - Widget layouts in `src/widgets` run in an isolated runtime: only `@expo/ui/swift-ui` components and modifiers, no hooks, no imports of app code, everything declared inside the `'widget'` function.
 - For habits, only today and yesterday may be edited. Purchases can always be edited. No streaks, points, budgets or celebratory UI.
-- `app-intents/` is app-target Swift (Expo inline modules + `expo-app-intents`). `PurchaseText.swift` mirrors `merchantKey`, `cleanMerchant`, `parseAmount` and `formatAmount` in `src/lib/money.ts`; change both together. Intent and dispatch names must match `src/lib/purchaseIntents.ts`. Never rename `LogPurchaseIntent` or its parameters: saved automations would break.
+- `app-intents/` is app-target Swift (Expo inline modules + `expo-app-intents`). `PurchaseText.swift` mirrors `merchantKey`, `cleanMerchant`, `parseAmount` and `formatAmount` in `src/lib/money.ts`; change both together. Intent and dispatch names must match `src/lib/purchaseIntents.ts`. Never rename `LogPurchaseIntent` or its parameters: saved automations would break. Import Expo modules there as `internal import` (the generated `ExpoModulesProvider.swift` does, and a plain `import` of the same module fails the build).
 
 ## Expo has changed — do not trust your training data
 
