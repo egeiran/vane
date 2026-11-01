@@ -33,6 +33,11 @@ describe('køen fra Swift', () => {
     expect(applyInvocation(d, approve)).toBe(d);
   });
 
+  it('tar inn et kjøp uten beløp og sted, så det kan fylles inn i appen', () => {
+    const d = applyInvocation(EMPTY_MONEY, { ...log, params: { amount: '', merchant: '' } });
+    expect(d.purchases[0]).toMatchObject({ id: 'inv1', amount: 0, merchant: 'Ukjent sted', parts: [] });
+  });
+
   it('lar ugyldige og ukjente kall være', () => {
     expect(applyInvocation(EMPTY_MONEY, { ...log, params: { amount: 149 } })).toBe(EMPTY_MONEY);
     expect(applyInvocation(EMPTY_MONEY, { ...log, name: 'noeAnnet' })).toBe(EMPTY_MONEY);
