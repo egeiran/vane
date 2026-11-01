@@ -68,7 +68,7 @@ Bare Apples språkmodell på telefonen. Ingenting sendes ut. Krever en iPhone me
 
 ## Rekkefølge
 
-Veikartet ligger som et eget issue på GitHub med alt arbeidet som under-issues, i den rekkefølgen det bør gjøres.
+Veikartet er [issue #4](https://github.com/egeiran/vane/issues/4), med en sjekkliste over alle issuene i den rekkefølgen de bør gjøres (#5–#23).
 
 1. **Grunnmur:** test på ekte iPhone, språk (norsk og engelsk), valuta og ukestart, moduler.
 2. **Før lansering:** oppstart, eksport og import, iCloud, Vane+ og grenser, påminnelser i bakgrunnen, vurdering i App Store, personvern og App Store-siden.
