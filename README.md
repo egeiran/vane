@@ -81,6 +81,8 @@ npm run typecheck
 npm run lint
 ```
 
+Appen kan også kjøres i nettleseren (`npx expo start --web`), bare for skjermbilder og testing. Vane er ikke en web-app: widgetene finnes ikke der, fanelinja ser annerledes ut, og dataene ligger i `localStorage` i stedet for SQLite (`src/lib/kvStorage.web.ts`).
+
 | Mappe            | Innhold                                                                 |
 | ---------------- | ----------------------------------------------------------------------- |
 | `src/app`        | Skjermene (Expo Router). `(tabs)` er I dag, Oversikt, Penger og Innstillinger. |
@@ -112,7 +114,5 @@ Appen lagrer widget-koden på telefonen hver gang den starter, og widgetene bruk
 
 - Swift-koden i `app-intents/` blir først kompilert i EAS-bygget. Logikken den deler med appen, er testet i JavaScript.
 - «Penger» trenger et nytt bygg. Den kan ikke sendes som OTA-oppdatering til et eldre bygg.
-
 - Interaktive widgets krever iOS 17 eller nyere. På eldre iOS kan widgetene bare vises.
 - Åpner du ikke appen på over en uke, stopper vanepåminnelsene. Morgenvarselet fortsetter.
-- Appen er ikke kjørt på en ekte iPhone ennå. Logikken er enhetstestet, iOS-bundelen bygger, og widgetene er testet i en simulert widget-runtime. Første EAS-bygg er den ekte testen.
