@@ -1,8 +1,8 @@
-import Storage from 'expo-sqlite/kv-store';
 import { create } from 'zustand';
-import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 
+import { kvStorage } from './kvStorage';
 import { EMPTY_MONEY } from './money';
 import * as M from './moneyState';
 import { newId } from './state';
@@ -25,14 +25,6 @@ type Actions = {
 };
 
 export type MoneyStore = MoneyData & Actions;
-
-const sqliteStorage: StateStorage = {
-  getItem: (key) => Storage.getItemSync(key),
-  setItem: (key, value) => Storage.setItemSync(key, value),
-  removeItem: (key) => {
-    Storage.removeItemSync(key);
-  },
-};
 
 export const pickMoney = (s: MoneyData): MoneyData => ({
   categories: s.categories,
@@ -77,7 +69,7 @@ export const useMoney = create<MoneyStore>()(
     {
       name: 'vane-penger',
       version: 1,
-      storage: createJSONStorage(() => sqliteStorage),
+      storage: createJSONStorage(() => kvStorage),
       partialize: (s) => pickMoney(s),
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<MoneyData>;

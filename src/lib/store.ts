@@ -1,9 +1,9 @@
-import Storage from 'expo-sqlite/kv-store';
 import { create } from 'zustand';
-import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { DateKey } from './dates';
+import { kvStorage } from './kvStorage';
 import * as S from './state';
 import { DEFAULT_SETTINGS, EMPTY_DATA, type Data, type HabitInput, type Settings } from './types';
 
@@ -23,15 +23,6 @@ type Actions = {
 };
 
 export type Store = Data & Actions;
-
-/** SQLite-basert nøkkel/verdi-lager, lest synkront så appen starter med dataene klare. */
-const sqliteStorage: StateStorage = {
-  getItem: (key) => Storage.getItemSync(key),
-  setItem: (key, value) => Storage.setItemSync(key, value),
-  removeItem: (key) => {
-    Storage.removeItemSync(key);
-  },
-};
 
 export const pickData = (s: Data): Data => ({
   habits: s.habits,
@@ -68,7 +59,7 @@ export const useStore = create<Store>()(
     {
       name: 'vane-data',
       version: 1,
-      storage: createJSONStorage(() => sqliteStorage),
+      storage: createJSONStorage(() => kvStorage),
       partialize: (s) => pickData(s),
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<Data>;
