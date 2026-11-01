@@ -9,6 +9,7 @@ import { WeekStrip } from '@/components/WeekStrip';
 import { tr } from '@/i18n';
 import { addDays, formatLong, isoWeek, type DateKey } from '@/lib/dates';
 import { dailyHabitsOn, frequencyText, isDone, restingHabitsOn, weeklyHabitsOn } from '@/lib/habits';
+import { showsWeekNumber, weekStartOf } from '@/lib/region';
 import { useStore } from '@/lib/store';
 import { useToday } from '@/lib/useToday';
 import { useTheme } from '@/theme';
@@ -23,6 +24,7 @@ export default function TodayScreen() {
   const isToday = day === today;
 
   const habits = useStore((s) => s.habits);
+  const weekStart = useStore((s) => weekStartOf(s.settings));
   const logs = useStore((s) => s.logs[day]);
   const daily = dailyHabitsOn(habits, day);
   const resting = restingHabitsOn(habits, day);
@@ -73,7 +75,7 @@ export default function TodayScreen() {
           ))}
           {resting.length ? (
             <Text style={[styles.note, styles.resting, { color: t.sub }]}>
-              {tr.today.resting(isToday, resting.map((h) => tr.today.restingItem(h.name, frequencyText(h))).join(', '))}
+              {tr.today.resting(isToday, resting.map((h) => tr.today.restingItem(h.name, frequencyText(h, weekStart))).join(', '))}
             </Text>
           ) : null}
         </View>
@@ -81,7 +83,7 @@ export default function TodayScreen() {
 
       {weekly.length > 0 ? (
         <View style={styles.section}>
-          <SectionLabel right={tr.dates.week(isoWeek(day))}>{tr.today.thisWeek}</SectionLabel>
+          <SectionLabel right={showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(day)) : undefined}>{tr.today.thisWeek}</SectionLabel>
           {weekly.map((h) => (
             <WeeklyRow key={h.id} habit={h} day={day} />
           ))}

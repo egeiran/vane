@@ -57,6 +57,9 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
     isToday ? { goals: goals.map((g) => (g.id === id ? { ...g, done: true } : g)) } : {};
   const nextValue = (i: TodayWidgetItem) => (i.kind === 'count' ? Math.min(i.value + 1, i.target) : isDone(i) ? 0 : 1);
 
+  // Klokkeslettet slik telefonen viser det (eldre oppslag har bare `time`).
+  const timeLabel = (i: TodayWidgetItem) => i.timeLabel || i.time;
+
   const goal: TodayWidgetGoal | undefined = openGoals[0];
   const habit: TodayWidgetItem | undefined = open[0];
   const mode = props.goalPrompt ? 'prompt' : goal ? 'goal' : habit ? 'habit' : daily.length || goals.length ? 'done' : 'empty';
@@ -96,9 +99,9 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
       habit.kind === 'count'
         ? amount(habit)
         : after
-          ? fill(T.after, { name: `${after.name}${after.time ? ` ${after.time}` : ''}` })
+          ? fill(T.after, { name: `${after.name}${after.time ? ` ${timeLabel(after)}` : ''}` })
           : habit.time
-            ? fill(T.at, { time: habit.time })
+            ? fill(T.at, { time: timeLabel(habit) })
             : (T.last ?? '');
   } else if (mode === 'done') {
     title = T.allDone ?? '';
@@ -185,7 +188,7 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
           : mode === 'habit' && habit
             ? habit.kind === 'count'
               ? `${habit.value}/${habit.target}`
-              : habit.time || `${doneCount}/${daily.length}`
+              : timeLabel(habit) || `${doneCount}/${daily.length}`
             : '';
     return (
       <VStack alignment="leading" spacing={4} modifiers={root}>
@@ -241,7 +244,7 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
   const rest = [...(mode === 'habit' ? open.slice(1) : open), ...items.filter((i) => i.weekly && !isDone(i))].slice(0, 4);
   const row = (i: TodayWidgetItem) => {
     const c = colors(i);
-    const right = i.kind === 'count' ? `${i.value}/${i.target}` : i.weekly ? T.thisWeek : i.time;
+    const right = i.kind === 'count' ? `${i.value}/${i.target}` : i.weekly ? T.thisWeek : timeLabel(i);
     return (
       <Button key={i.id} target={`tap:${i.id}`} onPress={() => withValue(i.id, nextValue(i))} modifiers={[buttonStyle('plain')]}>
         <HStack spacing={10}>

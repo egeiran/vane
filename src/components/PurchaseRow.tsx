@@ -5,6 +5,7 @@ import { tr } from '@/i18n';
 import type { DateKey } from '@/lib/dates';
 import { categoryById, categoryName, formatAmount, isPending, merchantName, purchaseWhen, suggestionFor } from '@/lib/money';
 import { useMoney } from '@/lib/moneyStore';
+import { showTime } from '@/lib/region';
 import type { MoneyData, Purchase } from '@/lib/types';
 import { useTheme } from '@/theme';
 
@@ -41,7 +42,7 @@ export function PurchaseRow({ purchase: p, data, today, first, timeOnly }: Props
             return c ? categoryName(c) : tr.money.deletedCategory;
           })
           .join(' + ');
-  const when = timeOnly ? p.time : purchaseWhen(p, today);
+  const when = timeOnly ? showTime(p.time) : purchaseWhen(p, today);
   const meta = [when, what, p.note].filter(Boolean).join(' · ');
   const amount = p.amount ? formatAmount(p.amount, p.currency) : tr.money.amountMissing;
 

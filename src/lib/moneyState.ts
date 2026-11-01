@@ -1,5 +1,5 @@
 import { formatTime, toKey, type DateKey } from './dates';
-import { cleanMerchant, isPending, merchantKey, parseAmount, suggestionFor, UNKNOWN_PLACE } from './money';
+import { cleanMerchant, EMPTY_MONEY, isPending, mainCurrency, merchantKey, parseAmount, suggestionFor, UNKNOWN_PLACE } from './money';
 import { newId } from './state';
 import type { Category, ColorKey, MoneyData, Purchase, PurchasePart } from './types';
 
@@ -48,15 +48,31 @@ export type IncomingPurchase = {
   at: Date;
 };
 
+/**
+ * Pengedataene slik de lastes fra telefonen. Alt som ble lagret før hovedvalutaen fantes, var i
+ * kroner, så slike data får NOK. Bare en ny installasjon følger telefonen (`null`).
+ */
+export function loadMoney(persisted: unknown): MoneyData {
+  const p = (persisted ?? {}) as Partial<MoneyData>;
+  return {
+    ...EMPTY_MONEY,
+    ...p,
+    categories: p.categories?.length ? p.categories : EMPTY_MONEY.categories,
+    merchants: p.merchants ?? {},
+    imported: p.imported ?? [],
+    currency: p.currency !== undefined ? p.currency : persisted ? 'NOK' : null,
+  };
+}
+
 /** Tar inn et kjøp fra Apple Pay. Det samme kjøpet tas bare inn én gang, også etter at det er slettet. */
 export function importPurchase(data: MoneyData, input: IncomingPurchase): MoneyData {
   if (data.imported.includes(input.id) || data.purchases.some((p) => p.id === input.id)) return data;
-  const parsed = parseAmount(input.amountText);
+  const parsed = parseAmount(input.amountText, mainCurrency(data));
   const raw = input.merchant.trim();
   const purchase: Purchase = {
     id: input.id,
     amount: parsed?.amount ?? 0,
-    currency: parsed?.currency ?? 'NOK',
+    currency: parsed?.currency ?? mainCurrency(data),
     merchant: cleanMerchant(raw),
     merchantKey: merchantKey(raw),
     day: toKey(input.at),
@@ -90,7 +106,7 @@ export function addPurchase(data: MoneyData, input: PurchaseInput, id = newId('p
   const purchase: Purchase = {
     id,
     amount: input.amount,
-    currency: 'NOK',
+    currency: mainCurrency(data),
     merchant: name || UNKNOWN_PLACE,
     merchantKey: merchantKey(name),
     day: input.day,

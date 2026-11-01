@@ -18,6 +18,8 @@ export type TodayWidgetItem = {
   weekly: boolean;
   /** Påminnelsen ('HH:MM'), eller '' uten påminnelse. Vaner med påminnelse tas først, etter klokkeslett. */
   time: string;
+  /** Påminnelsen slik telefonen viser klokka: «18:00» eller «6:00 PM». '' uten påminnelse. */
+  timeLabel: string;
   /** «glass» i «5 av 8 glass». */
   unit: string;
   light: WidgetColors;

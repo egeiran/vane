@@ -6,6 +6,9 @@ import { tr } from '@/i18n';
 
 export type DateKey = string;
 
+/** Hvilken dag uka starter på. Ukedagene i dataene er alltid mandag = 0, uansett ukestart. */
+export type WeekStart = 'mon' | 'sun';
+
 const pad = (n: number) => (n < 10 ? '0' : '') + n;
 
 export function toKey(d: Date): DateKey {
@@ -40,9 +43,19 @@ export function weekdayIndex(key: DateKey): number {
   return (fromKey(key).getDay() + 6) % 7;
 }
 
-/** Mandagen i uka `key` ligger i. */
-export function startOfWeek(key: DateKey): DateKey {
-  return addDays(key, -weekdayIndex(key));
+/** Hvor mange dager `key` er etter første dag i uka. */
+export function dayOfWeek(key: DateKey, weekStart: WeekStart = 'mon'): number {
+  return weekStart === 'mon' ? weekdayIndex(key) : fromKey(key).getDay();
+}
+
+/** Første dag i uka `key` ligger i: mandagen, eller søndagen når uka starter på søndag. */
+export function startOfWeek(key: DateKey, weekStart: WeekStart = 'mon'): DateKey {
+  return addDays(key, -dayOfWeek(key, weekStart));
+}
+
+/** Ukedagene (mandag = 0) i den rekkefølgen de vises: mandag–søndag eller søndag–lørdag. */
+export function weekOrder(weekStart: WeekStart): number[] {
+  return weekStart === 'mon' ? [0, 1, 2, 3, 4, 5, 6] : [6, 0, 1, 2, 3, 4, 5];
 }
 
 /** ISO-ukenummer. */
@@ -93,8 +106,16 @@ export function parseTime(value: string): Time {
   return { hour: Number.isFinite(h) ? h : 8, minute: Number.isFinite(m) ? m : 0 };
 }
 
+/** Klokkeslettet slik det lagres: «18:05». Bruk `displayTime` for å vise det. */
 export function formatTime({ hour, minute }: Time): string {
   return `${pad(hour)}:${pad(minute)}`;
+}
+
+/** Et lagret klokkeslett slik det vises: «18:05», eller «6:05 PM» med 12-timersklokke. */
+export function displayTime(value: string, clock24: boolean): string {
+  const { hour, minute } = parseTime(value);
+  if (clock24) return formatTime({ hour, minute });
+  return tr.dates.time12(hour % 12 || 12, pad(minute), hour >= 12);
 }
 
 /** Legger til minutter på et klokkeslett innenfor døgnet (ikke over midnatt). */

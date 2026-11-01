@@ -121,8 +121,8 @@ export default function MoneyScreen() {
             <View style={{ width: 36 }} />
           )}
         </View>
-        <Text style={[styles.total, { color: t.text }]} accessibilityLabel={tr.money.spentIn(monthName(month, today), formatAmount(summary.total))}>
-          {formatAmount(summary.total)}
+        <Text style={[styles.total, { color: t.text }]} accessibilityLabel={tr.money.spentIn(monthName(month, today), formatAmount(summary.total, summary.currency))}>
+          {formatAmount(summary.total, summary.currency)}
         </Text>
 
         {summary.count === 0 ? (
@@ -137,7 +137,7 @@ export default function MoneyScreen() {
               key={row.categoryId}
               onPress={() => router.push({ pathname: '/purchases', params: { month, category: row.categoryId } })}
               accessibilityRole="button"
-              accessibilityLabel={tr.money.categoryAmount(name, formatAmount(row.amount))}
+              accessibilityLabel={tr.money.categoryAmount(name, formatAmount(row.amount, summary.currency))}
               style={({ pressed }) => [styles.catRow, { opacity: pressed ? 0.6 : 1 }]}>
               <CategoryIcon category={c} size={30} />
               <View style={{ flex: 1, gap: 6 }}>
@@ -145,7 +145,7 @@ export default function MoneyScreen() {
                   <Text style={[styles.catName, { color: t.text }]} numberOfLines={1}>
                     {name}
                   </Text>
-                  <Text style={[styles.catAmount, { color: t.text }]}>{formatAmount(row.amount)}</Text>
+                  <Text style={[styles.catAmount, { color: t.text }]}>{formatAmount(row.amount, summary.currency)}</Text>
                 </View>
                 <View style={[styles.track, { backgroundColor: t.bg }]}>
                   <View style={[styles.fill, { width: `${(row.amount / Math.max(1, summary.total)) * 100}%`, backgroundColor: color(row.categoryId) }]} />
@@ -161,7 +161,7 @@ export default function MoneyScreen() {
             <View style={{ flex: 1, gap: 6 }}>
               <View style={styles.catTop}>
                 <Text style={[styles.catName, { color: t.sub }]}>{tr.money.pending}</Text>
-                <Text style={[styles.catAmount, { color: t.sub }]}>{formatAmount(summary.pending)}</Text>
+                <Text style={[styles.catAmount, { color: t.sub }]}>{formatAmount(summary.pending, summary.currency)}</Text>
               </View>
               <View style={[styles.track, { backgroundColor: t.bg }]}>
                 <View style={[styles.fill, { width: `${(summary.pending / Math.max(1, summary.total)) * 100}%`, backgroundColor: t.faint }]} />
@@ -196,7 +196,7 @@ export default function MoneyScreen() {
               onPress={() => setPicked(m.month)}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
-              accessibilityLabel={`${monthName(m.month, today)}: ${formatAmount(m.total)}`}
+              accessibilityLabel={`${monthName(m.month, today)}: ${formatAmount(m.total, m.currency)}`}
               style={({ pressed }) => [styles.barRow, { opacity: pressed ? 0.6 : 1 }]}>
               <Text style={[styles.barLabel, { color: on ? t.text : t.sub, fontWeight: on ? '700' : '500' }]}>{monthShort(m.month)}</Text>
               <View style={styles.barTrack}>
@@ -210,7 +210,7 @@ export default function MoneyScreen() {
                   </View>
                 ) : null}
               </View>
-              <Text style={[styles.barAmount, { color: on ? t.text : t.sub }]}>{formatAmount(m.total)}</Text>
+              <Text style={[styles.barAmount, { color: on ? t.text : t.sub }]}>{formatAmount(m.total, m.currency)}</Text>
             </Pressable>
           );
         })}

@@ -53,7 +53,10 @@ export function useAppEffects() {
     });
 
     const unsubscribeMoney = useMoney.subscribe((state, prev) => {
-      if (state.categories !== prev.categories || state.merchants !== prev.merchants) syncPurchaseNative();
+      // Swift trenger kategoriene, stedene og hovedvalutaen for å lage kjøpsvarselet.
+      if (state.categories !== prev.categories || state.merchants !== prev.merchants || state.currency !== prev.currency) {
+        syncPurchaseNative();
+      }
       if (state.purchases !== prev.purchases) {
         dismissResolvedNotifications(prev, state);
         scheduleSyncWidgets();

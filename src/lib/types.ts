@@ -1,6 +1,6 @@
 import type { SFSymbol } from 'sf-symbols-typescript';
 
-import type { DateKey } from './dates';
+import type { DateKey, WeekStart } from './dates';
 
 /** `skifer` er en nøytral grå som bare brukes til kategorier. */
 export type ColorKey = 'salvie' | 'himmel' | 'lavendel' | 'fersken' | 'sand' | 'rose' | 'skifer';
@@ -42,6 +42,8 @@ export type Settings = {
   morningEnabled: boolean;
   morningTime: string;
   remindersEnabled: boolean;
+  /** Mandag eller søndag. `null` betyr som telefonen (se `weekStartOf`). */
+  weekStart: WeekStart | null;
 };
 
 /** Verdi per vane for én dag: 1 for gjort (ja/nei) eller antall. */
@@ -60,6 +62,7 @@ export const DEFAULT_SETTINGS: Settings = {
   morningEnabled: true,
   morningTime: '07:00',
   remindersEnabled: true,
+  weekStart: null,
 };
 
 export const EMPTY_DATA: Data = {
@@ -86,7 +89,7 @@ export type Purchase = {
   id: string;
   /** I øre, alltid positivt. 0 når beløpet ikke kunne leses. */
   amount: number;
-  /** 'NOK', 'EUR' osv. Bare kroner telles med i summene. */
+  /** 'NOK', 'EUR' osv. Bare hovedvalutaen telles med i summene. */
   currency: string;
   /** Stedet, ryddet. Et eget navn på stedet ligger i `MoneyData.merchants` og går foran. */
   merchant: string;
@@ -116,4 +119,9 @@ export type MoneyData = {
   imported: string[];
   /** Veiviseren for Snarveier er vist. */
   setupSeen: boolean;
+  /**
+   * Hovedvalutaen: den som telles i summene, og som et beløp uten valuta får. `null` betyr som
+   * telefonen (se `mainCurrency`).
+   */
+  currency: string | null;
 };

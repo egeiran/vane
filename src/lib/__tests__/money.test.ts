@@ -261,6 +261,7 @@ describe('summer', () => {
   it('summerer måneden per kategori, størst først', () => {
     expect(monthSummary(month(), '2026-10')).toEqual({
       month: '2026-10',
+      currency: 'NOK',
       total: 90000,
       pending: 10000,
       byCategory: [

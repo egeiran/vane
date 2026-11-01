@@ -6,13 +6,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { Card, IconButton, Row, SwitchRow, TextButton } from '@/components/ui';
-import { tr } from '@/i18n';
+import { getLang, tr } from '@/i18n';
 import { addDays, formatTime, relativeDayName, type DateKey } from '@/lib/dates';
 import {
   amountInputText,
   categoryName,
+  currencyLabel,
   formatAmount,
   isPending,
+  mainCurrency,
   merchantKey,
   merchantName,
   parseAmount,
@@ -89,8 +91,9 @@ export default function PurchaseFormScreen() {
     );
   }
 
-  const currency = existing?.currency ?? 'NOK';
-  const unit = currency === 'NOK' ? 'kr' : currency;
+  const currency = existing?.currency ?? mainCurrency(data);
+  const unit = currencyLabel(currency);
+  const unitFirst = getLang() === 'en';
   const amount = toAmount(f.amount);
   // Skjulte kategorier vises bare når kjøpet allerede har dem.
   const used = new Set(existing?.parts.map((p) => p.categoryId) ?? []);
@@ -169,6 +172,8 @@ export default function PurchaseFormScreen() {
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
           <View style={styles.amountRow}>
+            {/* «$149» på engelsk, «149 kr» på norsk: tegnet og tallet møtes på midten. */}
+            {unitFirst ? <Text style={[styles.unit, { color: t.sub, textAlign: 'right' }]}>{unit}</Text> : null}
             <TextInput
               value={f.amount}
               onChangeText={(a) => set({ amount: a })}
@@ -177,9 +182,9 @@ export default function PurchaseFormScreen() {
               keyboardType="decimal-pad"
               autoFocus={!existing}
               accessibilityLabel={tr.purchaseForm.amountIn(unit)}
-              style={[styles.amountInput, { color: t.text }]}
+              style={[styles.amountInput, { color: t.text }, unitFirst && { textAlign: 'left' }]}
             />
-            <Text style={[styles.unit, { color: t.sub }]}>{unit}</Text>
+            {unitFirst ? null : <Text style={[styles.unit, { color: t.sub }]}>{unit}</Text>}
           </View>
           {existing ? (
             <Text style={[styles.help, { color: t.sub, textAlign: 'center' }]}>

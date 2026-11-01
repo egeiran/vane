@@ -9,6 +9,7 @@ import { tr } from '@/i18n';
 import { formatShort, relativeDayName } from '@/lib/dates';
 import { weekColumns, weekRows, isFuture, daysInRange, monthLabels } from '@/lib/grid';
 import { amountText, fractionOn, frequencyText, isDone, isWeekly, periodSummary, summaryText, weekCount, weeklyTarget } from '@/lib/habits';
+import { showTime, weekStartOf } from '@/lib/region';
 import { useData, useStore } from '@/lib/store';
 import { useToday } from '@/lib/useToday';
 import { shade, useTheme } from '@/theme';
@@ -42,19 +43,20 @@ export default function HabitScreen() {
   }
 
   const c = t.colors[habit.color];
+  const weekStart = weekStartOf(data.settings);
   const value = data.logs[today]?.[habit.id] ?? 0;
   const isCount = habit.type === 'count' && !isWeekly(habit);
   const done = isDone(habit, value);
 
   const meta = [
-    isCount ? tr.habitDetail.todayAmount(amountText(habit, value)) : isWeekly(habit) ? tr.habits.weekCount(weekCount(data, habit, today), weeklyTarget(habit)) : null,
-    frequencyText(habit),
-    habit.reminder ? tr.dates.at(habit.reminder) : null,
+    isCount ? tr.habitDetail.todayAmount(amountText(habit, value)) : isWeekly(habit) ? tr.habits.weekCount(weekCount(data, habit, today, weekStart), weeklyTarget(habit)) : null,
+    frequencyText(habit, weekStart),
+    habit.reminder ? tr.dates.at(showTime(habit.reminder)) : null,
   ]
     .filter(Boolean)
     .join(' · ');
 
-  const weeks: HeatWeek[] = weekRows(today, 5).map((row) => ({
+  const weeks: HeatWeek[] = weekRows(today, 5, weekStart).map((row) => ({
     label: formatShort(row[0]),
     cells: row.map((day) => {
       const future = isFuture(day, today);
@@ -68,7 +70,7 @@ export default function HabitScreen() {
     }),
   }));
 
-  const columns = weekColumns(today, HALF_YEAR);
+  const columns = weekColumns(today, HALF_YEAR, weekStart);
   const colors = columns.map((col) =>
     col.map((day) => (isFuture(day, today) ? 'transparent' : shade(t, c.solid, fractionOn(data, habit, day))))
   );
@@ -135,9 +137,9 @@ export default function HabitScreen() {
       <Card style={styles.card}>
         <View style={styles.cardHeader}>
           <Text style={[styles.cardTitle, { color: t.text }]}>{tr.habitDetail.lastFiveWeeks}</Text>
-          <Text style={{ fontSize: 13, color: t.sub }}>{summaryText(periodSummary(data, habit, today, daysInRange(today, 5)))}</Text>
+          <Text style={{ fontSize: 13, color: t.sub }}>{summaryText(periodSummary(data, habit, today, daysInRange(today, 5, weekStart)))}</Text>
         </View>
-        <WeekRows weeks={weeks} />
+        <WeekRows weeks={weeks} weekStart={weekStart} />
       </Card>
 
       <Card style={styles.card}>

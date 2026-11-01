@@ -47,6 +47,7 @@ export const en: Strings = {
     week: (n: number) => `week ${n}`,
     at: (time: string) => `at ${time}`,
     locked: (day: string) => `${day}, locked`,
+    time12: (hour: number, minute: string, pm: boolean) => `${hour}:${minute} ${pm ? 'PM' : 'AM'}`,
   },
 
   habits: {
@@ -180,6 +181,31 @@ export const en: Strings = {
     applePay: 'Purchases from Apple Pay',
     sendTest: 'Send test notification',
     version: (version: string) => `Vane · version ${version}`,
+    weekStart: 'Week starts on',
+    phone: 'Automatic',
+    monday: 'Monday',
+    sunday: 'Sunday',
+    currency: 'Main currency',
+  },
+
+  currency: {
+    title: 'Main currency',
+    phone: (code: string) => `Same as phone (${code})`,
+    help: 'The totals in Money count your main currency. Purchases in other currencies are shown separately, and an amount without a currency gets the main currency.',
+    names: {
+      NOK: 'Norwegian krone',
+      SEK: 'Swedish krona',
+      DKK: 'Danish krone',
+      ISK: 'Icelandic króna',
+      EUR: 'Euro',
+      GBP: 'British pound',
+      CHF: 'Swiss franc',
+      PLN: 'Polish złoty',
+      USD: 'US dollar',
+      CAD: 'Canadian dollar',
+      AUD: 'Australian dollar',
+      NZD: 'New Zealand dollar',
+    },
   },
 
   notifications: {

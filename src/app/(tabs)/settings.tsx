@@ -4,10 +4,13 @@ import { useEffect, useState } from 'react';
 import { Alert, AppState, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
-import { Card, Row, SectionLabel, Stepper, SwitchRow } from '@/components/ui';
+import { Card, Row, SectionLabel, Segmented, Stepper, SwitchRow } from '@/components/ui';
 import { tr } from '@/i18n';
 import { shiftTime } from '@/lib/dates';
+import { mainCurrency } from '@/lib/money';
+import { useMoney } from '@/lib/moneyStore';
 import { hasPermission, requestPermission, sendTestNotification } from '@/lib/notifications';
+import { showTime } from '@/lib/region';
 import { useStore } from '@/lib/store';
 import { useTheme } from '@/theme';
 
@@ -26,6 +29,7 @@ export default function SettingsScreen() {
   const t = useTheme();
   const settings = useStore((s) => s.settings);
   const update = useStore((s) => s.updateSettings);
+  const currency = useMoney((s) => mainCurrency(s));
   const [granted, setGranted] = usePermission();
 
   const enable = async (patch: Parameters<typeof update>[0]) => {
@@ -61,7 +65,7 @@ export default function SettingsScreen() {
               <Row>
                 <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.time}</Text>
                 <Stepper
-                  value={settings.morningTime}
+                  value={showTime(settings.morningTime)}
                   minWidth={60}
                   onDecrease={() => update({ morningTime: shiftTime(settings.morningTime, -15, 4 * 60, 12 * 60) })}
                   onIncrease={() => update({ morningTime: shiftTime(settings.morningTime, 15, 4 * 60, 12 * 60) })}
@@ -79,6 +83,19 @@ export default function SettingsScreen() {
         <SectionLabel>{tr.settings.habits}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
           <SwitchRow first label={tr.settings.reminders} value={settings.remindersEnabled} onChange={(v) => enable({ remindersEnabled: v })} />
+          <View style={[styles.block, { borderTopColor: t.border }]}>
+            <Text style={{ fontSize: 16, color: t.text }}>{tr.settings.weekStart}</Text>
+            <Segmented
+              label={tr.settings.weekStart}
+              value={settings.weekStart ?? 'phone'}
+              onChange={(v) => update({ weekStart: v === 'phone' ? null : v })}
+              options={[
+                { value: 'phone', label: tr.settings.phone },
+                { value: 'mon', label: tr.settings.monday },
+                { value: 'sun', label: tr.settings.sunday },
+              ]}
+            />
+          </View>
         </Card>
         <Text style={[styles.footnote, { color: t.sub }]}>{tr.settings.remindersHelp}</Text>
       </View>
@@ -89,6 +106,13 @@ export default function SettingsScreen() {
           <Pressable onPress={() => router.push('/categories')} accessibilityRole="button">
             <Row first>
               <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.categories}</Text>
+              <Icon name="chevron.right" size={14} color={t.sub} />
+            </Row>
+          </Pressable>
+          <Pressable onPress={() => router.push('/currency')} accessibilityRole="button" accessibilityLabel={`${tr.settings.currency}: ${currency}`}>
+            <Row>
+              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.currency}</Text>
+              <Text style={{ fontSize: 16, color: t.sub }}>{currency}</Text>
               <Icon name="chevron.right" size={14} color={t.sub} />
             </Row>
           </Pressable>
@@ -124,5 +148,6 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: 16, paddingTop: 20, gap: 8 },
   help: { fontSize: 14, lineHeight: 20, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 14, borderTopWidth: StyleSheet.hairlineWidth },
   footnote: { fontSize: 13, lineHeight: 18, paddingHorizontal: 4 },
+  block: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 14, gap: 10, borderTopWidth: StyleSheet.hairlineWidth },
   version: { textAlign: 'center', fontSize: 13, marginTop: 28 },
 });

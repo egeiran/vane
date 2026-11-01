@@ -4,6 +4,7 @@ import type { LockWidgetMode, LockWidgetProps, PengerWidgetProps, TodayWidgetIte
 
 import { addDays, atTime, fromKey, todayKey, type DateKey } from './dates';
 import { amountText, dailyHabitsOn, goalsOn, isDone, isEditable, isWeekly, openHabitsOn, valueOn, weeklyHabitsOn } from './habits';
+import { showTime } from './region';
 import { setValue, toggleGoal } from './state';
 import type { Data } from './types';
 
@@ -40,6 +41,7 @@ export function buildTodayProps(data: Data, day: DateKey, at: Date, waiting = 0)
       value: valueOn(data, h.id, day),
       weekly,
       time: weekly ? '' : (h.reminder ?? ''),
+      timeLabel: !weekly && h.reminder ? showTime(h.reminder) : '',
       unit: kind === 'count' ? (h.unit ?? '') : '',
       light: { solid: light[h.color].solid, soft: light[h.color].soft, ink: light[h.color].ink },
       dark: { solid: dark[h.color].solid, soft: dark[h.color].soft, ink: dark[h.color].ink },
@@ -100,7 +102,7 @@ export function buildLockProps(data: Data, day: DateKey, at: Date): LockWidgetPr
   }
   if (open.length === 1) {
     const h = open[0];
-    const sub = h.type === 'count' ? amountText(h, valueOn(data, h.id, day)) : h.reminder ? tr.dates.at(h.reminder) : L.last;
+    const sub = h.type === 'count' ? amountText(h, valueOn(data, h.id, day)) : h.reminder ? tr.dates.at(showTime(h.reminder)) : L.last;
     return { ...base, main: h.name, sub, inline: L.leftOne(h.name) };
   }
   if (total || goals.length) {

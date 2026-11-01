@@ -41,9 +41,12 @@ final class PurchaseNotifications: NotificationDelegate {
     // Teksten i varselet er på telefonens språk: nøkkelen er den norske teksten, og den engelske
     // står i `locales/en.json` (Localizable.strings). Navnene på kategoriene kommer oversatt fra appen.
     let name = cleaned == PurchaseText.unknownPlace ? String(localized: "Ukjent sted") : cleaned
+    // Hovedvalutaen kommer fra appen. Beløpet skrives som i appen, på norsk eller engelsk.
+    let main = config.currency ?? "NOK"
+    let english = Bundle.main.preferredLocalizations.first?.hasPrefix("nb") != true
     let amountText: String
-    if let parsed = PurchaseText.parseAmount(amount) {
-      amountText = PurchaseText.formatAmount(parsed.amount, currency: parsed.currency)
+    if let parsed = PurchaseText.parseAmount(amount, main: main) {
+      amountText = PurchaseText.formatAmount(parsed.amount, currency: parsed.currency, english: english)
     } else {
       amountText = amount.trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -127,6 +130,8 @@ struct PurchaseConfig: Decodable {
 
   let categories: [String: String]
   let merchants: [String: Merchant]
+  /// Hovedvalutaen. Valgfri, så en config lagret av en eldre versjon av appen fortsatt kan leses.
+  let currency: String?
 
   private static let key = "vane.purchaseConfig"
 
@@ -139,7 +144,7 @@ struct PurchaseConfig: Decodable {
       let data = json.data(using: .utf8),
       let config = try? JSONDecoder().decode(PurchaseConfig.self, from: data)
     else {
-      return PurchaseConfig(categories: [:], merchants: [:])
+      return PurchaseConfig(categories: [:], merchants: [:], currency: nil)
     }
     return config
   }

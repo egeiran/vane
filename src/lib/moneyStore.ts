@@ -20,6 +20,8 @@ type Actions = {
   updateCategory: (id: string, patch: Partial<Omit<Category, 'id'>>) => void;
   moveCategory: (id: string, delta: number) => void;
   markSetupSeen: () => void;
+  /** Hovedvalutaen, eller `null` for som telefonen. */
+  setCurrency: (currency: string | null) => void;
   /** Kjører en ren funksjon på dataene (brukes for køen fra Swift og svar på varsler). */
   apply: (fn: (d: MoneyData) => MoneyData) => void;
 };
@@ -32,6 +34,7 @@ export const pickMoney = (s: MoneyData): MoneyData => ({
   merchants: s.merchants,
   imported: s.imported,
   setupSeen: s.setupSeen,
+  currency: s.currency,
 });
 
 /**
@@ -63,6 +66,7 @@ export const useMoney = create<MoneyStore>()(
         updateCategory: (id, patch) => apply((d) => M.updateCategory(d, id, patch)),
         moveCategory: (id, delta) => apply((d) => M.moveCategory(d, id, delta)),
         markSetupSeen: () => apply(M.markSetupSeen),
+        setCurrency: (currency) => apply((d) => ({ ...d, currency })),
         apply,
       };
     },
@@ -71,16 +75,7 @@ export const useMoney = create<MoneyStore>()(
       version: 1,
       storage: createJSONStorage(() => kvStorage),
       partialize: (s) => pickMoney(s),
-      merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<MoneyData>;
-        return {
-          ...current,
-          ...p,
-          categories: p.categories?.length ? p.categories : EMPTY_MONEY.categories,
-          merchants: p.merchants ?? {},
-          imported: p.imported ?? [],
-        };
-      },
+      merge: (persisted, current) => ({ ...current, ...M.loadMoney(persisted) }),
     }
   )
 );

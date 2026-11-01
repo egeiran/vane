@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { tr } from '@/i18n';
 import type { DateKey } from '@/lib/dates';
 import { amountText, frequencyText, isDone, isWeekly, weekCount, weeklyTarget } from '@/lib/habits';
+import { showTime, weekStartOf } from '@/lib/region';
 import { useStore } from '@/lib/store';
 import type { Habit } from '@/lib/types';
 import { useTheme } from '@/theme';
@@ -26,14 +27,15 @@ export function HabitRow({ habit, day, showReminder }: Props) {
   const toggle = useStore((s) => s.toggle);
   const increment = useStore((s) => s.increment);
   const remindersOn = useStore((s) => s.settings.remindersEnabled);
+  const weekStart = useStore((s) => weekStartOf(s.settings));
 
   const isCount = habit.type === 'count' && !isWeekly(habit);
   const done = isDone(habit, value);
   const meta = isCount
     ? amountText(habit, value)
     : showReminder && habit.reminder && remindersOn
-      ? tr.habits.reminder(habit.reminder)
-      : frequencyText(habit);
+      ? tr.habits.reminder(showTime(habit.reminder))
+      : frequencyText(habit, weekStart);
 
   return (
     <View style={[styles.row, { backgroundColor: done ? c.soft : t.card }]}>
@@ -93,7 +95,7 @@ export function WeeklyRow({ habit, day }: { habit: Habit; day: DateKey }) {
   const t = useTheme();
   const c = t.colors[habit.color];
   const doneToday = useStore((s) => (s.logs[day]?.[habit.id] ?? 0) >= 1);
-  const count = useStore((s) => weekCount(s, habit, day));
+  const count = useStore((s) => weekCount(s, habit, day, weekStartOf(s.settings)));
   const toggle = useStore((s) => s.toggle);
   const target = weeklyTarget(habit);
   const full = count >= target;

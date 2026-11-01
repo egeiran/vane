@@ -1,6 +1,6 @@
 import { tr } from '@/i18n';
 
-import { addDays, compareKeys, daysBetween, startOfWeek, weekdayIndex, type DateKey } from './dates';
+import { addDays, compareKeys, daysBetween, startOfWeek, weekdayIndex, weekOrder, type DateKey, type WeekStart } from './dates';
 import type { Data, Goal, Habit } from './types';
 
 export const isWeekly = (h: Habit) => h.schedule.kind === 'weekly';
@@ -52,12 +52,15 @@ export function weeklyHabitsOn(habits: Habit[], day: DateKey): Habit[] {
   return habits.filter((h) => isWeekly(h) && existsOn(h, day));
 }
 
-/** Hvor mange dager i uka (mandag–søndag) som inneholder `day` vanen er gjort. */
-export function weekCount(data: Pick<Data, 'logs'>, h: Habit, day: DateKey): number {
-  const monday = startOfWeek(day);
+/**
+ * Hvor mange dager i uka som inneholder `day` vanen er gjort. Uka er mandag–søndag, eller
+ * søndag–lørdag når den starter på søndag (se `weekStartOf`).
+ */
+export function weekCount(data: Pick<Data, 'logs'>, h: Habit, day: DateKey, weekStart: WeekStart = 'mon'): number {
+  const first = startOfWeek(day, weekStart);
   let n = 0;
   for (let i = 0; i < 7; i++) {
-    if (valueOn(data, h.id, addDays(monday, i)) >= 1) n++;
+    if (valueOn(data, h.id, addDays(first, i)) >= 1) n++;
   }
   return n;
 }
@@ -138,14 +141,16 @@ export function isEditable(day: DateKey, today: DateKey): boolean {
   return diff === 0 || diff === 1;
 }
 
-export function frequencyText(h: Habit): string {
+/** «Hver dag», «3 ganger i uka» eller dagene i ukas rekkefølge: «Man, Ons, Fre» / «Søn, Man, Ons». */
+export function frequencyText(h: Habit, weekStart: WeekStart = 'mon'): string {
   switch (h.schedule.kind) {
     case 'daily':
       return tr.habits.everyDay;
     case 'weekly':
       return tr.habits.perWeek(h.schedule.times);
     case 'days': {
-      const chosen = tr.dates.weekdayShort.filter((_, i) => (h.schedule as { days: boolean[] }).days[i]);
+      const days = h.schedule.days;
+      const chosen = weekOrder(weekStart).filter((i) => days[i]).map((i) => tr.dates.weekdayShort[i]);
       if (chosen.length === 7) return tr.habits.everyDay;
       if (chosen.length === 0) return tr.habits.noDays;
       return chosen.join(', ');

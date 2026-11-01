@@ -9,6 +9,7 @@ import { tr } from '@/i18n';
 import { addDays, formatShort, isoWeek, relativeDayName, relativeWeekday, type DateKey } from '@/lib/dates';
 import { daysInRange, isFuture, weekColumns, weekRows } from '@/lib/grid';
 import { dayStats, fractionOn, goalsOn, periodSummary, summaryText } from '@/lib/habits';
+import { showsWeekNumber, weekStartOf } from '@/lib/region';
 import { useData } from '@/lib/store';
 import { useToday } from '@/lib/useToday';
 import { shade, useTheme } from '@/theme';
@@ -25,11 +26,12 @@ export default function OverviewScreen() {
   const [range, setRange] = useState<Range>('month');
   const [picked, setPicked] = useState<DateKey>(today);
   const weeks = RANGE_WEEKS[range];
+  const weekStart = weekStartOf(data.settings);
 
   const dayColor = (day: DateKey) => (isFuture(day, today) ? 'transparent' : shade(t, t.slate, dayStats(data, day).average));
 
-  const heroWeeks: HeatWeek[] = weekRows(today, weeks).map((row) => ({
-    label: range === 'week' ? tr.dates.week(isoWeek(today)) : formatShort(row[0]),
+  const heroWeeks: HeatWeek[] = weekRows(today, weeks, weekStart).map((row) => ({
+    label: range === 'week' && showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(today)) : formatShort(row[0]),
     cells: row.map((day) => {
       const future = isFuture(day, today);
       const s = dayStats(data, day);
@@ -51,8 +53,8 @@ export default function OverviewScreen() {
     (pickedGoals.length ? tr.overview.goalsDone(pickedGoals.filter((g) => g.done).length, pickedGoals.length) : tr.overview.noGoals);
 
   const legend = [0, 0.25, 0.5, 0.75, 1].map((f) => shade(t, t.slate, f));
-  const nDays = daysInRange(today, weeks);
-  const yearCols = range === 'year' ? weekColumns(today, 53) : [];
+  const nDays = daysInRange(today, weeks, weekStart);
+  const yearCols = range === 'year' ? weekColumns(today, 53, weekStart) : [];
 
   const recentGoals = Array.from({ length: 7 }, (_, i) => addDays(today, -i)).flatMap((day) =>
     goalsOn(data, day).map((g) => ({ day, goal: g }))
@@ -92,7 +94,7 @@ export default function OverviewScreen() {
           <ColumnGrid columns={yearCols.map((col) => col.map(dayColor))} size={5} gap={1} />
         ) : (
           <>
-            <WeekRows weeks={heroWeeks} />
+            <WeekRows weeks={heroWeeks} weekStart={weekStart} />
             <Text accessibilityLiveRegion="polite" style={[styles.dayLine, { backgroundColor: t.bg, color: t.text }]}>
               {dayLine}
             </Text>
@@ -125,7 +127,7 @@ export default function OverviewScreen() {
                     </View>
                     <Text style={{ fontSize: 13, color: t.sub }}>{summary}</Text>
                   </View>
-                  {range !== 'year' ? <MiniRows rows={weekRows(today, weeks)} color={color} today={today} big={range === 'week'} /> : null}
+                  {range !== 'year' ? <MiniRows rows={weekRows(today, weeks, weekStart)} color={color} today={today} big={range === 'week'} /> : null}
                 </View>
                 {range === 'year' ? <ColumnGrid columns={yearCols.map((col) => col.map(color))} size={5} gap={1} /> : null}
               </Pressable>

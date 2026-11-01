@@ -55,6 +55,8 @@ export const nb = {
     week: (n: number) => `uke ${n}`,
     at: (time: string) => `kl. ${time}`,
     locked: (day: string) => `${day}, låst`,
+    /** 12-timersklokke, når telefonen bruker det. */
+    time12: (hour: number, minute: string, pm: boolean) => `${hour}:${minute} ${pm ? 'p.m.' : 'a.m.'}`,
   },
 
   habits: {
@@ -191,6 +193,32 @@ export const nb = {
     applePay: 'Kjøp fra Apple Pay',
     sendTest: 'Send testvarsel',
     version: (version: string) => `Vane · versjon ${version}`,
+    weekStart: 'Uka starter',
+    /** Følger telefonen. Samme ord som iOS bruker. */
+    phone: 'Automatisk',
+    monday: 'Mandag',
+    sunday: 'Søndag',
+    currency: 'Hovedvaluta',
+  },
+
+  currency: {
+    title: 'Hovedvaluta',
+    phone: (code: string) => `Som telefonen (${code})`,
+    help: 'Summene i Penger teller hovedvalutaen. Kjøp i andre valutaer vises for seg, og et beløp uten valuta får hovedvalutaen.',
+    names: {
+      NOK: 'Norske kroner',
+      SEK: 'Svenske kroner',
+      DKK: 'Danske kroner',
+      ISK: 'Islandske kroner',
+      EUR: 'Euro',
+      GBP: 'Britiske pund',
+      CHF: 'Sveitsiske franc',
+      PLN: 'Polske zloty',
+      USD: 'Amerikanske dollar',
+      CAD: 'Kanadiske dollar',
+      AUD: 'Australske dollar',
+      NZD: 'New Zealand-dollar',
+    } as Record<string, string>,
   },
 
   notifications: {

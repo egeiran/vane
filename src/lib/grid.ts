@@ -1,26 +1,26 @@
 import { tr } from '@/i18n';
 
-import { addDays, compareKeys, fromKey, startOfWeek, weekdayIndex, type DateKey } from './dates';
+import { addDays, compareKeys, dayOfWeek, fromKey, startOfWeek, type DateKey, type WeekStart } from './dates';
 
-/** `n` uker som rader (mandag–søndag). Siste rad er uka `today` ligger i. */
-export function weekRows(today: DateKey, n: number): DateKey[][] {
-  const monday = startOfWeek(today);
+/** `n` uker som rader (mandag–søndag eller søndag–lørdag). Siste rad er uka `today` ligger i. */
+export function weekRows(today: DateKey, n: number, weekStart: WeekStart = 'mon'): DateKey[][] {
+  const first = startOfWeek(today, weekStart);
   return Array.from({ length: n }, (_, w) => {
-    const start = addDays(monday, -(n - 1 - w) * 7);
+    const start = addDays(first, -(n - 1 - w) * 7);
     return Array.from({ length: 7 }, (_, d) => addDays(start, d));
   });
 }
 
-/** `n` uker som kolonner (eldst først), hver med mandag–søndag. */
-export function weekColumns(today: DateKey, n: number): DateKey[][] {
-  return weekRows(today, n);
+/** `n` uker som kolonner (eldst først), hver med ukas sju dager. */
+export function weekColumns(today: DateKey, n: number, weekStart: WeekStart = 'mon'): DateKey[][] {
+  return weekRows(today, n, weekStart);
 }
 
 export const isFuture = (day: DateKey, today: DateKey) => compareKeys(day, today) > 0;
 
-/** Antall dager fra og med mandag for `n` uker siden til og med i dag. */
-export function daysInRange(today: DateKey, weeks: number): number {
-  return (weeks - 1) * 7 + weekdayIndex(today) + 1;
+/** Antall dager fra og med første dag i uka for `n` uker siden til og med i dag. */
+export function daysInRange(today: DateKey, weeks: number, weekStart: WeekStart = 'mon'): number {
+  return (weeks - 1) * 7 + dayOfWeek(today, weekStart) + 1;
 }
 
 /** Månedsetiketter for kolonnene: kolonnen som inneholder den 1. i en måned får navnet. */

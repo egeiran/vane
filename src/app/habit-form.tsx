@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Card, Row, Segmented, Stepper, SwitchRow, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
-import { shiftTime } from '@/lib/dates';
+import { shiftTime, weekOrder } from '@/lib/dates';
+import { showTime, weekStartOf } from '@/lib/region';
 import { useStore } from '@/lib/store';
 import type { ColorKey, Habit, HabitInput, Schedule } from '@/lib/types';
 import { useToday } from '@/lib/useToday';
@@ -40,6 +41,7 @@ export default function HabitFormScreen() {
   const today = useToday();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const existing = useStore((s) => s.habits.find((h) => h.id === id));
+  const weekStart = useStore((s) => weekStartOf(s.settings));
   const addHabit = useStore((s) => s.addHabit);
   const updateHabit = useStore((s) => s.updateHabit);
   const [f, setF] = useState(() => initialForm(existing));
@@ -130,7 +132,8 @@ export default function HabitFormScreen() {
           />
           {f.freq === 'days' ? (
             <View style={styles.days}>
-              {tr.dates.weekdayLetters.map((l, i) => {
+              {/* Vist i ukas rekkefølge, men lagret med mandag = 0 (se `weekOrder`). */}
+              {weekOrder(weekStart).map((i) => {
                 const on = f.days[i];
                 return (
                   <Pressable
@@ -140,7 +143,7 @@ export default function HabitFormScreen() {
                     accessibilityLabel={tr.dates.weekdayLong[i]}
                     accessibilityState={{ checked: on }}
                     style={[styles.dayChip, { backgroundColor: on ? c.ink : t.field }]}>
-                    <Text style={{ fontSize: 15, fontWeight: '600', color: on ? t.card : t.text }}>{l}</Text>
+                    <Text style={{ fontSize: 15, fontWeight: '600', color: on ? t.card : t.text }}>{tr.dates.weekdayLetters[i]}</Text>
                   </Pressable>
                 );
               })}
@@ -208,7 +211,7 @@ export default function HabitFormScreen() {
             <Row>
               <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.habitForm.time}</Text>
               <Stepper
-                value={f.reminder}
+                value={showTime(f.reminder)}
                 minWidth={60}
                 onDecrease={() => set({ reminder: shiftTime(f.reminder, -15) })}
                 onIncrease={() => set({ reminder: shiftTime(f.reminder, 15) })}
