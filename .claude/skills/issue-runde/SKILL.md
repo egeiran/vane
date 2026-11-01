@@ -34,9 +34,16 @@ for en runde:
 - **Etiketter:** `1 grunnmur`, `2 før lansering`, `3 etter lansering` og
   `4 senere` er fasene i veikartet (#4). `swift` betyr nytt bygg (ingen OTA).
   `manuelt` er arbeid utenfor koden. `vane+` er betalt.
-- **Data på telefonen:** lagrede data lastes med `merge` i `src/lib/store.ts` og
-  `src/lib/moneyStore.ts`. Nye felt må få standardverdi der, og gamle data må
-  aldri endre mening. Det er Vanes migrasjoner.
+- **Data på telefonen:** lagrede data lastes med `loadData` (`state.ts`) og
+  `loadMoney` (`moneyState.ts`), som storene bruker i `merge`. Nye felt får
+  standardverdi der, med en test for data fra før. Gamle data må aldri endre
+  mening: kjøp fra før hovedvalutaen fantes, var i kroner, så de får NOK, ikke
+  telefonens valuta. Det er Vanes migrasjoner.
+- **Innstillinger som kan endres mens appen kjører** (som ukestart) sendes inn
+  som parameter, ikke leses globalt. Ellers kan React Compiler vise gammel verdi.
+  Det som bare endres ved omstart (språk, telefonens klokke), kan leses globalt.
+- **Tekst:** all tekst går gjennom `tr` fra `src/i18n`, på norsk og engelsk.
+  Swift-tekst og widgetnavn har engelsk i `locales/en.json`.
 - **Lagrede automatiseringer:** `LogPurchaseIntent` og parameterne endres aldri.
   `PurchaseText.swift` speiler `src/lib/money.ts`. Navn i Swift må stemme med
   `src/lib/purchaseIntents.ts`.
@@ -93,8 +100,11 @@ ls node_modules >/dev/null 2>&1 || npm ci
 - **Porter:** Expo web på en ledig port (8091 som standard). Stopp aldri en server
   du ikke startet selv. `pkill -f` med et mønster som også står i din egen
   kommando, dreper skallet ditt: skriv mønsteret som `[e]xpo start --web`.
-- **Nettet:** i en skyøkt kan docs.expo.dev og swift.org være stengt. Les da
-  README og typene for SDK-versjonen i `node_modules`, og si det i planen.
+- **Nettet:** i en skyøkt kan docs.expo.dev, api.expo.dev og swift.org være
+  stengt. Les da README, typene og kilden for SDK-versjonen i `node_modules`, og
+  si det i planen. `npx expo install` trenger api.expo.dev; bruk
+  `EXPO_OFFLINE=1 npx expo install <pakke>`, som tar versjonen fra
+  `node_modules/expo/bundledNativeModules.json`.
 - **Det som mangler** (Playwright, nett, Swift), står i planen under «Kan ikke
   testes her».
 
@@ -233,6 +243,10 @@ hva en funksjon gir for inndataene i issuet.
 git switch -c issue/<N>-<kort-navn> <integrasjonsbranch>
 ```
 
+Endrer du skillen eller skriptene mens et issue pågår, committer du det på
+integrasjonsbranchen og merger den inn i issue-branchen. Ellers bruker du gamle
+skript i resten av issuet.
+
 ### c. Kod
 
 Du skriver koden selv. Research kan sendes til subagenter, men en endring som
@@ -273,7 +287,11 @@ Send diffen til en subagent som kjører `code-review`-skillen. Rører endringen
 data som kommer utenfra (filer som importeres, input fra Snarveier, varsler),
 Vane+-status eller iCloud, sender du den også til en som kjører
 `security-review`. Start dem samtidig. De skal bare rapportere. Fortell dem hva
-issuet ber om og hvilke valg som er bevisste.
+issuet ber om, hvilke valg som er bevisste, og hvilken diff de skal se på
+(`git diff <integrasjonsbranch>...issue/<N>-...`). `security-review` bruker
+`origin/HEAD`, som ikke finnes i en skyøkt, så si at den kan se på diffen selv.
+
+Reviewen finner nesten alltid noe. Ta den før merge, ikke etter.
 
 Rett funnene i egne commits og kjør testene på nytt. Er du uenig i et funn,
 skriver du det og hvorfor i guiden.
@@ -302,7 +320,11 @@ del-branchen, uten `--delete-branch`.
 
 Sett statusen for issuet til «Merget · <sha>», og bytt det planlagte innholdet
 med det som faktisk ble gjort: hva som er endret, hva brukeren bør sjekke, før
-og etter, og hvilke sjekker som er grønne. Publiser på nytt til samme lenke.
+og etter, hvilke sjekker som er grønne, og hva reviewen fant (rettet og ikke
+rettet). Publiser på nytt til samme lenke.
+
+Endret reviewen noe på skjermen, tar du etter-bildene på nytt, etter at Expo
+web er startet på nytt.
 
 ## 5. Avslutt runden
 
