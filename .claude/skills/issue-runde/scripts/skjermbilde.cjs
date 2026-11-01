@@ -100,6 +100,20 @@ async function main() {
     timezoneId: opts.sone,
     colorScheme: opts.mork ? 'dark' : 'light',
   });
+  // expo-localization på web leser ukestart og klokke fra Intl.DateTimeFormat().resolvedOptions(),
+  // som ikke har dem. Uten dette får appen alltid mandag og 24 timer i nettleseren (ikke på iPhone).
+  await ctx.addInitScript(() => {
+    const original = Intl.DateTimeFormat.prototype.resolvedOptions;
+    Intl.DateTimeFormat.prototype.resolvedOptions = function () {
+      const o = original.call(this);
+      try {
+        const l = new Intl.Locale(o.locale);
+        if (!o.weekInfo) o.weekInfo = l.getWeekInfo ? l.getWeekInfo() : l.weekInfo;
+        if (!o.hourCycle) o.hourCycle = (l.getHourCycles ? l.getHourCycles() : l.hourCycles)?.[0];
+      } catch {}
+      return o;
+    };
+  });
   await ctx.addInitScript((entries) => {
     // Bare første gang i denne fanen, så endringer appen gjør mens skriptet kjører, blir stående.
     if (sessionStorage.getItem('__seeded')) return;
