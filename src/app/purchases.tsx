@@ -5,8 +5,9 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { Icon } from '@/components/Icon';
 import { PurchaseRow } from '@/components/PurchaseRow';
 import { Card, SectionLabel } from '@/components/ui';
+import { tr } from '@/i18n';
 import { relativeDayName, type DateKey } from '@/lib/dates';
-import { capitalize, findPurchases, monthName, visibleCategories } from '@/lib/money';
+import { capitalize, categoryName, findPurchases, monthName, visibleCategories } from '@/lib/money';
 import { useMoneyData } from '@/lib/moneyStore';
 import type { Purchase } from '@/lib/types';
 import { useToday } from '@/lib/useToday';
@@ -53,13 +54,13 @@ export default function PurchasesScreen() {
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={styles.content}>
       <View style={styles.bar}>
-        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel="Tilbake" style={styles.backButton}>
+        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel={tr.common.back} style={styles.backButton}>
           <Icon name="chevron.left" size={20} color={t.text} />
-          <Text style={{ fontSize: 17, color: t.text, fontWeight: '500' }}>Tilbake</Text>
+          <Text style={{ fontSize: 17, color: t.text, fontWeight: '500' }}>{tr.common.back}</Text>
         </Pressable>
       </View>
       <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-        {month ? `Kjøp i ${monthName(month, today)}` : 'Alle kjøp'}
+        {month ? tr.money.purchasesIn(monthName(month, today)) : tr.purchases.allTitle}
       </Text>
 
       <View style={styles.searchWrap}>
@@ -68,11 +69,11 @@ export default function PurchasesScreen() {
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Søk på sted eller notat"
+            placeholder={tr.purchases.search}
             placeholderTextColor={t.faint}
             returnKeyType="search"
             clearButtonMode="while-editing"
-            accessibilityLabel="Søk på sted eller notat"
+            accessibilityLabel={tr.purchases.search}
             style={{ flex: 1, fontSize: 16, color: t.text, height: 44 }}
           />
         </View>
@@ -82,14 +83,14 @@ export default function PurchasesScreen() {
         {params.month ? (
           <Chip label={capitalize(monthName(params.month, today))} on={onlyMonth} onPress={() => setOnlyMonth(!onlyMonth)} />
         ) : null}
-        <Chip label="Alle kategorier" on={!categoryId} onPress={() => setCategoryId(undefined)} />
+        <Chip label={tr.purchases.allCategories} on={!categoryId} onPress={() => setCategoryId(undefined)} />
         {chips.map((c) => (
-          <Chip key={c.id} label={c.name} on={c.id === categoryId} onPress={() => setCategoryId(c.id === categoryId ? undefined : c.id)} />
+          <Chip key={c.id} label={categoryName(c)} on={c.id === categoryId} onPress={() => setCategoryId(c.id === categoryId ? undefined : c.id)} />
         ))}
       </ScrollView>
 
       {days.length === 0 ? (
-        <Text style={[styles.empty, { color: t.sub }]}>{query ? 'Ingen kjøp passer søket.' : 'Ingen kjøp her ennå.'}</Text>
+        <Text style={[styles.empty, { color: t.sub }]}>{query ? tr.purchases.noMatch : tr.purchases.none}</Text>
       ) : null}
 
       {days.map(({ day, items }) => (
@@ -105,7 +106,7 @@ export default function PurchasesScreen() {
 
       {list.length > shown ? (
         <Pressable onPress={() => setShown(shown + PAGE)} accessibilityRole="button" style={styles.more}>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: t.text }}>Vis flere</Text>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: t.text }}>{tr.purchases.showMore}</Text>
         </Pressable>
       ) : null}
     </ScrollView>

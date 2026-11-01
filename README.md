@@ -10,6 +10,7 @@ Små vaner, i ro og mak. En rolig vaneapp for iPhone, uten streaks, poeng eller 
 - **Widgets**: «I dag» på hjemskjermen viser én ting om gangen med én knapp: om morgenen «Hva vil du få til i dag?», så første uferdige mål, så neste vane. Huk av rett fra widgeten. «Vane» på låseskjermen viser en ring med vanene som er gjort, og det viktigste akkurat nå ved siden av. Uten mål spør begge fram til kl. 12. Svarer du «Ikke i dag», spør de ikke mer den dagen.
 - **Penger**: hver gang du betaler med Apple Pay, kommer et varsel som spør om kategori. Kjenner Vane stedet, foreslår den kategorien du valgte sist, og du godkjenner med ett trykk uten å åpne appen. Kjøp som ikke er godkjent, ligger under *Venter* (med tall på fanen) til du tar dem. Del opp et kjøp, skriv et notat, eller la et kjøp ikke telle med. Månedens sum per kategori, de siste seks månedene, og alle kjøp med søk. Vipps, kontanter og nettkjøp legger du inn med +. Sju faste kategorier som kan få nytt navn, ikon og farge, skjules og flyttes, og du kan legge til egne. Ingen budsjett og ingen rødfarge.
 - **Penger-widget**: «Penger» på hjemskjermen viser hvor mange kjøp som venter, eller er en knapp for å legge inn et kjøp. «I dag» får et lite merke i hjørnet når noe venter.
+- **Norsk og engelsk**: appen, widgetene, varslene og Snarveier-handlingen følger språket på telefonen.
 - Ingen konto, ingen server. Alt lagres lokalt på telefonen.
 
 ## Kjøp fra Apple Pay
@@ -88,12 +89,15 @@ Appen kan også kjøres i nettleseren (`npx expo start --web`), bare for skjermb
 | `src/app`        | Skjermene (Expo Router). `(tabs)` er I dag, Oversikt, Penger og Innstillinger. |
 | `src/components` | Byggeklosser: vanerader, ukestripe, målkort, rutenett, kjøpsrader.             |
 | `src/lib`        | Datoer, vanelogikk, penger, lagring, varsler og widget-synk.                   |
+| `src/i18n`       | All tekst, på norsk (`nb.ts`) og engelsk (`en.ts`).                            |
+| `locales`        | Tekst iOS viser utenfor appen: Snarveier, kjøpsvarselet og widgetnavn.          |
 | `src/widgets`    | Widgetene, skrevet med `expo-widgets` og `@expo/ui`.                           |
 | `app-intents`    | Swift i app-målet: «Registrer kjøp» for Snarveier og kjøpsvarslene.            |
 | `plugins`        | Config-plugin som kobler kjøpsvarslene til AppDelegate.                         |
 
 ### Slik henger det sammen
 
+- **Språk:** `tr` fra `src/i18n` gir teksten på telefonens språk (norsk for nb, nn og no, ellers engelsk). Språket velges når appen starter, og iOS starter appen på nytt når det endres (Innstillinger → Vane → Språk). Widgetene får teksten som props, fordi widget-koden ikke kan importere noe. Swift-tekstene bruker den norske teksten som nøkkel, og den engelske står i `locales/en.json`. Data lagres aldri oversatt: standardkategoriene vises på engelsk så lenge de ikke har fått nytt navn.
 - **Lagring:** `zustand` med SQLite-basert nøkkel/verdi-lager (`expo-sqlite/kv-store`). Ren logikk ligger i `src/lib/state.ts` og `src/lib/habits.ts` og er testet.
 - **Varsler:** Morgenvarselet gjentas daglig. Påminnelser for vaner legges inn sju dager fram og fylles på hver gang appen åpnes. Vaner som allerede er gjort, får ingen påminnelse.
 - **Penger:** Egen lagring (`src/lib/moneyStore.ts`, nøkkel `vane-penger`), ren logikk i `money.ts` og `moneyState.ts`. Beløp er i øre.

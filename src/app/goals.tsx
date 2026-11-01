@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { IconButton, PrimaryButton, TextButton } from '@/components/ui';
+import { tr } from '@/i18n';
 import { addDays, formatLong } from '@/lib/dates';
 import { dailyHabitsOn } from '@/lib/habits';
 import { useStore } from '@/lib/store';
@@ -52,13 +53,13 @@ export default function GoalsScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}>
         <View style={styles.top}>
           <Text style={[styles.date, { color: t.sub }]}>{formatLong(today)}</Text>
-          <IconButton icon="xmark" label="Lukk" onPress={close} />
+          <IconButton icon="xmark" label={tr.common.close} onPress={close} />
         </View>
         <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-          {goals.length ? 'Dagens mål' : 'God morgen.'}
+          {goals.length ? tr.goals.title : tr.goals.morning}
         </Text>
         <Text style={[styles.prompt, { color: t.sub }]} nativeID="goal-label">
-          Hva vil du få til i dag?
+          {tr.goals.question}
         </Text>
 
         <View style={styles.inputRow}>
@@ -68,7 +69,7 @@ export default function GoalsScreen() {
             onSubmitEditing={add}
             submitBehavior="submit"
             returnKeyType="done"
-            placeholder="F.eks. ringe bestemor"
+            placeholder={tr.goals.placeholder}
             placeholderTextColor={t.faint}
             autoFocus={goals.length === 0}
             accessibilityLabelledBy="goal-label"
@@ -78,25 +79,25 @@ export default function GoalsScreen() {
             onPress={add}
             disabled={empty}
             accessibilityRole="button"
-            accessibilityLabel="Legg til mål"
+            accessibilityLabel={tr.goals.add}
             style={[styles.add, { backgroundColor: empty ? t.button : t.inverse }]}>
             <Icon name="plus" size={20} color={empty ? t.sub : t.onInverse} />
           </Pressable>
         </View>
-        <Text style={[styles.hint, { color: t.sub }]}>Små ting du kan bli ferdig med i dag. Ett er nok, tre er mye.</Text>
+        <Text style={[styles.hint, { color: t.sub }]}>{tr.goals.help}</Text>
 
         {goals.length ? (
           <View style={styles.list}>
             {goals.map((g) => (
               <View key={g.id} style={[styles.goal, { backgroundColor: t.card }]}>
                 <Text style={[styles.goalText, { color: t.text }]}>{g.text}</Text>
-                <IconButton icon="xmark" label={`Fjern ${g.text}`} background="transparent" color={t.sub} onPress={() => removeGoal(today, g.id)} />
+                <IconButton icon="xmark" label={tr.goals.remove(g.text)} background="transparent" color={t.sub} onPress={() => removeGoal(today, g.id)} />
               </View>
             ))}
           </View>
         ) : yesterdayGoals.length ? (
           <View style={[styles.yesterday, { backgroundColor: t.button }]}>
-            <Text style={[styles.yesterdayLabel, { color: t.sub }]}>I GÅR</Text>
+            <Text style={[styles.yesterdayLabel, { color: t.sub }]}>{tr.goals.yesterdayLabel}</Text>
             {yesterdayGoals.map((g) => (
               <View key={g.id} style={styles.yesterdayRow}>
                 <Icon name={g.done ? 'checkmark.circle.fill' : 'circle'} size={18} color={g.done ? t.text : t.sub} />
@@ -109,14 +110,14 @@ export default function GoalsScreen() {
         <View style={{ flex: 1, minHeight: 24 }} />
         {habitCount ? (
           <Text style={[styles.habits, { color: t.sub }]}>
-            Du har også {habitCount} {habitCount === 1 ? 'vane' : 'vaner'} i dag.
+            {tr.goals.alsoHabits(habitCount)}
           </Text>
         ) : null}
-        <PrimaryButton label="Ferdig" onPress={finish} disabled={empty && goals.length === 0} />
+        <PrimaryButton label={tr.common.done} onPress={finish} disabled={empty && goals.length === 0} />
         {goals.length === 0 ? (
           <View style={{ alignItems: 'center', marginTop: 4 }}>
             <TextButton
-              label="Ikke i dag"
+              label={tr.goals.skip}
               color={t.sub}
               onPress={() => {
                 skipGoals(today);

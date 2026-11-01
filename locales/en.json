@@ -1,0 +1,21 @@
+{
+  "CFBundleDisplayName": "Vane",
+  "ios": {
+    "Localizable.strings": {
+      "Registrer kjøp": "Log Purchase",
+      "Beløp": "Amount",
+      "Sted": "Merchant",
+      "Registrer ${amount} hos ${merchant}": "Log ${amount} at ${merchant}",
+      "Forslag: %@. Hold inne for å svare.": "Suggested: %@. Touch and hold to answer.",
+      "Nytt sted. Trykk for å velge kategori.": "New place. Tap to choose a category.",
+      "Trykk for å velge kategori.": "Tap to choose a category.",
+      "Ukjent sted": "Unknown place",
+      "I dag": "Today",
+      "Huk av dagens vaner rett fra hjemskjermen.": "Check off today’s habits right from your Home Screen.",
+      "Vane": "Vane",
+      "Dagens vaner og mål på låseskjermen.": "Today’s habits and goals on your Lock Screen.",
+      "Penger": "Money",
+      "Kjøp som venter på kategori, eller legg inn et nytt.": "Purchases waiting for a category, or add a new one."
+    }
+  }
+}

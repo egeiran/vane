@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { tr } from '@/i18n';
 import type { DateKey } from '@/lib/dates';
-import { categoryById, formatAmount, isPending, merchantName, purchaseWhen, suggestionFor } from '@/lib/money';
+import { categoryById, categoryName, formatAmount, isPending, merchantName, purchaseWhen, suggestionFor } from '@/lib/money';
 import { useMoney } from '@/lib/moneyStore';
 import type { MoneyData, Purchase } from '@/lib/types';
 import { useTheme } from '@/theme';
@@ -31,20 +32,25 @@ export function PurchaseRow({ purchase: p, data, today, first, timeOnly }: Props
   const name = merchantName(data, p);
 
   const what = p.skipped
-    ? 'Ikke talt med'
+    ? tr.money.notCounted
     : pending
-      ? 'Venter'
-      : p.parts.map((part) => categoryById(data, part.categoryId)?.name ?? 'Slettet kategori').join(' + ');
+      ? tr.money.pending
+      : p.parts
+          .map((part) => {
+            const c = categoryById(data, part.categoryId);
+            return c ? categoryName(c) : tr.money.deletedCategory;
+          })
+          .join(' + ');
   const when = timeOnly ? p.time : purchaseWhen(p, today);
   const meta = [when, what, p.note].filter(Boolean).join(' · ');
-  const amount = p.amount ? formatAmount(p.amount, p.currency) : 'Beløp mangler';
+  const amount = p.amount ? formatAmount(p.amount, p.currency) : tr.money.amountMissing;
 
   return (
     <View style={[styles.wrap, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }]}>
       <Pressable
         onPress={() => router.push({ pathname: '/purchase-form', params: { id: p.id } })}
         accessibilityRole="button"
-        accessibilityLabel={`${name}, ${amount}, ${meta}`}
+        accessibilityLabel={tr.money.rowLabel(name, amount, meta)}
         style={({ pressed }) => [styles.row, { opacity: pressed ? 0.6 : p.skipped ? 0.55 : 1 }]}>
         <CategoryIcon category={category} size={36} />
         <View style={{ flex: 1, gap: 2 }}>
@@ -64,13 +70,13 @@ export function PurchaseRow({ purchase: p, data, today, first, timeOnly }: Props
             approve(p.id);
           }}
           accessibilityRole="button"
-          accessibilityLabel={`Godkjenn ${suggestion.name}`}
+          accessibilityLabel={tr.money.approve(categoryName(suggestion))}
           style={({ pressed }) => [
             styles.suggestion,
             { backgroundColor: t.colors[suggestion.color].soft, opacity: pressed ? 0.7 : 1 },
           ]}>
           <Icon name={suggestion.icon} size={14} color={t.colors[suggestion.color].ink} />
-          <Text style={[styles.suggestionText, { color: t.colors[suggestion.color].ink }]}>{suggestion.name}</Text>
+          <Text style={[styles.suggestionText, { color: t.colors[suggestion.color].ink }]}>{categoryName(suggestion)}</Text>
           <Icon name="checkmark" size={13} color={t.colors[suggestion.color].ink} weight="bold" />
         </Pressable>
       ) : null}

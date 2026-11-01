@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { addDays, fromKey, relativeDayName, WEEKDAY_LETTER, weekdayIndex, type DateKey } from '@/lib/dates';
+import { tr } from '@/i18n';
+import { addDays, fromKey, relativeDayName, weekdayIndex, type DateKey } from '@/lib/dates';
 import { dayStats } from '@/lib/habits';
 import { useData } from '@/lib/store';
 import { hexToRgba, useTheme } from '@/theme';
@@ -30,14 +31,14 @@ export function WeekStrip({ today, selected, onSelect }: Props) {
         const avg = offset <= 0 ? dayStats(data, day).average : null;
         return (
           <View key={day} style={styles.day}>
-            <Text style={[styles.letter, { color: t.sub }]}>{WEEKDAY_LETTER[weekdayIndex(day)]}</Text>
+            <Text style={[styles.letter, { color: t.sub }]}>{tr.dates.weekdayLetters[weekdayIndex(day)]}</Text>
             <Pressable
               disabled={!editable}
               onPress={() => onSelect(day)}
               accessibilityRole="button"
               accessibilityState={{ selected: isSel, disabled: !editable }}
               accessibilityLabel={
-                offset > 0 ? 'I morgen' : editable ? relativeDayName(day, today) : `${relativeDayName(day, today)}, låst`
+                offset > 0 ? tr.dates.tomorrow : editable ? relativeDayName(day, today) : tr.dates.locked(relativeDayName(day, today))
               }
               style={[
                 styles.num,

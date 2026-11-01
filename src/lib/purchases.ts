@@ -5,7 +5,9 @@ import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 
-import { isPending, nativePurchaseConfig, visibleCategories } from './money';
+import { tr } from '@/i18n';
+
+import { categoryName, isPending, nativePurchaseConfig, visibleCategories } from './money';
 import { getMoney, useMoney } from './moneyStore';
 import {
   ACTION_APPROVE,
@@ -38,16 +40,16 @@ let registered = '';
 /** Knappene i kjøpsvarslene. Én varselkategori per kategori, så forslaget kan stå på knappen. */
 async function registerNotificationCategories() {
   const categories = visibleCategories(getMoney());
-  const signature = categories.map((c) => `${c.id}=${c.name}`).join('|');
+  const signature = categories.map((c) => `${c.id}=${categoryName(c)}`).join('|');
   if (signature === registered) return;
   registered = signature;
   const pick = (buttonTitle: string) => ({ identifier: ACTION_PICK, buttonTitle, options: { opensAppToForeground: true } });
-  const later = { identifier: ACTION_LATER, buttonTitle: 'Senere', options: { opensAppToForeground: false } };
-  await Notifications.setNotificationCategoryAsync(NOTIFICATION_NEW, [pick('Velg kategori …'), later]);
+  const later = { identifier: ACTION_LATER, buttonTitle: tr.notifications.later, options: { opensAppToForeground: false } };
+  await Notifications.setNotificationCategoryAsync(NOTIFICATION_NEW, [pick(tr.notifications.pickCategory), later]);
   for (const c of categories) {
     await Notifications.setNotificationCategoryAsync(NOTIFICATION_SUGGEST + c.id, [
-      { identifier: ACTION_APPROVE, buttonTitle: `${c.name} ✓`, options: { opensAppToForeground: false } },
-      pick('Annen kategori …'),
+      { identifier: ACTION_APPROVE, buttonTitle: tr.notifications.approve(categoryName(c)), options: { opensAppToForeground: false } },
+      pick(tr.notifications.otherCategory),
       later,
     ]);
   }

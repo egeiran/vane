@@ -6,10 +6,12 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { Icon } from '@/components/Icon';
 import { PurchaseRow } from '@/components/PurchaseRow';
 import { Card, IconButton, PrimaryButton, SectionLabel, TextButton, tick } from '@/components/ui';
+import { tr } from '@/i18n';
 import {
   addMonths,
   capitalize,
   categoryById,
+  categoryName,
   formatAmount,
   isPending,
   monthName,
@@ -66,20 +68,17 @@ export default function MoneyScreen() {
         <View style={{ gap: 2 }}>
           <Text style={[styles.sub, { color: t.sub }]}>{capitalize(monthName(current, today))}</Text>
           <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-            Penger
+            {tr.money.title}
           </Text>
         </View>
-        <IconButton icon="plus" label="Legg inn kjøp" onPress={() => router.push('/purchase-form')} />
+        <IconButton icon="plus" label={tr.money.addPurchase} onPress={() => router.push('/purchase-form')} />
       </View>
 
       {!hasApplePay ? (
         <Card style={styles.card}>
-          <Text style={[styles.cardTitle, { color: t.text }]}>Kjøp fra Apple Pay</Text>
-          <Text style={[styles.body, { color: t.sub }]}>
-            Få et varsel hver gang du betaler med iPhone eller klokka, og velg kategori med én gang. Du setter det opp én gang i
-            Snarveier.
-          </Text>
-          <PrimaryButton label="Sett opp" onPress={() => router.push('/money-setup')} />
+          <Text style={[styles.cardTitle, { color: t.text }]}>{tr.money.applePayTitle}</Text>
+          <Text style={[styles.body, { color: t.sub }]}>{tr.money.applePayText}</Text>
+          <PrimaryButton label={tr.money.setUp} onPress={() => router.push('/money-setup')} />
         </Card>
       ) : null}
 
@@ -89,7 +88,7 @@ export default function MoneyScreen() {
             right={
               withSuggestion > 1 ? (
                 <TextButton
-                  label="Godkjenn alle forslag"
+                  label={tr.money.approveAll}
                   bold
                   onPress={() => {
                     tick();
@@ -100,7 +99,7 @@ export default function MoneyScreen() {
                 `${pending.length}`
               )
             }>
-            Venter
+            {tr.money.pending}
           </SectionLabel>
           <Card style={styles.list}>
             {pending.map((p, i) => (
@@ -112,38 +111,39 @@ export default function MoneyScreen() {
 
       <Card style={styles.card}>
         <View style={styles.monthBar}>
-          <IconButton icon="chevron.left" label="Forrige måned" size={36} background="transparent" onPress={() => setPicked(addMonths(month, -1))} />
+          <IconButton icon="chevron.left" label={tr.money.previousMonth} size={36} background="transparent" onPress={() => setPicked(addMonths(month, -1))} />
           <Text style={[styles.cardTitle, { color: t.text }]} accessibilityRole="header">
             {capitalize(monthName(month, today))}
           </Text>
           {month < current ? (
-            <IconButton icon="chevron.right" label="Neste måned" size={36} background="transparent" onPress={() => setPicked(addMonths(month, 1))} />
+            <IconButton icon="chevron.right" label={tr.money.nextMonth} size={36} background="transparent" onPress={() => setPicked(addMonths(month, 1))} />
           ) : (
             <View style={{ width: 36 }} />
           )}
         </View>
-        <Text style={[styles.total, { color: t.text }]} accessibilityLabel={`Brukt i ${monthName(month, today)}: ${formatAmount(summary.total)}`}>
+        <Text style={[styles.total, { color: t.text }]} accessibilityLabel={tr.money.spentIn(monthName(month, today), formatAmount(summary.total))}>
           {formatAmount(summary.total)}
         </Text>
 
         {summary.count === 0 ? (
-          <Text style={[styles.body, { color: t.sub, textAlign: 'center' }]}>Ingen kjøp i {monthName(month, today)}.</Text>
+          <Text style={[styles.body, { color: t.sub, textAlign: 'center' }]}>{tr.money.noPurchasesIn(monthName(month, today))}</Text>
         ) : null}
 
         {summary.byCategory.map((row) => {
           const c = categoryById(data, row.categoryId);
+          const name = c ? categoryName(c) : tr.money.deletedCategory;
           return (
             <Pressable
               key={row.categoryId}
               onPress={() => router.push({ pathname: '/purchases', params: { month, category: row.categoryId } })}
               accessibilityRole="button"
-              accessibilityLabel={`${c?.name ?? 'Slettet kategori'}: ${formatAmount(row.amount)}`}
+              accessibilityLabel={tr.money.categoryAmount(name, formatAmount(row.amount))}
               style={({ pressed }) => [styles.catRow, { opacity: pressed ? 0.6 : 1 }]}>
               <CategoryIcon category={c} size={30} />
               <View style={{ flex: 1, gap: 6 }}>
                 <View style={styles.catTop}>
                   <Text style={[styles.catName, { color: t.text }]} numberOfLines={1}>
-                    {c?.name ?? 'Slettet kategori'}
+                    {name}
                   </Text>
                   <Text style={[styles.catAmount, { color: t.text }]}>{formatAmount(row.amount)}</Text>
                 </View>
@@ -160,7 +160,7 @@ export default function MoneyScreen() {
             <CategoryIcon size={30} />
             <View style={{ flex: 1, gap: 6 }}>
               <View style={styles.catTop}>
-                <Text style={[styles.catName, { color: t.sub }]}>Venter</Text>
+                <Text style={[styles.catName, { color: t.sub }]}>{tr.money.pending}</Text>
                 <Text style={[styles.catAmount, { color: t.sub }]}>{formatAmount(summary.pending)}</Text>
               </View>
               <View style={[styles.track, { backgroundColor: t.bg }]}>
@@ -173,8 +173,8 @@ export default function MoneyScreen() {
         {otherCurrencies.length || summary.skipped ? (
           <Text style={[styles.note, { color: t.sub }]}>
             {[
-              otherCurrencies.length ? `I tillegg: ${otherCurrencies.join(', ')}.` : '',
-              summary.skipped ? `${summary.skipped} kjøp er ikke talt med.` : '',
+              otherCurrencies.length ? tr.money.otherCurrencies(otherCurrencies.join(', ')) : '',
+              summary.skipped ? tr.money.skipped(summary.skipped) : '',
             ]
               .filter(Boolean)
               .join(' ')}
@@ -183,7 +183,7 @@ export default function MoneyScreen() {
       </Card>
 
       <Card style={styles.card}>
-        <Text style={[styles.cardTitle, { color: t.text }]}>Siste seks måneder</Text>
+        <Text style={[styles.cardTitle, { color: t.text }]}>{tr.money.lastSixMonths}</Text>
         {months.map((m) => {
           const on = m.month === month;
           const segments = data.categories
@@ -220,10 +220,10 @@ export default function MoneyScreen() {
         <SectionLabel
           right={
             recent.length ? (
-              <TextButton label="Se alle" onPress={() => router.push({ pathname: '/purchases', params: { month } })} />
+              <TextButton label={tr.money.seeAll} onPress={() => router.push({ pathname: '/purchases', params: { month } })} />
             ) : undefined
           }>
-          {`Kjøp i ${monthName(month, today)}`}
+          {tr.money.purchasesIn(monthName(month, today))}
         </SectionLabel>
         {recent.length ? (
           <Card style={styles.list}>
@@ -232,16 +232,14 @@ export default function MoneyScreen() {
             ))}
           </Card>
         ) : (
-          <Text style={[styles.note, { color: t.sub, marginHorizontal: 4 }]}>
-            Ingen kjøp med kategori ennå. Trykk + for å legge inn et kjøp du har betalt med Vipps, kontanter eller på nett.
-          </Text>
+          <Text style={[styles.note, { color: t.sub, marginHorizontal: 4 }]}>{tr.money.noCategorized}</Text>
         )}
       </View>
 
       <View style={styles.section}>
         <Card style={{ overflow: 'hidden' }}>
-          <LinkRow icon="square.grid.2x2" label="Kategorier" onPress={() => router.push('/categories')} first />
-          <LinkRow icon="wallet.pass" label="Kjøp fra Apple Pay" onPress={() => router.push('/money-setup')} />
+          <LinkRow icon="square.grid.2x2" label={tr.money.categories} onPress={() => router.push('/categories')} first />
+          <LinkRow icon="wallet.pass" label={tr.money.applePay} onPress={() => router.push('/money-setup')} />
         </Card>
       </View>
     </ScrollView>

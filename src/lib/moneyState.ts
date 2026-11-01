@@ -1,5 +1,5 @@
 import { formatTime, toKey, type DateKey } from './dates';
-import { cleanMerchant, isPending, merchantKey, parseAmount, suggestionFor } from './money';
+import { cleanMerchant, isPending, merchantKey, parseAmount, suggestionFor, UNKNOWN_PLACE } from './money';
 import { newId } from './state';
 import type { Category, ColorKey, MoneyData, Purchase, PurchasePart } from './types';
 
@@ -91,7 +91,7 @@ export function addPurchase(data: MoneyData, input: PurchaseInput, id = newId('p
     id,
     amount: input.amount,
     currency: 'NOK',
-    merchant: name || 'Ukjent sted',
+    merchant: name || UNKNOWN_PLACE,
     merchantKey: merchantKey(name),
     day: input.day,
     time: input.time,

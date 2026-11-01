@@ -1,3 +1,5 @@
+import { tr } from '@/i18n';
+
 import { addDays, atTime, todayKey, type DateKey } from './dates';
 import { isDone, isScheduled, isWeekly, valueOn, weekCount, weeklyTarget } from './habits';
 import type { Data, Habit } from './types';
@@ -22,16 +24,21 @@ export type PlannedReminder = {
   data: { kind: 'habit'; habitId: string; day: DateKey };
 };
 
+/** Morgenvarselet. Teksten leses når varselet legges inn, på språket appen har da. */
 export const MORNING = {
   id: 'morning',
-  title: 'God morgen',
-  body: 'Hva vil du få til i dag?',
-} as const;
+  get title() {
+    return tr.notifications.morningTitle;
+  },
+  get body() {
+    return tr.notifications.morningBody;
+  },
+};
 
 function bodyFor(data: Data, h: Habit, day: DateKey): string {
-  if (isWeekly(h)) return `${weekCount(data, h, day)} av ${weeklyTarget(h)} denne uka.`;
-  if (h.type === 'count') return `Målet i dag er ${h.target} ${h.unit || 'ganger'}.`;
-  return 'Har du fått gjort det i dag?';
+  if (isWeekly(h)) return tr.notifications.weeklyBody(weekCount(data, h, day), weeklyTarget(h));
+  if (h.type === 'count') return tr.notifications.countBody(h.target, h.unit || tr.habits.defaultUnit);
+  return tr.notifications.checkBody;
 }
 
 /**

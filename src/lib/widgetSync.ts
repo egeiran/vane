@@ -10,7 +10,7 @@ import { addDays, fromKey, todayKey } from './dates';
 import { pendingPurchases } from './money';
 import { getMoney } from './moneyStore';
 import { getData, useStore } from './store';
-import { applyWidgetTaps, buildLockProps, buildTodayProps, lockEntryTimes, pushedValues, type Pushed } from './widgetProps';
+import { applyWidgetTaps, buildLockProps, buildPengerProps, buildTodayProps, lockEntryTimes, pushedValues, type Pushed } from './widgetProps';
 
 const supported = Platform.OS === 'ios';
 /** Verdiene appen sist sendte til hjemskjerm-widgeten (se `Pushed`). */
@@ -64,7 +64,7 @@ function push() {
     console.warn('[vane] Kunne ikke oppdatere låseskjerm-widgeten', e);
   }
   try {
-    PengerWidget.updateTimeline([{ date: now, props: { waiting } }]);
+    PengerWidget.updateTimeline([{ date: now, props: buildPengerProps(waiting) }]);
   } catch (e) {
     console.warn('[vane] Kunne ikke oppdatere penger-widgeten', e);
   }

@@ -5,6 +5,7 @@ import { Alert, AppState, Linking, Pressable, ScrollView, StyleSheet, Text, View
 
 import { Icon } from '@/components/Icon';
 import { Card, Row, SectionLabel, Stepper, SwitchRow } from '@/components/ui';
+import { tr } from '@/i18n';
 import { shiftTime } from '@/lib/dates';
 import { hasPermission, requestPermission, sendTestNotification } from '@/lib/notifications';
 import { useStore } from '@/lib/store';
@@ -34,72 +35,66 @@ export default function SettingsScreen() {
 
   const test = async () => {
     const ok = await sendTestNotification();
-    if (ok) Alert.alert('Testvarsel sendt', 'Lås telefonen – varselet kommer om fem sekunder.');
+    if (ok) Alert.alert(tr.settings.testSent, tr.settings.testSentBody);
     else setGranted(false);
   };
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
       <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-        Innstillinger
+        {tr.settings.title}
       </Text>
 
       {granted === false ? (
         <Pressable onPress={() => Linking.openSettings()} accessibilityRole="button" style={[styles.warning, { backgroundColor: t.card }]}>
           <Icon name="bell.slash" size={18} color={t.sub} />
-          <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: t.text }}>
-            Varsler er skrudd av for Vane. Trykk for å åpne Innstillinger og slå dem på.
-          </Text>
+          <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: t.text }}>{tr.settings.notificationsOff}</Text>
         </Pressable>
       ) : null}
 
       <View style={styles.section}>
-        <SectionLabel>Morgen</SectionLabel>
+        <SectionLabel>{tr.settings.morning}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
-          <SwitchRow first label="Morgenvarsel" value={settings.morningEnabled} onChange={(v) => enable({ morningEnabled: v })} />
+          <SwitchRow first label={tr.settings.morningNotification} value={settings.morningEnabled} onChange={(v) => enable({ morningEnabled: v })} />
           {settings.morningEnabled ? (
             <>
               <Row>
-                <Text style={{ flex: 1, fontSize: 16, color: t.text }}>Tidspunkt</Text>
+                <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.time}</Text>
                 <Stepper
                   value={settings.morningTime}
                   minWidth={60}
                   onDecrease={() => update({ morningTime: shiftTime(settings.morningTime, -15, 4 * 60, 12 * 60) })}
                   onIncrease={() => update({ morningTime: shiftTime(settings.morningTime, 15, 4 * 60, 12 * 60) })}
-                  decreaseLabel="15 minutter tidligere"
-                  increaseLabel="15 minutter senere"
+                  decreaseLabel={tr.common.earlier15}
+                  increaseLabel={tr.common.later15}
                 />
               </Row>
-              <Text style={[styles.help, { color: t.sub, borderTopColor: t.border }]}>
-                Hver morgen: «God morgen. Hva vil du få til i dag?»
-              </Text>
+              <Text style={[styles.help, { color: t.sub, borderTopColor: t.border }]}>{tr.settings.morningHelp}</Text>
             </>
           ) : null}
         </Card>
       </View>
 
       <View style={styles.section}>
-        <SectionLabel>Vaner</SectionLabel>
+        <SectionLabel>{tr.settings.habits}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
-          <SwitchRow first label="Påminnelser for vaner" value={settings.remindersEnabled} onChange={(v) => enable({ remindersEnabled: v })} />
+          <SwitchRow first label={tr.settings.reminders} value={settings.remindersEnabled} onChange={(v) => enable({ remindersEnabled: v })} />
         </Card>
-        <Text style={[styles.footnote, { color: t.sub }]}>
-          Påminnelser kommer bare for vaner som ikke er gjort ennå. Tidspunktet velger du på hver vane.
-        </Text>
+        <Text style={[styles.footnote, { color: t.sub }]}>{tr.settings.remindersHelp}</Text>
       </View>
 
       <View style={styles.section}>
-        <SectionLabel>Penger</SectionLabel>
+        <SectionLabel>{tr.settings.money}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
           <Pressable onPress={() => router.push('/categories')} accessibilityRole="button">
             <Row first>
-              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>Kategorier</Text>
+              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.categories}</Text>
               <Icon name="chevron.right" size={14} color={t.sub} />
             </Row>
           </Pressable>
           <Pressable onPress={() => router.push('/money-setup')} accessibilityRole="button">
             <Row>
-              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>Kjøp fra Apple Pay</Text>
+              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.applePay}</Text>
               <Icon name="chevron.right" size={14} color={t.sub} />
             </Row>
           </Pressable>
@@ -110,14 +105,14 @@ export default function SettingsScreen() {
         <Card style={{ overflow: 'hidden' }}>
           <Pressable onPress={test} accessibilityRole="button">
             <Row first>
-              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>Send testvarsel</Text>
+              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.sendTest}</Text>
               <Icon name="chevron.right" size={14} color={t.sub} />
             </Row>
           </Pressable>
         </Card>
       </View>
 
-      <Text style={[styles.version, { color: t.sub }]}>Vane · versjon {Constants.expoConfig?.version ?? '1.0.0'}</Text>
+      <Text style={[styles.version, { color: t.sub }]}>{tr.settings.version(Constants.expoConfig?.version ?? '1.0.0')}</Text>
     </ScrollView>
   );
 }

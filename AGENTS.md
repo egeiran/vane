@@ -2,8 +2,9 @@ This is an Expo/React Native mobile application. Prioritize mobile-first pattern
 
 ## Vane
 
-Vane is a calm, iOS-first habit tracker with a small spending log («Penger»). UI copy is Norwegian (bokmål). See `README.md` for features and structure.
+Vane is a calm, iOS-first habit tracker with a small spending log («Penger»). UI copy is Norwegian (bokmål) and English, following the phone's language. See `README.md` for features and structure.
 
+- All text the user sees goes through `tr` from `src/i18n` (`tr.today.title`, `tr.habits.times(3)`). `nb.ts` is the source of truth; `en.ts` must have the same keys (TypeScript and `i18n.test.ts` check it). Never store translated text in data: default categories and «Ukjent sted» are stored in Norwegian and shown with `categoryName` / `merchantName`. Swift strings, the Shortcuts action and widget-gallery names use the Norwegian text as key, with English in `locales/en.json` (`Localizable.strings`).
 - Keep pure logic in `src/lib` (`dates.ts`, `habits.ts`, `state.ts`, `reminders.ts`, `money.ts`, `moneyState.ts`, `purchaseIntents.ts`) and cover it with tests in `src/lib/__tests__`.
 - `src/lib/store.ts` wraps the pure reducers in a persisted zustand store; use `useData()` when a component needs the whole data object. Money has its own store in `src/lib/moneyStore.ts` (`useMoneyData()`).
 - Widget layouts in `src/widgets` run in an isolated runtime: only `@expo/ui/swift-ui` components and modifiers, no hooks, no imports of app code, everything declared inside the `'widget'` function.

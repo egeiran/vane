@@ -1,3 +1,5 @@
+import { tr } from '@/i18n';
+
 import { addDays, compareKeys, daysBetween, startOfWeek, weekdayIndex, type DateKey } from './dates';
 import type { Data, Goal, Habit } from './types';
 
@@ -113,20 +115,20 @@ export function periodSummary(data: Data, h: Habit, end: DateKey, n: number): Pe
     sum += v;
   }
   if (isWeekly(h)) return { kind: 'times', done };
-  if (h.type === 'count') return { kind: 'amount', sum, unit: h.unit || 'ganger' };
+  if (h.type === 'count') return { kind: 'amount', sum, unit: h.unit };
   return { kind: 'days', done, of };
 }
 
 export function summaryText(s: PeriodSummary): string {
   switch (s.kind) {
     case 'new':
-      return 'Ny i dag';
+      return tr.habits.newToday;
     case 'days':
-      return `${s.done} av ${s.of} dager`;
+      return tr.habits.daysOf(s.done, s.of);
     case 'times':
-      return `${s.done} ${s.done === 1 ? 'gang' : 'ganger'}`;
+      return tr.habits.times(s.done);
     case 'amount':
-      return `${s.sum} ${s.unit} totalt`;
+      return tr.habits.total(s.sum, s.unit || tr.habits.defaultUnit);
   }
 }
 
@@ -139,19 +141,18 @@ export function isEditable(day: DateKey, today: DateKey): boolean {
 export function frequencyText(h: Habit): string {
   switch (h.schedule.kind) {
     case 'daily':
-      return 'Hver dag';
+      return tr.habits.everyDay;
     case 'weekly':
-      return `${h.schedule.times} ${h.schedule.times === 1 ? 'gang' : 'ganger'} i uka`;
+      return tr.habits.perWeek(h.schedule.times);
     case 'days': {
-      const names = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'];
-      const chosen = names.filter((_, i) => (h.schedule as { days: boolean[] }).days[i]);
-      if (chosen.length === 7) return 'Hver dag';
-      if (chosen.length === 0) return 'Ingen dager valgt';
+      const chosen = tr.dates.weekdayShort.filter((_, i) => (h.schedule as { days: boolean[] }).days[i]);
+      if (chosen.length === 7) return tr.habits.everyDay;
+      if (chosen.length === 0) return tr.habits.noDays;
       return chosen.join(', ');
     }
   }
 }
 
 export function amountText(h: Habit, value: number): string {
-  return `${value} av ${h.target} ${h.unit || 'ganger'}`;
+  return tr.habits.amount(value, h.target, h.unit || tr.habits.defaultUnit);
 }

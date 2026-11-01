@@ -6,9 +6,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { Card, IconButton, Row, SwitchRow, TextButton } from '@/components/ui';
+import { tr } from '@/i18n';
 import { addDays, formatTime, relativeDayName, type DateKey } from '@/lib/dates';
 import {
   amountInputText,
+  categoryName,
   formatAmount,
   isPending,
   merchantKey,
@@ -81,8 +83,8 @@ export default function PurchaseFormScreen() {
   if (id && !existing) {
     return (
       <View style={[styles.missing, { backgroundColor: t.bg }]}>
-        <Text style={{ color: t.sub, fontSize: 16 }}>Kjøpet finnes ikke lenger.</Text>
-        <TextButton label="Lukk" bold onPress={close} />
+        <Text style={{ color: t.sub, fontSize: 16 }}>{tr.purchaseForm.missing}</Text>
+        <TextButton label={tr.common.close} bold onPress={close} />
       </View>
     );
   }
@@ -139,10 +141,10 @@ export default function PurchaseFormScreen() {
   };
 
   const confirmDelete = () =>
-    Alert.alert('Slette kjøpet?', 'Det forsvinner fra summene. Dette kan ikke angres.', [
-      { text: 'Avbryt', style: 'cancel' },
+    Alert.alert(tr.purchaseForm.deleteTitle, tr.purchaseForm.deleteBody, [
+      { text: tr.common.cancel, style: 'cancel' },
       {
-        text: 'Slett',
+        text: tr.common.delete,
         style: 'destructive',
         onPress: () => {
           close();
@@ -152,16 +154,16 @@ export default function PurchaseFormScreen() {
     ]);
 
   const rest = amount - splitSum;
-  const title = !existing ? 'Nytt kjøp' : isPending(existing) ? 'Velg kategori' : 'Kjøp';
+  const title = !existing ? tr.purchaseForm.newTitle : isPending(existing) ? tr.purchaseForm.pickTitle : tr.purchaseForm.title;
 
   return (
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={styles.bar}>
-        <TextButton label="Avbryt" onPress={close} />
+        <TextButton label={tr.common.cancel} onPress={close} />
         <Text style={[styles.barTitle, { color: t.text }]} accessibilityRole="header">
           {title}
         </Text>
-        <TextButton label={existing ? 'Lagre' : 'Legg til'} bold onPress={save} disabled={!canSave} />
+        <TextButton label={existing ? tr.common.save : tr.common.add} bold onPress={save} disabled={!canSave} />
       </View>
 
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
@@ -174,43 +176,43 @@ export default function PurchaseFormScreen() {
               placeholderTextColor={t.faint}
               keyboardType="decimal-pad"
               autoFocus={!existing}
-              accessibilityLabel={`Beløp i ${unit}`}
+              accessibilityLabel={tr.purchaseForm.amountIn(unit)}
               style={[styles.amountInput, { color: t.text }]}
             />
             <Text style={[styles.unit, { color: t.sub }]}>{unit}</Text>
           </View>
           {existing ? (
             <Text style={[styles.help, { color: t.sub, textAlign: 'center' }]}>
-              {`${existing.source === 'applepay' ? 'Apple Pay' : 'Lagt inn for hånd'} · ${purchaseWhen(existing, today)}`}
+              {`${existing.source === 'applepay' ? tr.purchaseForm.sourceApplePay : tr.purchaseForm.sourceManual} · ${purchaseWhen(existing, today)}`}
             </Text>
           ) : null}
 
           {hasKey ? (
             <>
               <Text style={[styles.label, { color: t.sub }]} nativeID="merchant-label">
-                Sted
+                {tr.purchaseForm.place}
               </Text>
               <TextInput
                 value={f.merchant}
                 onChangeText={changeMerchant}
-                placeholder="F.eks. Vipps til Ola"
+                placeholder={tr.purchaseForm.placePlaceholder}
                 placeholderTextColor={t.faint}
                 returnKeyType="done"
                 accessibilityLabelledBy="merchant-label"
                 style={[styles.input, { backgroundColor: t.field, color: t.text }]}
               />
-              {existing ? <Text style={[styles.help, { color: t.sub }]}>Navnet brukes for alle kjøp herfra.</Text> : null}
+              {existing ? <Text style={[styles.help, { color: t.sub }]}>{tr.purchaseForm.placeHelp}</Text> : null}
             </>
           ) : null}
 
           <View style={styles.dayRow}>
-            <Text style={{ flex: 1, fontSize: 16, color: t.text }}>Dato</Text>
-            <IconButton icon="chevron.left" label="Dagen før" size={36} background={t.field} onPress={() => set({ day: addDays(f.day, -1) })} />
+            <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.purchaseForm.date}</Text>
+            <IconButton icon="chevron.left" label={tr.purchaseForm.dayBefore} size={36} background={t.field} onPress={() => set({ day: addDays(f.day, -1) })} />
             <Text style={[styles.dayText, { color: t.text }]} accessibilityLiveRegion="polite">
               {relativeDayName(f.day, today)}
             </Text>
             {f.day < today ? (
-              <IconButton icon="chevron.right" label="Dagen etter" size={36} background={t.field} onPress={() => set({ day: addDays(f.day, 1) })} />
+              <IconButton icon="chevron.right" label={tr.purchaseForm.dayAfter} size={36} background={t.field} onPress={() => set({ day: addDays(f.day, 1) })} />
             ) : (
               <View style={{ width: 36 }} />
             )}
@@ -218,14 +220,14 @@ export default function PurchaseFormScreen() {
         </Card>
 
         <Card style={styles.card}>
-          <Text style={[styles.label, { color: t.sub }]}>{f.split ? 'Del opp' : 'Kategori'}</Text>
+          <Text style={[styles.label, { color: t.sub }]}>{f.split ? tr.purchaseForm.split : tr.common.category}</Text>
           {f.split ? (
             <>
               {categories.map((c) => (
                 <View key={c.id} style={styles.splitRow}>
                   <CategoryIcon category={c} size={30} />
                   <Text style={{ flex: 1, fontSize: 16, color: t.text }} numberOfLines={1}>
-                    {c.name}
+                    {categoryName(c)}
                   </Text>
                   <TextInput
                     value={f.splitAmounts[c.id] ?? ''}
@@ -233,31 +235,31 @@ export default function PurchaseFormScreen() {
                     placeholder="0"
                     placeholderTextColor={t.faint}
                     keyboardType="decimal-pad"
-                    accessibilityLabel={`${c.name}, beløp i ${unit}`}
+                    accessibilityLabel={tr.purchaseForm.splitAmount(categoryName(c), unit)}
                     style={[styles.splitInput, { backgroundColor: t.field, color: t.text }]}
                   />
                 </View>
               ))}
               <Text style={[styles.help, { color: rest === 0 ? t.sub : t.text }]} accessibilityLiveRegion="polite">
-                {rest === 0 ? 'Går opp.' : rest > 0 ? `Igjen: ${formatAmount(rest, currency)}` : `For mye: ${formatAmount(-rest, currency)}`}
+                {rest === 0 ? tr.purchaseForm.balanced : rest > 0 ? tr.purchaseForm.left(formatAmount(rest, currency)) : tr.purchaseForm.tooMuch(formatAmount(-rest, currency))}
               </Text>
             </>
           ) : (
             <CategoryPicker categories={categories} value={f.categoryId} onChange={(categoryId) => set({ categoryId, picked: true })} />
           )}
           <View style={{ alignItems: 'flex-start', marginLeft: -8 }}>
-            <TextButton label={f.split ? 'Bare én kategori' : 'Del opp på flere kategorier'} color={t.sub} onPress={() => toggleSplit(!f.split)} />
+            <TextButton label={f.split ? tr.purchaseForm.oneCategory : tr.purchaseForm.splitMany} color={t.sub} onPress={() => toggleSplit(!f.split)} />
           </View>
         </Card>
 
         <Card style={styles.card}>
           <Text style={[styles.label, { color: t.sub }]} nativeID="note-label">
-            Notat
+            {tr.purchaseForm.note}
           </Text>
           <TextInput
             value={f.note}
             onChangeText={(note) => set({ note })}
-            placeholder="F.eks. bursdagsgave til Ola"
+            placeholder={tr.purchaseForm.notePlaceholder}
             placeholderTextColor={t.faint}
             returnKeyType="done"
             accessibilityLabelledBy="note-label"
@@ -266,17 +268,15 @@ export default function PurchaseFormScreen() {
         </Card>
 
         <Card style={{ overflow: 'hidden' }}>
-          <SwitchRow first label="Ikke tell med" value={f.skipped} onChange={(skipped) => set({ skipped })} />
+          <SwitchRow first label={tr.purchaseForm.skip} value={f.skipped} onChange={(skipped) => set({ skipped })} />
           <Row>
-            <Text style={[styles.help, { color: t.sub, paddingVertical: 8 }]}>
-              For utlegg du får tilbake, eller kjøp for jobben. Kjøpet blir stående, men teller ikke i summene.
-            </Text>
+            <Text style={[styles.help, { color: t.sub, paddingVertical: 8 }]}>{tr.purchaseForm.skipHelp}</Text>
           </Row>
         </Card>
 
         {existing ? (
           <View style={{ alignItems: 'center' }}>
-            <TextButton label="Slett kjøp" color={t.danger} onPress={confirmDelete} />
+            <TextButton label={tr.purchaseForm.deletePurchase} color={t.danger} onPress={confirmDelete} />
           </View>
         ) : null}
       </ScrollView>

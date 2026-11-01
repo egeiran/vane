@@ -1,4 +1,6 @@
-import { addDays, compareKeys, fromKey, MONTHS_SHORT, startOfWeek, weekdayIndex, type DateKey } from './dates';
+import { tr } from '@/i18n';
+
+import { addDays, compareKeys, fromKey, startOfWeek, weekdayIndex, type DateKey } from './dates';
 
 /** `n` uker som rader (mandag–søndag). Siste rad er uka `today` ligger i. */
 export function weekRows(today: DateKey, n: number): DateKey[][] {
@@ -26,7 +28,7 @@ export function monthLabels(columns: DateKey[][]): { index: number; label: strin
   const out: { index: number; label: string }[] = [];
   columns.forEach((col, i) => {
     const first = col.find((d) => fromKey(d).getDate() === 1);
-    if (first) out.push({ index: i, label: MONTHS_SHORT[fromKey(first).getMonth()] });
+    if (first) out.push({ index: i, label: tr.dates.monthsShort[fromKey(first).getMonth()] });
   });
   return out;
 }

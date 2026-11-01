@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { tr } from '@/i18n';
 import type { DateKey } from '@/lib/dates';
 import { useStore } from '@/lib/store';
 import type { Goal } from '@/lib/types';
@@ -20,13 +21,13 @@ export function GoalsCard({ day, isToday }: { day: DateKey; isToday: boolean }) 
   const toggleGoal = useStore((s) => s.toggleGoal);
 
   if (!goals.length) {
-    if (!isToday) return <Text style={[styles.note, { color: t.sub }]}>Ingen mål satt i går.</Text>;
+    if (!isToday) return <Text style={[styles.note, { color: t.sub }]}>{tr.goals.noneYesterday}</Text>;
     if (skipped) {
       // Man har sagt «Ikke i dag» – bare en stille linje, ingen invitasjon.
       return (
         <View style={styles.skipped}>
-          <Text style={{ flex: 1, fontSize: 14, color: t.sub }}>Ingen mål i dag.</Text>
-          <TextButton label="Legg til likevel" color={t.sub} onPress={() => router.push('/goals')} />
+          <Text style={{ flex: 1, fontSize: 14, color: t.sub }}>{tr.goals.noneToday}</Text>
+          <TextButton label={tr.goals.addAnyway} color={t.sub} onPress={() => router.push('/goals')} />
         </View>
       );
     }
@@ -39,8 +40,8 @@ export function GoalsCard({ day, isToday }: { day: DateKey; isToday: boolean }) 
           <Icon name="plus" size={16} color={t.text} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: t.text }}>Sett mål for dagen</Text>
-          <Text style={{ fontSize: 13, color: t.sub }}>Små ting du vil få gjort i dag</Text>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: t.text }}>{tr.goals.setGoals}</Text>
+          <Text style={{ fontSize: 13, color: t.sub }}>{tr.goals.setGoalsSub}</Text>
         </View>
       </Pressable>
     );
@@ -50,12 +51,12 @@ export function GoalsCard({ day, isToday }: { day: DateKey; isToday: boolean }) 
   return (
     <View style={[styles.card, { backgroundColor: t.card }]}>
       <View style={styles.header}>
-        <Text style={[styles.label, { color: t.sub }]}>{isToday ? 'DAGENS MÅL' : 'MÅL I GÅR'}</Text>
+        <Text style={[styles.label, { color: t.sub }]}>{isToday ? tr.goals.cardLabelToday : tr.goals.cardLabelYesterday}</Text>
         <View style={styles.headerRight}>
           <Text style={{ fontSize: 13, color: t.sub }}>
-            {done} av {goals.length}
+            {tr.today.doneOf(done, goals.length)}
           </Text>
-          {isToday ? <TextButton label="Endre" bold onPress={() => router.push('/goals')} /> : null}
+          {isToday ? <TextButton label={tr.common.edit} bold onPress={() => router.push('/goals')} /> : null}
         </View>
       </View>
       {goals.map((g) => (

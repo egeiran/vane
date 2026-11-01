@@ -2,16 +2,9 @@
  * Datoer som lokale nøkler på formen 'YYYY-MM-DD'.
  * All aritmetikk går via lokale Date-objekter, så sommertid ikke gir hull.
  */
-export type DateKey = string;
+import { tr } from '@/i18n';
 
-export const WEEKDAY_LETTER = ['M', 'T', 'O', 'T', 'F', 'L', 'S'] as const;
-export const WEEKDAY_SHORT = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'] as const;
-export const WEEKDAY_LONG = ['mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag', 'søndag'] as const;
-export const MONTHS = [
-  'januar', 'februar', 'mars', 'april', 'mai', 'juni',
-  'juli', 'august', 'september', 'oktober', 'november', 'desember',
-] as const;
-export const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
+export type DateKey = string;
 
 const pad = (n: number) => (n < 10 ? '0' : '') + n;
 
@@ -65,25 +58,32 @@ export function compareKeys(a: DateKey, b: DateKey): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-/** «Lørdag 17. oktober» */
+/** «Lørdag 17. oktober» / «Saturday, October 17» */
 export function formatLong(key: DateKey): string {
   const d = fromKey(key);
-  const w = WEEKDAY_LONG[weekdayIndex(key)];
-  return `${w[0].toUpperCase()}${w.slice(1)} ${d.getDate()}. ${MONTHS[d.getMonth()]}`;
+  return tr.dates.long(tr.dates.weekdayLong[weekdayIndex(key)], d.getDate(), tr.dates.months[d.getMonth()]);
 }
 
-/** «17. okt» */
+/** «17. okt» / «Oct 17» */
 export function formatShort(key: DateKey): string {
   const d = fromKey(key);
-  return `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
+  return tr.dates.short(d.getDate(), tr.dates.monthsShort[d.getMonth()]);
 }
 
 /** «I dag», «I går» eller «Fredag 9. oktober». */
 export function relativeDayName(key: DateKey, today: DateKey): string {
   const diff = daysBetween(key, today);
-  if (diff === 0) return 'I dag';
-  if (diff === 1) return 'I går';
+  if (diff === 0) return tr.dates.today;
+  if (diff === 1) return tr.dates.yesterday;
   return formatLong(key);
+}
+
+/** «I dag», «I går» eller bare ukedagen: «Fredag». */
+export function relativeWeekday(key: DateKey, today: DateKey): string {
+  const diff = daysBetween(key, today);
+  if (diff === 0) return tr.dates.today;
+  if (diff === 1) return tr.dates.yesterday;
+  return tr.dates.weekday(tr.dates.weekdayLong[weekdayIndex(key)]);
 }
 
 export type Time = { hour: number; minute: number };

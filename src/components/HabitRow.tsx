@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { tr } from '@/i18n';
 import type { DateKey } from '@/lib/dates';
 import { amountText, frequencyText, isDone, isWeekly, weekCount, weeklyTarget } from '@/lib/habits';
 import { useStore } from '@/lib/store';
@@ -31,7 +32,7 @@ export function HabitRow({ habit, day, showReminder }: Props) {
   const meta = isCount
     ? amountText(habit, value)
     : showReminder && habit.reminder && remindersOn
-      ? `Påminnelse ${habit.reminder}`
+      ? tr.habits.reminder(habit.reminder)
       : frequencyText(habit);
 
   return (
@@ -43,7 +44,7 @@ export function HabitRow({ habit, day, showReminder }: Props) {
           color={c.solid}
           track={done ? t.card : c.soft}
           textColor={c.ink}
-          label={`${habit.name}: ${amountText(habit, value)}. Trykk for å trekke fra én.`}
+          label={tr.habits.minusOne(habit.name, amountText(habit, value))}
           onPress={() => {
             tick();
             increment(habit.id, day, -1);
@@ -64,7 +65,7 @@ export function HabitRow({ habit, day, showReminder }: Props) {
         style={styles.body}
         onPress={() => router.push({ pathname: '/habit/[id]', params: { id: habit.id } })}
         accessibilityRole="button"
-        accessibilityHint="Viser rutenettet for vanen">
+        accessibilityHint={tr.habits.gridHint}>
         <Text style={[styles.name, { color: t.text }]} numberOfLines={1}>
           {habit.name}
         </Text>
@@ -75,7 +76,7 @@ export function HabitRow({ habit, day, showReminder }: Props) {
       {isCount ? (
         <IconButton
           icon="plus"
-          label={`Legg til én ${habit.unit || ''}`.trim()}
+          label={tr.habits.addOne(habit.unit || '')}
           background={done ? t.card : c.soft}
           color={c.ink}
           onPress={() => {
@@ -116,7 +117,7 @@ export function WeeklyRow({ habit, day }: { habit: Habit; day: DateKey }) {
           {habit.name}
         </Text>
         <Text style={[styles.meta, { color: full ? c.ink : t.sub }]}>
-          {full ? 'Ferdig for uka' : `${count} av ${target} denne uka`}
+          {full ? tr.habits.weekDone : tr.habits.weekCount(count, target)}
         </Text>
       </Pressable>
       <View style={styles.pips} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">

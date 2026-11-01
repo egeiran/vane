@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { WEEKDAY_LETTER } from '@/lib/dates';
+import { tr } from '@/i18n';
 import { useTheme } from '@/theme';
 
 export type HeatCell = {
@@ -22,7 +22,7 @@ export function WeekRows({ weeks, cellHeight = 34 }: { weeks: HeatWeek[]; cellHe
     <View style={{ gap: 5 }}>
       <View style={styles.row} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <View style={styles.label} />
-        {WEEKDAY_LETTER.map((l, i) => (
+        {tr.dates.weekdayLetters.map((l, i) => (
           <Text key={i} style={[styles.letter, { color: t.sub }]}>
             {l}
           </Text>
@@ -77,11 +77,11 @@ export function Legend({ colors }: { colors: string[] }) {
   const t = useTheme();
   return (
     <View style={styles.legend} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Text style={[styles.legendText, { color: t.sub }]}>Mindre</Text>
+      <Text style={[styles.legendText, { color: t.sub }]}>{tr.overview.less}</Text>
       {colors.map((c, i) => (
         <View key={i} style={[styles.legendCell, { backgroundColor: c }]} />
       ))}
-      <Text style={[styles.legendText, { color: t.sub }]}>Mer</Text>
+      <Text style={[styles.legendText, { color: t.sub }]}>{tr.overview.more}</Text>
     </View>
   );
 }

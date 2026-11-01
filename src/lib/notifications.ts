@@ -4,6 +4,8 @@ import Storage from 'expo-sqlite/kv-store';
 import { router } from 'expo-router';
 import { Platform } from 'react-native';
 
+import { tr } from '@/i18n';
+
 import { parseTime } from './dates';
 import { handlePurchaseResponse } from './purchases';
 import {
@@ -30,9 +32,9 @@ export function configureNotifications() {
       shouldSetBadge: false,
     }),
   });
-  const snooze = { identifier: ACTION_SNOOZE, buttonTitle: 'Om 1 time', options: { opensAppToForeground: false } };
+  const snooze = { identifier: ACTION_SNOOZE, buttonTitle: tr.notifications.snooze, options: { opensAppToForeground: false } };
   Notifications.setNotificationCategoryAsync(CATEGORY_CHECK, [
-    { identifier: ACTION_DONE, buttonTitle: 'Gjort', options: { opensAppToForeground: false } },
+    { identifier: ACTION_DONE, buttonTitle: tr.notifications.done, options: { opensAppToForeground: false } },
     snooze,
   ]).catch(() => {});
   Notifications.setNotificationCategoryAsync(CATEGORY_COUNT, [

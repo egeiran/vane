@@ -12,6 +12,9 @@ internal import ExpoAppIntents
 /// Begge parameterne er valgfrie. En automatisering kan ikke spørre om noe, så mangler et beløp
 /// eller et sted i transaksjonen, ville en påkrevd parameter fått hele automatiseringen til å
 /// feile. Da registreres kjøpet likevel, og man fyller inn resten i appen.
+///
+/// Tittelen og navnene på parameterne vises på telefonens språk: den norske teksten under er nøkkelen,
+/// og den engelske står i `locales/en.json` (Localizable.strings). Bare teksten som vises, oversettes.
 struct LogPurchaseIntent: AppIntent {
   static let title: LocalizedStringResource = "Registrer kjøp"
   static let openAppWhenRun: Bool = false

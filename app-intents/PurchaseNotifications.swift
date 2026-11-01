@@ -37,7 +37,10 @@ final class PurchaseNotifications: NotificationDelegate {
   static func notify(purchaseId: String, amount: String, merchant: String, at date: Date) async {
     let config = PurchaseConfig.load()
     let memory = config.merchants[PurchaseText.merchantKey(merchant)]
-    let name = memory?.name ?? PurchaseText.cleanMerchant(merchant)
+    let cleaned = memory?.name ?? PurchaseText.cleanMerchant(merchant)
+    // Teksten i varselet er på telefonens språk: nøkkelen er den norske teksten, og den engelske
+    // står i `locales/en.json` (Localizable.strings). Navnene på kategoriene kommer oversatt fra appen.
+    let name = cleaned == PurchaseText.unknownPlace ? String(localized: "Ukjent sted") : cleaned
     let amountText: String
     if let parsed = PurchaseText.parseAmount(amount) {
       amountText = PurchaseText.formatAmount(parsed.amount, currency: parsed.currency)
@@ -48,10 +51,13 @@ final class PurchaseNotifications: NotificationDelegate {
     let content = UNMutableNotificationContent()
     content.title = amountText.isEmpty ? name : "\(amountText) · \(name)"
     if let categoryId = memory?.categoryId, let categoryName = config.categories[categoryId] {
-      content.body = "Forslag: \(categoryName). Hold inne for å svare."
+      content.body = String(localized: "Forslag: \(categoryName). Hold inne for å svare.")
       content.categoryIdentifier = suggestPrefix + categoryId
     } else {
-      content.body = memory == nil ? "Nytt sted. Trykk for å velge kategori." : "Trykk for å velge kategori."
+      content.body =
+        memory == nil
+        ? String(localized: "Nytt sted. Trykk for å velge kategori.")
+        : String(localized: "Trykk for å velge kategori.")
       content.categoryIdentifier = newCategory
     }
     content.threadIdentifier = "purchases"

@@ -14,7 +14,7 @@ import {
 } from '@expo/ui/swift-ui/modifiers';
 import { createWidget, type WidgetEnvironment } from 'expo-widgets';
 
-import type { TodayWidgetGoal, TodayWidgetItem, TodayWidgetProps } from './types';
+import type { TodayWidgetGoal, TodayWidgetItem, TodayWidgetProps, TodayWidgetText } from './types';
 
 /**
  * «Én ting» på hjemskjermen: det viktigste akkurat nå, med én knapp. Om morgenen er det å sette
@@ -61,45 +61,52 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
   const habit: TodayWidgetItem | undefined = open[0];
   const mode = props.goalPrompt ? 'prompt' : goal ? 'goal' : habit ? 'habit' : daily.length || goals.length ? 'done' : 'empty';
 
-  const amount = (i: TodayWidgetItem) => `${i.value} av ${i.target}${i.unit ? ` ${i.unit}` : ''}`;
-  const waiting = props.waiting ?? 0;
-  const vaner = (n: number) => `${n} ${n === 1 ? 'vane' : 'vaner'}`;
+  // Teksten kommer fra appen, på telefonens språk. Maler som «{done} av {total}» fylles inn her.
+  const T = props.text ?? ({} as TodayWidgetText);
+  const fill = (template: string | undefined, values: Record<string, string | number>) =>
+    (template ?? '').replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? ''));
 
-  let label = 'I DAG';
+  const amount = (i: TodayWidgetItem) => fill(T.amount, { value: i.value, target: i.target }) + (i.unit ? ` ${i.unit}` : '');
+  const waiting = props.waiting ?? 0;
+  const vaner = (n: number) => fill(n === 1 ? T.habitOne : T.habitOther, { n });
+
+  let label = T.labelToday ?? '';
   let title = '';
   let detail = '';
   if (mode === 'prompt') {
-    label = 'GOD MORGEN';
-    title = 'Hva vil du få til i dag?';
-    detail = daily.length ? `${vaner(daily.length)} i dag` : '';
+    label = T.labelMorning ?? '';
+    title = T.prompt ?? '';
+    detail = daily.length ? fill(T.habitsToday, { habits: vaner(daily.length) }) : '';
   } else if (mode === 'goal' && goal) {
-    label = small ? 'DAGENS MÅL' : `DAGENS MÅL · ${doneGoals.length} AV ${goals.length}`;
+    label = small ? (T.labelGoals ?? '') : fill(T.labelGoalsCount, { done: doneGoals.length, total: goals.length });
     title = goal.text;
     detail =
       openGoals.length > 1
-        ? `+ ${openGoals.length - 1} til`
+        ? fill(T.moreGoals, { n: openGoals.length - 1 })
         : doneGoals.length === 1
-          ? `${doneGoals[0].text} er gjort`
+          ? fill(T.goalDone, { goal: doneGoals[0].text })
           : doneGoals.length > 1
-            ? `${doneGoals.length} mål er gjort`
+            ? fill(T.goalsDone, { n: doneGoals.length })
             : '';
   } else if (mode === 'habit' && habit) {
     const after = open[1];
-    label = 'IGJEN I DAG';
+    label = T.labelLeft ?? '';
     title = habit.name;
     detail =
       habit.kind === 'count'
         ? amount(habit)
         : after
-          ? `Etterpå: ${after.name}${after.time ? ` ${after.time}` : ''}`
+          ? fill(T.after, { name: `${after.name}${after.time ? ` ${after.time}` : ''}` })
           : habit.time
-            ? `kl. ${habit.time}`
-            : 'Den siste i dag';
+            ? fill(T.at, { time: habit.time })
+            : (T.last ?? '');
   } else if (mode === 'done') {
-    title = 'Alt er gjort';
-    detail = [daily.length ? vaner(daily.length) : '', goals.length ? `${goals.length} mål` : ''].filter(Boolean).join(' og ');
+    title = T.allDone ?? '';
+    detail = [daily.length ? vaner(daily.length) : '', goals.length ? fill(goals.length === 1 ? T.goalOne : T.goalOther, { n: goals.length }) : '']
+      .filter(Boolean)
+      .join(T.and ?? ' ');
   } else {
-    title = props.hasHabits ? 'Ingen vaner i dag' : 'Legg til en vane i appen';
+    title = (props.hasHabits ? T.noHabitsToday : T.addHabit) ?? '';
   }
 
   // Den store knappen. To like store symboler oppå hverandre gir en myk fylt sirkel med kant.
@@ -159,8 +166,8 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
         />
       );
     });
-  const habitsText = daily.length ? `${doneCount} av ${vaner(daily.length)}` : '';
-  const goalsText = goals.length && mode !== 'goal' ? `mål ${doneGoals.length} av ${goals.length}` : '';
+  const habitsText = daily.length ? fill(T.habitsDoneOf, { done: doneCount, habits: vaner(daily.length) }) : '';
+  const goalsText = goals.length && mode !== 'goal' ? fill(T.goalsFoot, { done: doneGoals.length, total: goals.length }) : '';
   const foot = [habitsText, goalsText].filter(Boolean).join(' · ');
 
   const root = [
@@ -172,9 +179,9 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
   if (small) {
     const smallFoot =
       mode === 'prompt'
-        ? 'Sett mål'
+        ? (T.setGoal ?? '')
         : mode === 'goal'
-          ? `${doneGoals.length} av ${goals.length} mål`
+          ? fill(T.goalsOf, { done: doneGoals.length, total: goals.length })
           : mode === 'habit' && habit
             ? habit.kind === 'count'
               ? `${habit.value}/${habit.target}`
@@ -234,7 +241,7 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
   const rest = [...(mode === 'habit' ? open.slice(1) : open), ...items.filter((i) => i.weekly && !isDone(i))].slice(0, 4);
   const row = (i: TodayWidgetItem) => {
     const c = colors(i);
-    const right = i.kind === 'count' ? `${i.value}/${i.target}` : i.weekly ? 'denne uka' : i.time;
+    const right = i.kind === 'count' ? `${i.value}/${i.target}` : i.weekly ? T.thisWeek : i.time;
     return (
       <Button key={i.id} target={`tap:${i.id}`} onPress={() => withValue(i.id, nextValue(i))} modifiers={[buttonStyle('plain')]}>
         <HStack spacing={10}>
@@ -253,13 +260,13 @@ const TodayWidget = (props: TodayWidgetProps, environment: WidgetEnvironment) =>
       {focus(24, 56)}
       {rest.length ? (
         <VStack alignment="leading" spacing={8} modifiers={[padding({ top: 18 })]}>
-          <Text modifiers={[font({ size: 11, weight: 'bold' }), kerning(0.6), foregroundStyle(sub)]}>RESTEN AV DAGEN</Text>
+          <Text modifiers={[font({ size: 11, weight: 'bold' }), kerning(0.6), foregroundStyle(sub)]}>{T.restOfDay ?? ''}</Text>
           {rest.map(row)}
         </VStack>
       ) : null}
       <Spacer />
       {doneNames.length ? (
-        <Text modifiers={[font({ size: 13 }), foregroundStyle(sub), lineLimit(2), padding({ bottom: 8 })]}>{`Gjort: ${doneNames.join(', ')}`}</Text>
+        <Text modifiers={[font({ size: 13 }), foregroundStyle(sub), lineLimit(2), padding({ bottom: 8 })]}>{fill(T.doneList, { names: doneNames.join(', ') })}</Text>
       ) : null}
       {dotRow}
     </VStack>
@@ -273,4 +280,6 @@ export default createWidget<TodayWidgetProps>('TodayWidget', TodayWidget, {
   goalPrompt: true,
   hasHabits: false,
   waiting: 0,
+  // Bare det som vises før appen har sendt noe. Appen sender all tekst på telefonens språk.
+  text: { labelMorning: 'GOD MORGEN', prompt: 'Hva vil du få til i dag?', setGoal: 'Sett mål' } as TodayWidgetText,
 });

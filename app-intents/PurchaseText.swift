@@ -8,6 +8,10 @@ enum PurchaseText {
   private static let wordBreaks: Set<Character> = [" ", "-", "/", "&", "("]
   private static let droppedLast: Set<String> = ["NO", "NOR", "NORGE", "NORWAY", "AS", "ASA"]
 
+  /// Stedet når et kjøp ikke har noe. Lagres alltid slik (som `UNKNOWN_PLACE` i money.ts), og vises
+  /// oversatt i varselet.
+  static let unknownPlace = "Ukjent sted"
+
   /// Store bokstaver, uten mellomrom og ASCII-tegnsetting: «Rema 1000» og «REMA-1000» blir «REMA1000».
   static func merchantKey(_ raw: String) -> String {
     let upper = raw.precomposedStringWithCompatibilityMapping.uppercased()
@@ -46,7 +50,7 @@ enum PurchaseText {
       return s
     }
     let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-    return trimmed.isEmpty ? "Ukjent sted" : trimmed
+    return trimmed.isEmpty ? unknownPlace : trimmed
   }
 
   /// «kr 149,00», «1 234,50 kr», «149,-», «€12.50». Gir øre og valuta, eller nil uten tall

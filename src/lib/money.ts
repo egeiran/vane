@@ -1,6 +1,8 @@
 import type { SFSymbol } from 'sf-symbols-typescript';
 
-import { formatShort, MONTHS, MONTHS_SHORT, relativeDayName, type DateKey } from './dates';
+import { stringsFor, tr } from '@/i18n';
+
+import { daysBetween, formatShort, relativeDayName, type DateKey } from './dates';
 import type { Category, MoneyData, Purchase } from './types';
 
 /**
@@ -11,6 +13,10 @@ import type { Category, MoneyData, Purchase } from './types';
  * `merchantKey`, `cleanMerchant`, `parseAmount` og `formatAmount` må gjøre det samme der.
  */
 
+/**
+ * Standardkategoriene lagres med norske navn. Så lenge navnet er det samme, vises det på brukerens
+ * språk (`categoryName`). Gir man kategorien nytt navn, vises det man skrev.
+ */
 export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'dagligvarer', name: 'Dagligvarer', icon: 'cart', color: 'salvie', hidden: false },
   { id: 'spise-ute', name: 'Spise ute', icon: 'fork.knife', color: 'fersken', hidden: false },
@@ -20,6 +26,15 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'fritid', name: 'Fritid', icon: 'ticket', color: 'lavendel', hidden: false },
   { id: 'annet', name: 'Annet', icon: 'ellipsis.circle', color: 'skifer', hidden: false },
 ];
+
+/** Stedet når et kjøp ikke har noe. Lagres alltid slik, og vises oversatt (`merchantName`). */
+export const UNKNOWN_PLACE = stringsFor('nb').money.unknownPlace;
+
+/** Navnet på en kategori slik brukeren skal se det: oversatt for standardkategorier som ikke har fått nytt navn. */
+export function categoryName(c: Pick<Category, 'id' | 'name'>): string {
+  const original = stringsFor('nb').defaultCategories[c.id];
+  return original !== undefined && c.name === original ? (tr.defaultCategories[c.id] ?? c.name) : c.name;
+}
 
 /** Ikonene man kan velge for en kategori. */
 export const CATEGORY_ICONS: SFSymbol[] = [
@@ -126,7 +141,7 @@ export function cleanMerchant(raw: string): string {
   while (words.length > 1 && DROP_LAST.includes(words[words.length - 1])) words.pop();
   s = words.join(' ');
   if (s === s.toUpperCase() && [...s].some(isCased)) s = titleCase(s);
-  return s || raw.trim() || 'Ukjent sted';
+  return s || raw.trim() || UNKNOWN_PLACE;
 }
 
 function currencyIn(s: string): string {
@@ -181,7 +196,8 @@ export function amountInputText(amount: number): string {
 }
 
 export function merchantName(data: MoneyData, p: Pick<Purchase, 'merchant' | 'merchantKey'>): string {
-  return data.merchants[p.merchantKey]?.name || p.merchant;
+  const name = data.merchants[p.merchantKey]?.name || p.merchant;
+  return name === UNKNOWN_PLACE ? tr.money.unknownPlace : name;
 }
 
 export function categoryById(data: MoneyData, id: string): Category | undefined {
@@ -211,8 +227,8 @@ export function suggestionFor(data: MoneyData, p: Purchase): Category | null {
 
 /** «I dag 14:32», «I går 09:10», «23. okt 18:00». */
 export function purchaseWhen(p: Purchase, today: DateKey): string {
-  const day = relativeDayName(p.day, today);
-  return `${day === 'I dag' || day === 'I går' ? day : formatShort(p.day)} ${p.time}`;
+  const diff = daysBetween(p.day, today);
+  return `${diff === 0 || diff === 1 ? relativeDayName(p.day, today) : formatShort(p.day)} ${p.time}`;
 }
 
 // Måneder
@@ -232,12 +248,12 @@ const monthIndex = (month: MonthKey) => Number(month.slice(5, 7)) - 1;
 
 /** «oktober», eller «oktober 2025» når det ikke er i år. */
 export function monthName(month: MonthKey, today: DateKey): string {
-  const name = MONTHS[monthIndex(month)];
-  return month.slice(0, 4) === today.slice(0, 4) ? name : `${name} ${month.slice(0, 4)}`;
+  const name = tr.dates.months[monthIndex(month)];
+  return month.slice(0, 4) === today.slice(0, 4) ? name : tr.dates.monthYear(name, month.slice(0, 4));
 }
 
 /** «okt» */
-export const monthShort = (month: MonthKey) => MONTHS_SHORT[monthIndex(month)];
+export const monthShort = (month: MonthKey) => tr.dates.monthsShort[monthIndex(month)];
 
 export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -318,7 +334,7 @@ export type NativePurchaseConfig = {
 };
 
 export function nativePurchaseConfig(data: MoneyData): NativePurchaseConfig {
-  const categories = Object.fromEntries(visibleCategories(data).map((c) => [c.id, c.name]));
+  const categories = Object.fromEntries(visibleCategories(data).map((c) => [c.id, categoryName(c)]));
   const merchants: NativePurchaseConfig['merchants'] = {};
   for (const [key, m] of Object.entries(data.merchants)) {
     const entry: { name?: string; categoryId?: string } = {};
