@@ -24,6 +24,7 @@ import {
 } from '@/lib/money';
 import { partsAreValid } from '@/lib/moneyState';
 import { useMoney, useMoneyData } from '@/lib/moneyStore';
+import { moneyHome } from '@/lib/store';
 import type { MoneyData, Purchase, PurchasePart } from '@/lib/types';
 import { useToday } from '@/lib/useToday';
 import { useTheme } from '@/theme';
@@ -62,7 +63,7 @@ function initialForm(data: MoneyData, p: Purchase | undefined, today: DateKey): 
 
 function close() {
   if (router.canGoBack()) router.back();
-  else router.replace('/money');
+  else router.replace(moneyHome());
 }
 
 const toAmount = (text: string | undefined) => (text ? (parseAmount(text)?.amount ?? 0) : 0);

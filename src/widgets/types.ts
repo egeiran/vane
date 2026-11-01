@@ -51,6 +51,8 @@ export type TodayWidgetProps = {
  */
 export type PengerWidgetProps = {
   waiting: number;
+  /** Penger er slått på. Er den av, sier widgeten det, uten knapp. */
+  enabled: boolean;
   text: PengerWidgetText;
 };
 

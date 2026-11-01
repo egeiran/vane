@@ -38,12 +38,25 @@ export type Goal = {
   done: boolean;
 };
 
+/**
+ * Delene av appen man velger selv. Vanene er alltid med. Bare Penger finnes ennå; de andre slås
+ * på når modulene kommer (dagbok #19, Apple Helse #20, faste utgifter #21).
+ */
+export type Modules = {
+  money: boolean;
+  journal: boolean;
+  health: boolean;
+  recurring: boolean;
+};
+
 export type Settings = {
   morningEnabled: boolean;
   morningTime: string;
   remindersEnabled: boolean;
   /** Mandag eller søndag. `null` betyr som telefonen (se `weekStartOf`). */
   weekStart: WeekStart | null;
+  /** Ingen data slettes når en modul slås av. */
+  modules: Modules;
 };
 
 /** Verdi per vane for én dag: 1 for gjort (ja/nei) eller antall. */
@@ -63,6 +76,8 @@ export const DEFAULT_SETTINGS: Settings = {
   morningTime: '07:00',
   remindersEnabled: true,
   weekStart: null,
+  // Penger er på for alle til oppstarten (#9) lar nye brukere velge.
+  modules: { money: true, journal: false, health: false, recurring: false },
 };
 
 export const EMPTY_DATA: Data = {

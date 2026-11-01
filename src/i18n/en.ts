@@ -186,6 +186,9 @@ export const en: Strings = {
     monday: 'Monday',
     sunday: 'Sunday',
     currency: 'Main currency',
+    modules: 'Modules',
+    moneyModule: 'Money',
+    modulesHelp: 'Habits are always included. If you turn off Money, the tab is gone and purchases from Apple Pay come in without a notification. Nothing is deleted, and everything is there when you turn it back on.',
   },
 
   currency: {
@@ -401,6 +404,7 @@ export const en: Strings = {
       waiting: 'waiting',
       tapToPick: 'Tap to choose a category',
       add: 'Add purchase',
+      off: 'Money is turned off in Vane',
     },
   },
 };

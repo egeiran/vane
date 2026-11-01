@@ -6,11 +6,12 @@ import type { SFSymbol } from 'sf-symbols-typescript';
 import { Icon } from '@/components/Icon';
 import { IconButton, PrimaryButton, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
+import { moneyHome } from '@/lib/store';
 import { useTheme } from '@/theme';
 
 function close() {
   if (router.canGoBack()) router.back();
-  else router.replace('/money');
+  else router.replace(moneyHome());
 }
 
 /** Ikonene til stegene. Teksten står i `tr.moneySetup.steps`, i samme rekkefølge. */

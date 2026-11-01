@@ -31,15 +31,21 @@ struct LogPurchaseIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult {
+    // Er Penger slått av i appen, lagres kjøpet likevel, men uten varsel og uten tall i widgetene.
+    let moneyEnabled = PurchaseConfig.load().moneyEnabled
     // Før kjøpet legges i køen: kjører appen, synker den widgetene med riktig tall straks etterpå.
-    WaitingCount.adjust(by: 1)
+    if moneyEnabled {
+      WaitingCount.adjust(by: 1)
+    }
     let amountText = amount ?? ""
     let merchantText = merchant ?? ""
     let purchaseId = await AppIntentDispatcher.shared.dispatch(
       name: "logPurchase",
       params: ["amount": .string(amountText), "merchant": .string(merchantText)]
     )
-    await PurchaseNotifications.notify(purchaseId: purchaseId, amount: amountText, merchant: merchantText, at: Date())
+    if moneyEnabled {
+      await PurchaseNotifications.notify(purchaseId: purchaseId, amount: amountText, merchant: merchantText, at: Date())
+    }
     return .result()
   }
 }

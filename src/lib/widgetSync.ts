@@ -43,7 +43,9 @@ async function pull() {
  */
 function push() {
   const data = getData();
-  const waiting = pendingPurchases(getMoney()).length;
+  const moneyOn = data.settings.modules.money;
+  // Med Penger av viser «I dag» ikke merket for kjøp som venter.
+  const waiting = moneyOn ? pendingPurchases(getMoney()).length : 0;
   const now = new Date();
   const today = todayKey(now);
   const tomorrow = addDays(today, 1);
@@ -64,7 +66,7 @@ function push() {
     console.warn('[vane] Kunne ikke oppdatere låseskjerm-widgeten', e);
   }
   try {
-    PengerWidget.updateTimeline([{ date: now, props: buildPengerProps(waiting) }]);
+    PengerWidget.updateTimeline([{ date: now, props: buildPengerProps(waiting, moneyOn) }]);
   } catch (e) {
     console.warn('[vane] Kunne ikke oppdatere penger-widgeten', e);
   }

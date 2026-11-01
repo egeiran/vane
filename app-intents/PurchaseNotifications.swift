@@ -132,6 +132,13 @@ struct PurchaseConfig: Decodable {
   let merchants: [String: Merchant]
   /// Hovedvalutaen. Valgfri, så en config lagret av en eldre versjon av appen fortsatt kan leses.
   let currency: String?
+  /// Penger er slått på i appen. Valgfri som `currency`; mangler den, er Penger på.
+  let enabled: Bool?
+
+  /// Er Penger av, lagres kjøp fra Snarveier, men det kommer ikke noe varsel.
+  var moneyEnabled: Bool {
+    return enabled ?? true
+  }
 
   private static let key = "vane.purchaseConfig"
 
@@ -144,7 +151,7 @@ struct PurchaseConfig: Decodable {
       let data = json.data(using: .utf8),
       let config = try? JSONDecoder().decode(PurchaseConfig.self, from: data)
     else {
-      return PurchaseConfig(categories: [:], merchants: [:], currency: nil)
+      return PurchaseConfig(categories: [:], merchants: [:], currency: nil, enabled: nil)
     }
     return config
   }

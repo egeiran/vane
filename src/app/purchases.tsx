@@ -9,6 +9,7 @@ import { tr } from '@/i18n';
 import { relativeDayName, type DateKey } from '@/lib/dates';
 import { capitalize, categoryName, findPurchases, monthName, visibleCategories } from '@/lib/money';
 import { useMoneyData } from '@/lib/moneyStore';
+import { moneyHome } from '@/lib/store';
 import type { Purchase } from '@/lib/types';
 import { useToday } from '@/lib/useToday';
 import { useTheme } from '@/theme';
@@ -18,7 +19,7 @@ const PAGE = 60;
 
 function back() {
   if (router.canGoBack()) router.back();
-  else router.replace('/money');
+  else router.replace(moneyHome());
 }
 
 /** Alle kjøp, eller én måned (?month=YYYY-MM), med filter på kategori (?category=…) og søk. */

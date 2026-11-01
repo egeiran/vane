@@ -211,7 +211,7 @@ describe('widgetene på engelsk', () => {
     expect(buildTodayProps(data, '2026-10-17', noon).text.labelLeft).toBe('IGJEN I DAG');
     setLang('en');
     expect(buildTodayProps(data, '2026-10-17', noon).text.labelLeft).toBe('LEFT TODAY');
-    expect(buildPengerProps(2)).toEqual({ waiting: 2, text: stringsFor('en').widgets.money });
+    expect(buildPengerProps(2)).toEqual({ waiting: 2, enabled: true, text: stringsFor('en').widgets.money });
   });
 });
 

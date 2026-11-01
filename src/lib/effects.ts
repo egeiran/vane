@@ -50,6 +50,8 @@ export function useAppEffects() {
         return;
       scheduleSyncWidgets();
       scheduleNotificationSync();
+      // Penger slått av eller på: Swift skal vite om det skal sendes kjøpsvarsler.
+      if (state.settings.modules !== prev.settings.modules) syncPurchaseNative();
     });
 
     const unsubscribeMoney = useMoney.subscribe((state, prev) => {

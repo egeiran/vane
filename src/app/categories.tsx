@@ -7,11 +7,12 @@ import { Card, IconButton, PrimaryButton, tick } from '@/components/ui';
 import { tr } from '@/i18n';
 import { categoryName } from '@/lib/money';
 import { useMoney } from '@/lib/moneyStore';
+import { moneyHome } from '@/lib/store';
 import { useTheme } from '@/theme';
 
 function back() {
   if (router.canGoBack()) router.back();
-  else router.replace('/money');
+  else router.replace(moneyHome());
 }
 
 /** Kategoriene: rekkefølge, skjule og vise, og trykk for å endre navn, ikon og farge. */

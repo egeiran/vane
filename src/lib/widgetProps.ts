@@ -58,9 +58,9 @@ export function buildTodayProps(data: Data, day: DateKey, at: Date, waiting = 0)
   };
 }
 
-/** «Penger» på hjemskjermen: antall kjøp som venter, og teksten. */
-export function buildPengerProps(waiting: number): PengerWidgetProps {
-  return { waiting, text: { ...tr.widgets.money } };
+/** «Penger» på hjemskjermen: antall kjøp som venter, om Penger er slått på, og teksten. */
+export function buildPengerProps(waiting: number, enabled = true): PengerWidgetProps {
+  return { waiting: enabled ? waiting : 0, enabled, text: { ...tr.widgets.money } };
 }
 
 /** Hva låseskjermen viser på dagen `day`, sett fra tidspunktet `at`. Ringen viser daglige vaner gjort. */

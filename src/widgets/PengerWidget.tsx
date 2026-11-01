@@ -27,12 +27,23 @@ const PengerWidget = (props: PengerWidgetProps, environment: WidgetEnvironment) 
   const sub = dark ? '#A1A1A6' : '#6A6A6F';
   const waiting = props.waiting ?? 0;
   // Teksten kommer fra appen, på telefonens språk.
-  const T = props.text ?? { label: '', waiting: '', tapToPick: '', add: '' };
+  const T = props.text ?? { label: '', waiting: '', tapToPick: '', add: '', off: '' };
 
   const label = (
     <Text modifiers={[font({ size: 11, weight: 'bold' }), kerning(0.6), foregroundStyle(sub), lineLimit(1)]}>{T.label}</Text>
   );
   const base = [containerBackground(bg, 'widget'), frame({ maxWidth: Infinity, maxHeight: Infinity, alignment: 'topLeading' })];
+
+  // Penger er slått av i appen: si det, uten knapp. Trykk åpner appen.
+  if (props.enabled === false) {
+    return (
+      <VStack alignment="leading" spacing={4} modifiers={[...base, widgetURL('vane://')]}>
+        {label}
+        <Spacer />
+        <Text modifiers={[font({ size: 15, weight: 'semibold' }), foregroundStyle(sub), lineLimit(3)]}>{T.off}</Text>
+      </VStack>
+    );
+  }
 
   if (waiting > 0) {
     return (
@@ -61,5 +72,6 @@ const PengerWidget = (props: PengerWidgetProps, environment: WidgetEnvironment) 
 
 export default createWidget<PengerWidgetProps>('PengerWidget', PengerWidget, {
   waiting: 0,
-  text: { label: 'PENGER', waiting: 'kjøp venter', tapToPick: 'Trykk for å velge kategori', add: 'Legg inn kjøp' },
+  enabled: true,
+  text: { label: 'PENGER', waiting: 'kjøp venter', tapToPick: 'Trykk for å velge kategori', add: 'Legg inn kjøp', off: 'Penger er slått av i Vane' },
 });

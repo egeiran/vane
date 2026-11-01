@@ -5,7 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { DateKey } from './dates';
 import { kvStorage } from './kvStorage';
 import * as S from './state';
-import { DEFAULT_SETTINGS, EMPTY_DATA, type Data, type HabitInput, type Settings } from './types';
+import { EMPTY_DATA, type Data, type HabitInput, type Settings } from './types';
 
 type Actions = {
   addHabit: (input: HabitInput, today: DateKey) => string;
@@ -61,21 +61,16 @@ export const useStore = create<Store>()(
       version: 1,
       storage: createJSONStorage(() => kvStorage),
       partialize: (s) => pickData(s),
-      merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<Data>;
-        return {
-          ...current,
-          ...p,
-          goalsSkipped: p.goalsSkipped ?? {},
-          settings: { ...DEFAULT_SETTINGS, ...(p.settings ?? {}) },
-        };
-      },
+      merge: (persisted, current) => ({ ...current, ...S.loadData(persisted) }),
     }
   )
 );
 
 /** Nåværende data uten handlinger, til bruk utenfor React. */
 export const getData = (): Data => pickData(useStore.getState());
+
+/** Hvor en Penger-skjerm går når den lukkes og det ikke er noe å gå tilbake til. */
+export const moneyHome = () => (getData().settings.modules.money ? ('/money' as const) : ('/' as const));
 
 /** Alle data som et stabilt objekt (rendrer bare på nytt når noe faktisk endres). */
 export const useData = (): Data => useStore(useShallow(pickData));

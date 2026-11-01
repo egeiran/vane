@@ -383,15 +383,17 @@ export function findPurchases(data: MoneyData, filter: PurchaseFilter): Purchase
 
 /**
  * Det Swift-koden trenger for å lage varselet når et kjøp kommer inn, uten at appen kjører:
- * navnene på kategoriene som er i bruk, hva hvert sted heter og fikk sist, og hovedvalutaen.
+ * navnene på kategoriene som er i bruk, hva hvert sted heter og fikk sist, hovedvalutaen, og om
+ * Penger er slått på. Er Penger av, lagres kjøp fra Snarveier, men Swift sender ikke varsel.
  */
 export type NativePurchaseConfig = {
   categories: Record<string, string>;
   merchants: Record<string, { name?: string; categoryId?: string }>;
   currency: string;
+  enabled: boolean;
 };
 
-export function nativePurchaseConfig(data: MoneyData): NativePurchaseConfig {
+export function nativePurchaseConfig(data: MoneyData, enabled = true): NativePurchaseConfig {
   const categories = Object.fromEntries(visibleCategories(data).map((c) => [c.id, categoryName(c)]));
   const merchants: NativePurchaseConfig['merchants'] = {};
   for (const [key, m] of Object.entries(data.merchants)) {
@@ -400,5 +402,5 @@ export function nativePurchaseConfig(data: MoneyData): NativePurchaseConfig {
     if (m.categoryId && categories[m.categoryId]) entry.categoryId = m.categoryId;
     if (entry.name || entry.categoryId) merchants[key] = entry;
   }
-  return { categories, merchants, currency: mainCurrency(data) };
+  return { categories, merchants, currency: mainCurrency(data), enabled };
 }

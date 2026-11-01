@@ -101,29 +101,39 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.section}>
-        <SectionLabel>{tr.settings.money}</SectionLabel>
+        <SectionLabel>{tr.settings.modules}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
-          <Pressable onPress={() => router.push('/categories')} accessibilityRole="button">
-            <Row first>
-              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.categories}</Text>
-              <Icon name="chevron.right" size={14} color={t.sub} />
-            </Row>
-          </Pressable>
-          <Pressable onPress={() => router.push('/currency')} accessibilityRole="button" accessibilityLabel={`${tr.settings.currency}: ${currency}`}>
-            <Row>
-              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.currency}</Text>
-              <Text style={{ fontSize: 16, color: t.sub }}>{currency}</Text>
-              <Icon name="chevron.right" size={14} color={t.sub} />
-            </Row>
-          </Pressable>
-          <Pressable onPress={() => router.push('/money-setup')} accessibilityRole="button">
-            <Row>
-              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.applePay}</Text>
-              <Icon name="chevron.right" size={14} color={t.sub} />
-            </Row>
-          </Pressable>
+          <SwitchRow first label={tr.settings.moneyModule} value={settings.modules.money} onChange={(money) => update({ modules: { ...settings.modules, money } })} />
         </Card>
+        <Text style={[styles.footnote, { color: t.sub }]}>{tr.settings.modulesHelp}</Text>
       </View>
+
+      {settings.modules.money ? (
+        <View style={styles.section}>
+          <SectionLabel>{tr.settings.money}</SectionLabel>
+          <Card style={{ overflow: 'hidden' }}>
+            <Pressable onPress={() => router.push('/categories')} accessibilityRole="button">
+              <Row first>
+                <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.categories}</Text>
+                <Icon name="chevron.right" size={14} color={t.sub} />
+              </Row>
+            </Pressable>
+            <Pressable onPress={() => router.push('/currency')} accessibilityRole="button" accessibilityLabel={`${tr.settings.currency}: ${currency}`}>
+              <Row>
+                <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.currency}</Text>
+                <Text style={{ fontSize: 16, color: t.sub }}>{currency}</Text>
+                <Icon name="chevron.right" size={14} color={t.sub} />
+              </Row>
+            </Pressable>
+            <Pressable onPress={() => router.push('/money-setup')} accessibilityRole="button">
+              <Row>
+                <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.applePay}</Text>
+                <Icon name="chevron.right" size={14} color={t.sub} />
+              </Row>
+            </Pressable>
+          </Card>
+        </View>
+      ) : null}
 
       <View style={styles.section}>
         <Card style={{ overflow: 'hidden' }}>

@@ -199,6 +199,9 @@ export const nb = {
     monday: 'Mandag',
     sunday: 'Søndag',
     currency: 'Hovedvaluta',
+    modules: 'Moduler',
+    moneyModule: 'Penger',
+    modulesHelp: 'Vanene er alltid med. Slår du av Penger, er fanen borte og kjøp fra Apple Pay kommer uten varsel. Ingenting slettes, og alt er der når du slår den på igjen.',
   },
 
   currency: {
@@ -423,6 +426,7 @@ export const nb = {
       waiting: 'kjøp venter',
       tapToPick: 'Trykk for å velge kategori',
       add: 'Legg inn kjøp',
+      off: 'Penger er slått av i Vane',
     },
   },
 };
