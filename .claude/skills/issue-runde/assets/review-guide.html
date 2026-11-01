@@ -1,0 +1,357 @@
+<title>TEMA før og etter</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<!--
+  Mal for review-guiden i en issue-runde i Vane (se references/review-guide.md).
+  Erstatt alt i STORE BOKSTAVER og alle HTML-kommentarer med innhold, og fjern
+  det som ikke brukes. Eksempelseksjonen (#000) viser alle delene.
+-->
+<style>
+/* Layout: én lesekolonne. Hvert issue er en seksjon med «Hva du bør sjekke»,
+   bildepar man bytter mellom Før og Etter, og tabeller Før | Etter.
+   Paletten er Vanes egen (src/theme.ts): lys først, mørk som valg. Salvie er
+   «etter», rose er «før», sand er «forventet». Skriften er systemfonten, som i appen. */
+:root {
+  --bg: #F6F6F3;
+  --surface: #FFFFFF;
+  --surface-2: #F2F2EE;
+  --border: #DCDCD7;
+  --hair: #ECECE8;
+  --text: #1C1C1E;
+  --text-2: #45454A;
+  --muted: #6A6A6F;
+  --faint: #A3A3A7;
+  --accent: #2A4D70;
+  --active: #5F8DB8;
+  --ok: #6F9A68;
+  --ok-ink: #35552F;
+  --ok-soft: #E3ECDF;
+  --before: #C27383;
+  --before-ink: #7A2E3E;
+  --before-soft: #F3E1E4;
+  --warn: #AE9142;
+  --warn-ink: #5E4C14;
+  --warn-soft: #F1EAD3;
+  --inverse: #1C1C1E;
+  --on-inverse: #FFFFFF;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Figtree', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111112; --surface: #1C1C1E; --surface-2: #2A2A2D; --border: #3A3A3D; --hair: #2C2C2F;
+    --text: #F2F2F0; --text-2: #D0D0CE; --muted: #A1A1A6; --faint: #6A6A6F; --accent: #B3CBE3;
+    --active: #6F9BC6; --ok: #7FAA78; --ok-ink: #B9D3B3; --ok-soft: #243022; --before: #CC8190;
+    --before-ink: #E9BCC6; --before-soft: #36222A; --warn: #BCA052; --warn-ink: #E0D09E;
+    --warn-soft: #332D1A; --inverse: #F2F2F0; --on-inverse: #111112; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111112; --surface: #1C1C1E; --surface-2: #2A2A2D; --border: #3A3A3D; --hair: #2C2C2F;
+  --text: #F2F2F0; --text-2: #D0D0CE; --muted: #A1A1A6; --faint: #6A6A6F; --accent: #B3CBE3;
+  --active: #6F9BC6; --ok: #7FAA78; --ok-ink: #B9D3B3; --ok-soft: #243022; --before: #CC8190;
+  --before-ink: #E9BCC6; --before-soft: #36222A; --warn: #BCA052; --warn-ink: #E0D09E;
+  --warn-soft: #332D1A; --inverse: #F2F2F0; --on-inverse: #111112; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-ui); font-size: 15px; line-height: 1.55; }
+.wrap {
+  max-width: 920px; margin: 0 auto; padding-block: 36px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px;
+}
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
+code { font-family: var(--font-mono); font-size: 0.85em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+h1, h2 { font-weight: 800; letter-spacing: -0.02em; line-height: 1.08; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(38px, 7vw, 56px); }
+h2 { font-size: clamp(26px, 4.2vw, 34px); }
+h3 { font-size: 15px; font-weight: 700; margin: 0; }
+.lead { color: var(--text-2); max-width: 64ch; margin: 0; font-size: 16px; }
+.head { display: grid; gap: 14px; }
+.stamp { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* Status: hver rad ser ut som en vane i appen, med sirkelen til venstre. */
+.issues { display: grid; gap: 8px; }
+.issue { display: grid; grid-template-columns: 28px 56px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 16px; border-radius: 16px; background: var(--surface); }
+.issue .dot { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--faint); display: grid; place-items: center; }
+.issue .dot svg { width: 14px; height: 14px; }
+.issue.is-merged .dot { background: var(--ok); border-color: var(--ok); color: var(--on-inverse); }
+.issue.is-active .dot, .issue.is-pr .dot { border-color: var(--active); border-right-color: transparent; }
+.issue.is-parked .dot { border-color: var(--warn); border-style: dashed; }
+.issue .num { font-family: var(--font-mono); color: var(--muted); font-size: 13px; }
+.issue .name { min-width: 0; font-weight: 600; }
+.issue a.name { color: var(--text); text-decoration: none; }
+.issue a.name:hover { text-decoration: underline; }
+.pill { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; text-decoration: none; background: var(--surface-2); color: var(--muted); }
+.pill.is-active, .pill.is-pr { color: var(--accent); }
+.pill.is-merged { background: var(--ok-soft); color: var(--ok-ink); }
+.pill.is-parked { background: var(--warn-soft); color: var(--warn-ink); }
+
+.review { border-radius: 16px; background: var(--surface); padding: 16px 18px; display: grid; gap: 8px; }
+.review h3 { color: var(--text); font-size: 14px; }
+.review ul, .review ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--text-2); font-size: 14px; }
+.review li strong { color: var(--text); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; }
+.fact { border-radius: 16px; background: var(--surface); padding: 12px 16px; }
+.fact .k { font-size: 12px; color: var(--muted); font-weight: 600; }
+.fact .v { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+section.change { display: grid; gap: 20px; }
+.change-head { display: grid; gap: 8px; }
+.links { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; color: var(--muted); }
+
+.compare { overflow-x: auto; border-radius: 16px; background: var(--surface); }
+.compare table { width: 100%; border-collapse: collapse; min-width: 620px; }
+.compare th, .compare td { text-align: left; vertical-align: top; padding: 12px 14px; border-bottom: 1px solid var(--hair); }
+.compare tr:last-child td { border-bottom: 0; }
+.compare thead th { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.compare thead th.before { color: var(--before-ink); }
+.compare thead th.after { color: var(--ok-ink); }
+.compare thead th.expected { color: var(--warn-ink); }
+.compare td.expected { color: var(--text-2); width: 39%; }
+.compare td:first-child { font-weight: 600; width: 22%; }
+.compare td.before { color: var(--text-2); width: 39%; }
+.compare td.after { width: 39%; }
+.compare.is-numbers td.before, .compare.is-numbers td.after { font-family: var(--font-mono); font-variant-numeric: tabular-nums; width: auto; }
+.compare.is-numbers td:first-child { width: auto; }
+.gain { color: var(--ok-ink); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* Et bildepar: én ramme, og knapper som bytter mellom Før og Etter. */
+.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 20px; }
+.shots.is-phone { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
+figure.pair { margin: 0; display: grid; gap: 10px; min-width: 0; align-content: start; }
+.pair-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.pair-bar h3 { min-width: 0; }
+.flip { display: inline-flex; background: var(--surface-2); border-radius: 9px; padding: 2px; }
+.flip button { font: 600 13px var(--font-ui); padding: 5px 12px; border: 0; border-radius: 7px; cursor: pointer; background: transparent; color: var(--muted); }
+.flip button[aria-pressed="true"][data-side="before"] { background: var(--before-soft); color: var(--before-ink); }
+.flip button[aria-pressed="true"][data-side="after"] { background: var(--ok-soft); color: var(--ok-ink); }
+.frame { display: grid; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface); }
+.shots.is-phone .frame { border-radius: 28px; max-width: 320px; }
+.frame img { grid-area: 1 / 1; width: 100%; height: auto; display: block; }
+.frame img[hidden] { display: none; }
+figcaption { font-size: 13.5px; color: var(--text-2); }
+figcaption b { color: var(--text); }
+
+.note { color: var(--muted); font-size: 14px; max-width: 72ch; margin: 0; }
+.how { border-radius: 16px; padding: 16px 18px; background: var(--surface); display: grid; gap: 8px; color: var(--text-2); font-size: 14px; }
+.how strong { color: var(--text); }
+.steps { margin: 0; padding-left: 22px; display: grid; gap: 8px; color: var(--text-2); font-size: 14px; }
+.steps li::marker { color: var(--muted); font-family: var(--font-mono); }
+.steps .expect { display: block; color: var(--text); }
+.checks { display: flex; flex-wrap: wrap; gap: 8px; }
+.check { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--ok-soft); color: var(--ok-ink); font-weight: 600; }
+.check b { margin-right: 6px; }
+.ask { padding: 14px 18px; background: var(--warn-soft); color: var(--text-2); font-size: 14px; border-radius: 16px; display: grid; gap: 6px; }
+.ask strong { color: var(--warn-ink); }
+.ask ul, .ask ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--hair); padding-top: 16px; }
+
+@media (max-width: 560px) {
+  .issue { grid-template-columns: 28px minmax(0, 1fr); row-gap: 4px; }
+  .issue .num { grid-column: 2; }
+  .issue .name, .issue .pill { grid-column: 2; justify-self: start; }
+  /* Teksttabeller brytes på telefon i stedet for å rulle sidelengs.
+     Talltabeller beholder bredden og ruller i sin egen boks. */
+  .compare:not(.is-numbers) table { min-width: 0; }
+  .compare:not(.is-numbers) th, .compare:not(.is-numbers) td { padding: 10px; }
+  .compare:not(.is-numbers) td:first-child { width: auto; }
+}
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <div class="eyebrow">Vane · BRANCH → main</div>
+    <h1>TEMA</h1>
+    <p class="lead">Review-guide for runden <code>BRANCH</code>: N issues, hvert som én commit. Hver seksjon har hva som er endret, hva du bør sjekke, og før og etter. Trykk «Før» og «Etter» på bildene for å bytte.</p>
+    <div class="stamp">Sist oppdatert DATO · STATUS (for eksempel «2 av 3 issues merget»)</div>
+    <!-- Slik går runden: samme punkter som i planen, kort. -->
+    <div class="how">
+      <strong>Slik går runden</strong>
+      <div>Hvert issue får en egen branch fra <code>BRANCH</code>. Det testes, reviewes av en egen agent og squash-merges til én commit når sjekkene er grønne. Til slutt går <code>BRANCH</code> til main i én PR, som du merger selv med merge commit. Ingenting bygges, sendes som OTA eller legges i App Store Connect.</div>
+    </div>
+  </header>
+
+  <!-- PR-en til main. Fylles når runden er ferdig. Til da: fjern seksjonen. -->
+  <section class="change" aria-labelledby="pr-h">
+    <div class="change-head">
+      <div class="eyebrow">Klar til review</div>
+      <h2 id="pr-h">PR #NNN til main</h2>
+      <div class="links"><a href="https://github.com/egeiran/vane/pull/NNN">PR #NNN: BRANCH → main</a></div>
+    </div>
+    <div class="facts">
+      <div class="fact"><div class="k">Issues</div><div class="v">N</div></div>
+      <div class="fact"><div class="k">Tester</div><div class="v">N</div></div>
+      <div class="fact"><div class="k">Nye tester</div><div class="v">N</div></div>
+      <div class="fact"><div class="k">Swift-filer endret</div><div class="v">N</div></div>
+    </div>
+    <div class="ask">
+      <strong>Før merge</strong>
+      <ol>
+        <li><!-- Har runden Swift, app.json eller nye native pakker: «Bygg til iPhone» fra branchen, og testene på telefon. --></li>
+        <li><strong>Merge med «Create a merge commit»</strong>, ikke squash, så <code>main</code> beholder én commit per issue.</li>
+      </ol>
+      <strong>Etter merge</strong>
+      <ol>
+        <li><!-- Nytt bygg til TestFlight eller OTA, avhengig av hva runden endret. --></li>
+      </ol>
+    </div>
+    <div class="review">
+      <h3>Tre ting å se særlig på</h3>
+      <ol>
+        <li><strong>KORT:</strong> HVORFOR DET ER VERDT Å SE PÅ.</li>
+      </ol>
+    </div>
+    <div class="review">
+      <h3>Må testes på telefon</h3>
+      <ul>
+        <li><strong>HVA:</strong> HVORDAN, OG HVA SOM ER RIKTIG.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="change" aria-labelledby="status-h">
+    <div class="change-head">
+      <div class="eyebrow">Status</div>
+      <h2 id="status-h">N issues</h2>
+    </div>
+    <div class="issues" role="list">
+      <!-- Én rad per issue. Klassen på raden og pillen: is-wait «Venter», is-active «Pågår»,
+           is-pr «Del-PR #N», is-merged «Merget · sha», is-parked «Parkert». Merget får haken. -->
+      <div class="issue is-merged" role="listitem"><span class="dot" aria-hidden="true"><svg viewBox="0 0 14 14" fill="none"><path d="M3 7.5l2.6 2.5L11 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="num">#000</span><a class="name" href="#i000">KORT NAVN PÅ ISSUET</a><a class="pill is-merged" href="https://github.com/egeiran/vane/commit/SHA">Merget · SHA</a></div>
+      <div class="issue is-wait" role="listitem"><span class="dot" aria-hidden="true"></span><span class="num">#001</span><a class="name" href="#i001">KORT NAVN PÅ ISSUET</a><span class="pill is-wait">Venter</span></div>
+    </div>
+    <div class="how">
+      <div><strong>Slik er bildene laget.</strong> Appen kjører i nettleseren (Expo web) i iPhone-bredde, med de faste testdataene fra skillen og «i dag» satt til DATO. «Før» er integrasjonsbranchen før issuet, og «Etter» er issuet merget inn. Nettleseren er ikke iOS: fanelinja og widgetene ser annerledes ut. HVA SOM IKKE KUNNE VISES HER, OG HVORFOR.</div>
+    </div>
+  </section>
+
+  <!-- Én seksjon per issue. Eksempelet viser alle delene; bruk dem som viser endringen best. -->
+  <section class="change" id="i000" aria-labelledby="i000-h">
+    <div class="change-head">
+      <div class="eyebrow">#000 · Merget i TEMA</div>
+      <h2 id="i000-h">HVA SOM ER ANNERLEDES NÅ</h2>
+      <div class="links">
+        <a href="https://github.com/egeiran/vane/issues/000">Issue #000</a>
+        <a href="https://github.com/egeiran/vane/commit/SHA">Commit SHA</a>
+      </div>
+    </div>
+
+    <div class="review">
+      <h3>Hva du bør sjekke</h3>
+      <ul>
+        <li><code>FIL</code>: REGELEN, OG HVORFOR DEN ER SLIK.</li>
+      </ul>
+    </div>
+
+    <!-- Bildepar i telefonformat. Bildet som vises først er «Etter» (hidden på «Før»). -->
+    <div class="shots is-phone">
+      <figure class="pair">
+        <div class="pair-bar"><h3>SKJERM</h3><span class="flip" role="group" aria-label="Vis før eller etter"><button type="button" data-side="before" aria-pressed="false">Før</button><button type="button" data-side="after" aria-pressed="true">Etter</button></span></div>
+        <div class="frame"><img src="img/000-before-today.png" alt="Før: HVA SOM STÅR PÅ SKJERMEN" width="780" height="1688" loading="lazy" hidden><img src="img/000-after-today.png" alt="Etter: HVA SOM STÅR PÅ SKJERMEN" width="780" height="1688" loading="lazy"></div>
+        <figcaption><b>Før:</b> DET SOM VAR GALT. <b>Etter:</b> DET MAN SKAL SE ETTER.</figcaption>
+      </figure>
+    </div>
+
+    <div class="compare">
+      <table>
+        <thead><tr><th scope="col">Hva</th><th scope="col" class="before">Før</th><th scope="col" class="after">Etter</th></tr></thead>
+        <tbody>
+          <tr><td>HVOR ELLER HVA</td><td class="before">FØR</td><td class="after">ETTER</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="compare is-numbers">
+      <table>
+        <thead><tr><th scope="col">INNDATA, OG HVOR DE KOMMER FRA</th><th scope="col" class="before">Før</th><th scope="col" class="after">Etter</th></tr></thead>
+        <tbody>
+          <tr><td>«$12.50»</td><td class="before">1250 NOK</td><td class="after">1250 USD</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Når før og etter ikke kan vises: en konkret testmåte. -->
+    <div class="how">
+      <strong>Slik tester du</strong>
+      <ol class="steps">
+        <li>HVA DU GJØR, OG HVOR. <span class="expect">Riktig: HVA DU SKAL SE.</span></li>
+      </ol>
+    </div>
+
+    <div class="checks"><span class="check"><b>✓</b>N tester (M nye)</span><span class="check"><b>✓</b>Typecheck</span><span class="check"><b>✓</b>Lint</span><span class="check"><b>✓</b>Prebuild</span></div>
+
+    <div class="ask"><strong>Må testes på telefon:</strong> HVA, HVORDAN, OG HVA SOM ER RIKTIG RESULTAT.</div>
+  </section>
+
+  <!-- Et issue som ikke er tatt ennå. Første utgave av guiden har én slik per
+       issue. «Forventet» er en prognose og blir «Etter» først når det er sett. -->
+  <section class="change" id="i001" aria-labelledby="i001-h">
+    <div class="change-head">
+      <div class="eyebrow">#001 · Planlagt</div>
+      <h2 id="i001-h">HVA SOM SKAL BLI ANNERLEDES</h2>
+      <div class="links"><a href="https://github.com/egeiran/vane/issues/001">Issue #001</a></div>
+    </div>
+    <p class="note">HVA SOM SKAL GJØRES, I 1–2 SETNINGER.</p>
+    <div class="review">
+      <h3>Hva du bør sjekke</h3>
+      <ul>
+        <li><code>FIL</code>: REGELEN DET KOMMER TIL Å HANDLE OM.</li>
+      </ul>
+    </div>
+    <div class="compare">
+      <table>
+        <thead><tr><th scope="col">Hva</th><th scope="col" class="before">I dag</th><th scope="col" class="expected">Forventet</th></tr></thead>
+        <tbody>
+          <tr><td>HVOR ELLER HVA</td><td class="before">DET ISSUET OG KODEN SIER</td><td class="expected">DET SOM SKAL SKJE</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="how">
+      <strong>Slik bevises det</strong>
+      <ol class="steps">
+        <li>BILDER, TALL ELLER TESTER SOM KOMMER.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="change" aria-labelledby="ikke-med-h">
+    <div class="change-head">
+      <div class="eyebrow">Ikke med i runden</div>
+      <h2 id="ikke-med-h">Valgt bort</h2>
+    </div>
+    <div class="compare">
+      <table>
+        <thead><tr><th scope="col">Issue</th><th scope="col">Hvorfor</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://github.com/egeiran/vane/issues/002">#002</a> KORT NAVN</td><td>GRUNNEN, I ÉN SETNING.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>Issuene #… i egeiran/vane. Hvert issue er én commit i <code>BRANCH</code>, som går til main i PR #NNN med merge commit.</footer>
+</div>
+
+<script>
+  // Bytt hvert bildepar mellom Før og Etter.
+  document.querySelectorAll('figure.pair').forEach((fig) => {
+    const imgs = fig.querySelectorAll('.frame img');
+    const buttons = fig.querySelectorAll('.flip button');
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const before = button.dataset.side === 'before';
+        imgs[0].hidden = !before;
+        imgs[1].hidden = before;
+        buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+      });
+    });
+  });
+</script>
