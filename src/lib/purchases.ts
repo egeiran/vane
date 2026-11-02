@@ -5,7 +5,9 @@ import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 
-import { isPending, nativePurchaseConfig, visibleCategories } from './money';
+import { tr } from '@/i18n';
+
+import { categoryName, isPending, nativePurchaseConfig, visibleCategories } from './money';
 import { getMoney, useMoney } from './moneyStore';
 import {
   ACTION_APPROVE,
@@ -20,6 +22,7 @@ import {
   readNotificationData,
   suggestedCategoryOf,
 } from './purchaseIntents';
+import { getData } from './store';
 import type { MoneyData } from './types';
 
 /**
@@ -34,20 +37,46 @@ type SetupModule = { setPurchaseConfig(json: string): void };
 const setup = supported ? requireOptionalNativeModule<SetupModule>('AppIntentsSetup') : null;
 
 let registered = '';
+const OFF = 'off';
 
-/** Knappene i kjøpsvarslene. Én varselkategori per kategori, så forslaget kan stå på knappen. */
+const moneyOn = () => getData().settings.modules.money;
+
+/**
+ * Penger er slått av: fjern kjøpsvarsler som ligger framme, og knappene iOS har lagret for dem,
+ * så gamle varsler ikke åpner Penger. Kjøpene ligger der fortsatt.
+ */
+async function clearPurchaseNotifications() {
+  const presented = await Notifications.getPresentedNotificationsAsync();
+  for (const n of presented) {
+    if (n.request.identifier.startsWith('purchase:')) await Notifications.dismissNotificationAsync(n.request.identifier);
+  }
+  await Notifications.deleteNotificationCategoryAsync(NOTIFICATION_NEW);
+  for (const c of getMoney().categories) await Notifications.deleteNotificationCategoryAsync(NOTIFICATION_SUGGEST + c.id);
+}
+
+/**
+ * Knappene i kjøpsvarslene. Én varselkategori per kategori, så forslaget kan stå på knappen.
+ * Med Penger av registreres ingenting, og Swift sender ingen kjøpsvarsler.
+ */
 async function registerNotificationCategories() {
+  if (!moneyOn()) {
+    if (registered !== OFF) {
+      registered = OFF;
+      await clearPurchaseNotifications();
+    }
+    return;
+  }
   const categories = visibleCategories(getMoney());
-  const signature = categories.map((c) => `${c.id}=${c.name}`).join('|');
+  const signature = categories.map((c) => `${c.id}=${categoryName(c)}`).join('|');
   if (signature === registered) return;
   registered = signature;
   const pick = (buttonTitle: string) => ({ identifier: ACTION_PICK, buttonTitle, options: { opensAppToForeground: true } });
-  const later = { identifier: ACTION_LATER, buttonTitle: 'Senere', options: { opensAppToForeground: false } };
-  await Notifications.setNotificationCategoryAsync(NOTIFICATION_NEW, [pick('Velg kategori …'), later]);
+  const later = { identifier: ACTION_LATER, buttonTitle: tr.notifications.later, options: { opensAppToForeground: false } };
+  await Notifications.setNotificationCategoryAsync(NOTIFICATION_NEW, [pick(tr.notifications.pickCategory), later]);
   for (const c of categories) {
     await Notifications.setNotificationCategoryAsync(NOTIFICATION_SUGGEST + c.id, [
-      { identifier: ACTION_APPROVE, buttonTitle: `${c.name} ✓`, options: { opensAppToForeground: false } },
-      pick('Annen kategori …'),
+      { identifier: ACTION_APPROVE, buttonTitle: tr.notifications.approve(categoryName(c)), options: { opensAppToForeground: false } },
+      pick(tr.notifications.otherCategory),
       later,
     ]);
   }
@@ -58,7 +87,7 @@ let sentConfig = '';
 /** Sender kategoriene og stedene til Swift, og registrerer knappene på nytt når de endres. */
 export function syncPurchaseNative() {
   if (!supported) return;
-  const json = JSON.stringify(nativePurchaseConfig(getMoney()));
+  const json = JSON.stringify(nativePurchaseConfig(getMoney(), moneyOn()));
   if (setup && json !== sentConfig) {
     try {
       setup.setPurchaseConfig(json);
@@ -108,7 +137,8 @@ export function handlePurchaseResponse(r: Notifications.NotificationResponse): b
     // Swift har lagt det samme i køen. Det gjør ikke noe om begge kommer fram.
     const categoryId = suggestedCategoryOf(content.categoryIdentifier);
     if (categoryId) apply((d) => approveFromNotification(d, n.purchaseId, categoryId));
-  } else if (r.actionIdentifier === ACTION_PICK || r.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER) {
+  } else if ((r.actionIdentifier === ACTION_PICK || r.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER) && moneyOn()) {
+    // Med Penger av tas kjøpet inn, men Penger åpnes ikke.
     openPurchase(n.purchaseId);
   }
   return true;

@@ -3,7 +3,6 @@ import { useColorScheme } from 'react-native';
 import type { ColorKey } from './lib/types';
 
 export type HabitColor = {
-  label: string;
   /** Fylt rute / avhuket sirkel (≥3:1 mot hvitt). */
   solid: string;
   /** Svak bakgrunn for rader som er gjort. */
@@ -13,23 +12,23 @@ export type HabitColor = {
 };
 
 const LIGHT_COLORS: Record<ColorKey, HabitColor> = {
-  salvie: { label: 'Salvie', solid: '#6F9A68', soft: '#E3ECDF', ink: '#35552F' },
-  himmel: { label: 'Himmel', solid: '#5F8DB8', soft: '#DFE8F1', ink: '#2A4D70' },
-  lavendel: { label: 'Lavendel', solid: '#8B7BBE', soft: '#E8E3F2', ink: '#4B3C7D' },
-  fersken: { label: 'Fersken', solid: '#C7835A', soft: '#F5E4D8', ink: '#7A3F1C' },
-  sand: { label: 'Sand', solid: '#AE9142', soft: '#F1EAD3', ink: '#5E4C14' },
-  rose: { label: 'Rose', solid: '#C27383', soft: '#F3E1E4', ink: '#7A2E3E' },
-  skifer: { label: 'Skifer', solid: '#7D8590', soft: '#E6E8EB', ink: '#3A4049' },
+  salvie: { solid: '#6F9A68', soft: '#E3ECDF', ink: '#35552F' },
+  himmel: { solid: '#5F8DB8', soft: '#DFE8F1', ink: '#2A4D70' },
+  lavendel: { solid: '#8B7BBE', soft: '#E8E3F2', ink: '#4B3C7D' },
+  fersken: { solid: '#C7835A', soft: '#F5E4D8', ink: '#7A3F1C' },
+  sand: { solid: '#AE9142', soft: '#F1EAD3', ink: '#5E4C14' },
+  rose: { solid: '#C27383', soft: '#F3E1E4', ink: '#7A2E3E' },
+  skifer: { solid: '#7D8590', soft: '#E6E8EB', ink: '#3A4049' },
 };
 
 const DARK_COLORS: Record<ColorKey, HabitColor> = {
-  salvie: { label: 'Salvie', solid: '#7FAA78', soft: '#243022', ink: '#B9D3B3' },
-  himmel: { label: 'Himmel', solid: '#6F9BC6', soft: '#1F2A36', ink: '#B3CBE3' },
-  lavendel: { label: 'Lavendel', solid: '#9A8BCB', soft: '#2A2538', ink: '#CDC3EA' },
-  fersken: { label: 'Fersken', solid: '#D08F67', soft: '#36261C', ink: '#EBC3A8' },
-  sand: { label: 'Sand', solid: '#BCA052', soft: '#332D1A', ink: '#E0D09E' },
-  rose: { label: 'Rose', solid: '#CC8190', soft: '#36222A', ink: '#E9BCC6' },
-  skifer: { label: 'Skifer', solid: '#8E96A1', soft: '#262A30', ink: '#C3C9D1' },
+  salvie: { solid: '#7FAA78', soft: '#243022', ink: '#B9D3B3' },
+  himmel: { solid: '#6F9BC6', soft: '#1F2A36', ink: '#B3CBE3' },
+  lavendel: { solid: '#9A8BCB', soft: '#2A2538', ink: '#CDC3EA' },
+  fersken: { solid: '#D08F67', soft: '#36261C', ink: '#EBC3A8' },
+  sand: { solid: '#BCA052', soft: '#332D1A', ink: '#E0D09E' },
+  rose: { solid: '#CC8190', soft: '#36222A', ink: '#E9BCC6' },
+  skifer: { solid: '#8E96A1', soft: '#262A30', ink: '#C3C9D1' },
 };
 
 /** Fargene en vane kan få. */

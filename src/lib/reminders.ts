@@ -1,5 +1,8 @@
+import { tr } from '@/i18n';
+
 import { addDays, atTime, todayKey, type DateKey } from './dates';
 import { isDone, isScheduled, isWeekly, valueOn, weekCount, weeklyTarget } from './habits';
+import { weekStartOf } from './region';
 import type { Data, Habit } from './types';
 
 export const CATEGORY_CHECK = 'habit-check';
@@ -22,16 +25,21 @@ export type PlannedReminder = {
   data: { kind: 'habit'; habitId: string; day: DateKey };
 };
 
+/** Morgenvarselet. Teksten leses når varselet legges inn, på språket appen har da. */
 export const MORNING = {
   id: 'morning',
-  title: 'God morgen',
-  body: 'Hva vil du få til i dag?',
-} as const;
+  get title() {
+    return tr.notifications.morningTitle;
+  },
+  get body() {
+    return tr.notifications.morningBody;
+  },
+};
 
 function bodyFor(data: Data, h: Habit, day: DateKey): string {
-  if (isWeekly(h)) return `${weekCount(data, h, day)} av ${weeklyTarget(h)} denne uka.`;
-  if (h.type === 'count') return `Målet i dag er ${h.target} ${h.unit || 'ganger'}.`;
-  return 'Har du fått gjort det i dag?';
+  if (isWeekly(h)) return tr.notifications.weeklyBody(weekCount(data, h, day, weekStartOf(data.settings)), weeklyTarget(h));
+  if (h.type === 'count') return tr.notifications.countBody(h.target, h.unit || tr.habits.defaultUnit);
+  return tr.notifications.checkBody;
 }
 
 /**
@@ -49,7 +57,7 @@ export function planReminders(data: Data, now: Date = new Date()): PlannedRemind
       const date = atTime(day, h.reminder);
       if (date.getTime() <= now.getTime()) continue;
       if (isDone(h, valueOn(data, h.id, day))) continue;
-      if (isWeekly(h) && weekCount(data, h, day) >= weeklyTarget(h)) continue;
+      if (isWeekly(h) && weekCount(data, h, day, weekStartOf(data.settings)) >= weeklyTarget(h)) continue;
       out.push({
         id: `habit:${h.id}:${day}`,
         date,

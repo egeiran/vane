@@ -9,7 +9,10 @@ Små vaner, i ro og mak. En rolig vaneapp for iPhone, uten streaks, poeng eller 
 - **Påminnelser**: per vane, med knappene *Gjort*, *+1* og *Om 1 time* rett i varselet. Kommer ikke hvis vanen allerede er gjort.
 - **Widgets**: «I dag» på hjemskjermen viser én ting om gangen med én knapp: om morgenen «Hva vil du få til i dag?», så første uferdige mål, så neste vane. Huk av rett fra widgeten. «Vane» på låseskjermen viser en ring med vanene som er gjort, og det viktigste akkurat nå ved siden av. Uten mål spør begge fram til kl. 12. Svarer du «Ikke i dag», spør de ikke mer den dagen.
 - **Penger**: hver gang du betaler med Apple Pay, kommer et varsel som spør om kategori. Kjenner Vane stedet, foreslår den kategorien du valgte sist, og du godkjenner med ett trykk uten å åpne appen. Kjøp som ikke er godkjent, ligger under *Venter* (med tall på fanen) til du tar dem. Del opp et kjøp, skriv et notat, eller la et kjøp ikke telle med. Månedens sum per kategori, de siste seks månedene, og alle kjøp med søk. Vipps, kontanter og nettkjøp legger du inn med +. Sju faste kategorier som kan få nytt navn, ikon og farge, skjules og flyttes, og du kan legge til egne. Ingen budsjett og ingen rødfarge.
+- **Moduler**: Penger kan slås av under Innstillinger → Moduler. Da er fanen borte, og kjøp fra Apple Pay lagres uten varsel. Ingenting slettes.
 - **Penger-widget**: «Penger» på hjemskjermen viser hvor mange kjøp som venter, eller er en knapp for å legge inn et kjøp. «I dag» får et lite merke i hjørnet når noe venter.
+- **Norsk og engelsk**: appen, widgetene, varslene og Snarveier-handlingen følger språket på telefonen.
+- **Valuta, ukestart og klokke**: følger telefonen. Hovedvaluta og om uka starter på mandag eller søndag kan endres i Innstillinger. Bare hovedvalutaen telles i summene.
 - Ingen konto, ingen server. Alt lagres lokalt på telefonen.
 
 ## Kjøp fra Apple Pay
@@ -81,20 +84,26 @@ npm run typecheck
 npm run lint
 ```
 
+Appen kan også kjøres i nettleseren (`npx expo start --web`), bare for skjermbilder og testing. Vane er ikke en web-app: widgetene finnes ikke der, fanelinja ser annerledes ut, og dataene ligger i `localStorage` i stedet for SQLite (`src/lib/kvStorage.web.ts`).
+
 | Mappe            | Innhold                                                                 |
 | ---------------- | ----------------------------------------------------------------------- |
 | `src/app`        | Skjermene (Expo Router). `(tabs)` er I dag, Oversikt, Penger og Innstillinger. |
 | `src/components` | Byggeklosser: vanerader, ukestripe, målkort, rutenett, kjøpsrader.             |
 | `src/lib`        | Datoer, vanelogikk, penger, lagring, varsler og widget-synk.                   |
+| `src/i18n`       | All tekst, på norsk (`nb.ts`) og engelsk (`en.ts`).                            |
+| `locales`        | Tekst iOS viser utenfor appen: Snarveier, kjøpsvarselet og widgetnavn.          |
 | `src/widgets`    | Widgetene, skrevet med `expo-widgets` og `@expo/ui`.                           |
 | `app-intents`    | Swift i app-målet: «Registrer kjøp» for Snarveier og kjøpsvarslene.            |
 | `plugins`        | Config-plugin som kobler kjøpsvarslene til AppDelegate.                         |
 
 ### Slik henger det sammen
 
+- **Språk:** `tr` fra `src/i18n` gir teksten på telefonens språk (norsk for nb, nn og no, ellers engelsk). Språket velges når appen starter, og iOS starter appen på nytt når det endres (Innstillinger → Vane → Språk). Widgetene får teksten som props, fordi widget-koden ikke kan importere noe. Swift-tekstene bruker den norske teksten som nøkkel, og den engelske står i `locales/en.json`. Data lagres aldri oversatt: standardkategoriene vises på engelsk så lenge de ikke har fått nytt navn.
 - **Lagring:** `zustand` med SQLite-basert nøkkel/verdi-lager (`expo-sqlite/kv-store`). Ren logikk ligger i `src/lib/state.ts` og `src/lib/habits.ts` og er testet.
 - **Varsler:** Morgenvarselet gjentas daglig. Påminnelser for vaner legges inn sju dager fram og fylles på hver gang appen åpnes. Vaner som allerede er gjort, får ingen påminnelse.
-- **Penger:** Egen lagring (`src/lib/moneyStore.ts`, nøkkel `vane-penger`), ren logikk i `money.ts` og `moneyState.ts`. Beløp er i øre.
+- **Penger:** Egen lagring (`src/lib/moneyStore.ts`, nøkkel `vane-penger`), ren logikk i `money.ts` og `moneyState.ts`. Beløp er i hundredeler (øre, cent). Hovedvalutaen (`mainCurrency`) er den brukeren har valgt, ellers telefonens. Et beløp uten valuta får hovedvalutaen, `$` er hovedvalutaen når den er en dollar, og «kr» når den er en krone.
+- **Region:** `src/lib/region.ts` leser valuta, ukestart og 12/24-timersklokke fra telefonen én gang ved oppstart. Ukestart velges i Innstillinger (`settings.weekStart`, `null` er som telefonen). Ukedagene i vanene lagres alltid med mandag = 0.
 - **Kjøp fra Apple Pay:** Automatiseringen i Snarveier kjører `LogPurchaseIntent` (`app-intents/`) uten å åpne appen. Swift legger kjøpet i køen til `expo-app-intents`, sender varselet og teller opp «venter» i widgetene. Varselet har knapper per kategori (registrert fra appen med expo-notifications). Trykker du på forslaget, tar Swift imot svaret og legger det i køen. Det må skje i Swift, fordi appens JavaScript ikke kjører når iOS bare starter appen i bakgrunnen. Derfor kaller AppDelegate `PurchaseNotifications.install()` (`plugins/withPurchaseNotifications.js`). Appen leser køen når den starter og kommer i forgrunnen (`src/lib/purchases.ts`), og samme kjøp tas aldri inn to ganger. For å foreslå kategori sender appen navn på kategorier og steder til Swift (`setPurchaseConfig`).
 - **Widgets:** Appen sender dagens vaner og mål til widgetene, pluss et oppslag som tar over ved midnatt. Hjemskjerm-widgeten velger selv hva den viser fram, så et trykk oppdaterer den med en gang, uten at appen kjører. Hver gang appen synker (`syncWidgets`), leser den først trykkene fra widgeten og sender deretter sin egen tilstand. Det skjer i kø, så appen aldri overskriver trykk den ikke har lest. Bare det widgeten selv har endret, tas inn, og som en endring oppå appens verdi (`applyWidgetTaps`). Widgeten tar bare imot trykk på dagens oppslag. Appen synker når den åpnes, når noe endres, og når den legges bort.
 
@@ -112,7 +121,5 @@ Appen lagrer widget-koden på telefonen hver gang den starter, og widgetene bruk
 
 - Swift-koden i `app-intents/` blir først kompilert i EAS-bygget. Logikken den deler med appen, er testet i JavaScript.
 - «Penger» trenger et nytt bygg. Den kan ikke sendes som OTA-oppdatering til et eldre bygg.
-
 - Interaktive widgets krever iOS 17 eller nyere. På eldre iOS kan widgetene bare vises.
 - Åpner du ikke appen på over en uke, stopper vanepåminnelsene. Morgenvarselet fortsetter.
-- Appen er ikke kjørt på en ekte iPhone ennå. Logikken er enhetstestet, iOS-bundelen bygger, og widgetene er testet i en simulert widget-runtime. Første EAS-bygg er den ekte testen.

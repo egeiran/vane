@@ -1,8 +1,23 @@
 import type { DateKey } from './dates';
 import { isWeekly } from './habits';
-import type { Data, Goal, Habit, HabitInput, Settings } from './types';
+import { DEFAULT_SETTINGS, EMPTY_DATA, type Data, type Goal, type Habit, type HabitInput, type Settings } from './types';
 
 /** Rene funksjoner som tar inn data og gir nye data tilbake. Lagringen ligger i store.ts. */
+
+/**
+ * Dataene slik de lastes fra telefonen. Felt som ble lagt til etter at dataene ble lagret, får
+ * standardverdien, også inne i `modules` (Penger er på for alle som brukte appen før).
+ */
+export function loadData(persisted: unknown): Data {
+  const p = (persisted ?? {}) as Partial<Data>;
+  const settings: Partial<Settings> = p.settings ?? {};
+  return {
+    ...EMPTY_DATA,
+    ...p,
+    goalsSkipped: p.goalsSkipped ?? {},
+    settings: { ...DEFAULT_SETTINGS, ...settings, modules: { ...DEFAULT_SETTINGS.modules, ...(settings.modules ?? {}) } },
+  };
+}
 
 export function newId(prefix = ''): string {
   return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);

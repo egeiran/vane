@@ -4,7 +4,9 @@ import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInpu
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Card, Row, Segmented, Stepper, SwitchRow, TextButton } from '@/components/ui';
-import { shiftTime, WEEKDAY_LETTER, WEEKDAY_LONG } from '@/lib/dates';
+import { tr } from '@/i18n';
+import { shiftTime, weekOrder } from '@/lib/dates';
+import { showTime, weekStartOf } from '@/lib/region';
 import { useStore } from '@/lib/store';
 import type { ColorKey, Habit, HabitInput, Schedule } from '@/lib/types';
 import { useToday } from '@/lib/useToday';
@@ -18,7 +20,7 @@ function initialForm(h?: Habit) {
     color: (h?.color ?? 'salvie') as ColorKey,
     type: h?.type ?? ('check' as Habit['type']),
     target: h?.type === 'count' ? h.target : 8,
-    unit: h?.unit ?? 'glass',
+    unit: h?.unit ?? tr.habitForm.defaultUnit,
     freq: (h?.schedule.kind ?? 'daily') as Freq,
     days: h?.schedule.kind === 'days' ? h.schedule.days : [true, false, true, false, true, false, false],
     times: h?.schedule.kind === 'weekly' ? h.schedule.times : 3,
@@ -39,6 +41,7 @@ export default function HabitFormScreen() {
   const today = useToday();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const existing = useStore((s) => s.habits.find((h) => h.id === id));
+  const weekStart = useStore((s) => weekStartOf(s.settings));
   const addHabit = useStore((s) => s.addHabit);
   const updateHabit = useStore((s) => s.updateHabit);
   const [f, setF] = useState(() => initialForm(existing));
@@ -68,30 +71,30 @@ export default function HabitFormScreen() {
   return (
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={styles.bar}>
-        <TextButton label="Avbryt" onPress={close} />
+        <TextButton label={tr.common.cancel} onPress={close} />
         <Text style={[styles.barTitle, { color: t.text }]} accessibilityRole="header">
-          {existing ? 'Endre vane' : 'Ny vane'}
+          {existing ? tr.habitForm.editTitle : tr.habitForm.newTitle}
         </Text>
-        <TextButton label={existing ? 'Lagre' : 'Legg til'} bold onPress={save} disabled={!canSave} />
+        <TextButton label={existing ? tr.common.save : tr.common.add} bold onPress={save} disabled={!canSave} />
       </View>
 
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
           <Text style={[styles.label, { color: t.sub }]} nativeID="name-label">
-            Navn
+            {tr.common.name}
           </Text>
           <TextInput
             value={f.name}
             onChangeText={(name) => set({ name })}
-            placeholder="F.eks. Gå en tur"
+            placeholder={tr.habitForm.namePlaceholder}
             placeholderTextColor={t.faint}
             autoFocus={!existing}
             returnKeyType="done"
             accessibilityLabelledBy="name-label"
             style={[styles.input, { backgroundColor: t.field, color: t.text }]}
           />
-          <Text style={[styles.label, { color: t.sub, marginTop: 6 }]}>Farge</Text>
-          <View style={styles.swatches} accessibilityRole="radiogroup" accessibilityLabel="Farge">
+          <Text style={[styles.label, { color: t.sub, marginTop: 6 }]}>{tr.common.color}</Text>
+          <View style={styles.swatches} accessibilityRole="radiogroup" accessibilityLabel={tr.common.color}>
             {COLOR_KEYS.map((k) => {
               const on = k === f.color;
               return (
@@ -99,7 +102,7 @@ export default function HabitFormScreen() {
                   key={k}
                   onPress={() => set({ color: k })}
                   accessibilityRole="radio"
-                  accessibilityLabel={t.colors[k].label}
+                  accessibilityLabel={tr.colors[k]}
                   accessibilityState={{ selected: on }}
                   style={styles.swatchHit}>
                   <View
@@ -116,30 +119,31 @@ export default function HabitFormScreen() {
         </Card>
 
         <Card style={styles.card}>
-          <Text style={[styles.label, { color: t.sub }]}>Hvor ofte</Text>
+          <Text style={[styles.label, { color: t.sub }]}>{tr.habitForm.frequency}</Text>
           <Segmented
-            label="Hvor ofte"
+            label={tr.habitForm.frequency}
             value={f.freq}
             onChange={(freq) => set({ freq })}
             options={[
-              { value: 'daily', label: 'Hver dag' },
-              { value: 'days', label: 'Velg dager' },
-              { value: 'weekly', label: 'Per uke' },
+              { value: 'daily', label: tr.habitForm.daily },
+              { value: 'days', label: tr.habitForm.days },
+              { value: 'weekly', label: tr.habitForm.weekly },
             ]}
           />
           {f.freq === 'days' ? (
             <View style={styles.days}>
-              {WEEKDAY_LETTER.map((l, i) => {
+              {/* Vist i ukas rekkefølge, men lagret med mandag = 0 (se `weekOrder`). */}
+              {weekOrder(weekStart).map((i) => {
                 const on = f.days[i];
                 return (
                   <Pressable
                     key={i}
                     onPress={() => set({ days: f.days.map((d, j) => (j === i ? !d : d)) })}
                     accessibilityRole="checkbox"
-                    accessibilityLabel={WEEKDAY_LONG[i]}
+                    accessibilityLabel={tr.dates.weekdayLong[i]}
                     accessibilityState={{ checked: on }}
                     style={[styles.dayChip, { backgroundColor: on ? c.ink : t.field }]}>
-                    <Text style={{ fontSize: 15, fontWeight: '600', color: on ? t.card : t.text }}>{l}</Text>
+                    <Text style={{ fontSize: 15, fontWeight: '600', color: on ? t.card : t.text }}>{tr.dates.weekdayLetters[i]}</Text>
                   </Pressable>
                 );
               })}
@@ -147,13 +151,13 @@ export default function HabitFormScreen() {
           ) : null}
           {f.freq === 'weekly' ? (
             <View style={styles.inline}>
-              <Text style={[styles.inlineLabel, { color: t.text }]}>Ganger per uke</Text>
+              <Text style={[styles.inlineLabel, { color: t.text }]}>{tr.habitForm.timesPerWeek}</Text>
               <Stepper
                 value={String(f.times)}
                 onDecrease={() => set({ times: Math.max(1, f.times - 1) })}
                 onIncrease={() => set({ times: Math.min(6, f.times + 1) })}
-                decreaseLabel="Én gang mindre"
-                increaseLabel="Én gang mer"
+                decreaseLabel={tr.habitForm.oneLess}
+                increaseLabel={tr.habitForm.oneMore}
               />
             </View>
           ) : null}
@@ -161,36 +165,36 @@ export default function HabitFormScreen() {
 
         {f.freq !== 'weekly' ? (
           <Card style={styles.card}>
-            <Text style={[styles.label, { color: t.sub }]}>Hvordan huke av</Text>
+            <Text style={[styles.label, { color: t.sub }]}>{tr.habitForm.howToCheck}</Text>
             <Segmented
-              label="Type"
+              label={tr.habitForm.type}
               value={f.type}
               onChange={(type) => set({ type })}
               options={[
-                { value: 'check', label: 'Ja / nei' },
-                { value: 'count', label: 'Antall' },
+                { value: 'check', label: tr.habitForm.check },
+                { value: 'count', label: tr.habitForm.count },
               ]}
             />
             {f.type === 'count' ? (
               <>
                 <View style={styles.inline}>
-                  <Text style={[styles.inlineLabel, { color: t.text }]}>Mål per dag</Text>
+                  <Text style={[styles.inlineLabel, { color: t.text }]}>{tr.habitForm.targetPerDay}</Text>
                   <Stepper
                     value={String(f.target)}
                     onDecrease={() => set({ target: Math.max(2, f.target - 1) })}
                     onIncrease={() => set({ target: Math.min(99, f.target + 1) })}
-                    decreaseLabel="Ett mindre"
-                    increaseLabel="Ett mer"
+                    decreaseLabel={tr.habitForm.targetLess}
+                    increaseLabel={tr.habitForm.targetMore}
                   />
                 </View>
                 <View style={styles.inline}>
                   <Text style={[styles.inlineLabel, { color: t.text }]} nativeID="unit-label">
-                    Enhet
+                    {tr.habitForm.unit}
                   </Text>
                   <TextInput
                     value={f.unit}
                     onChangeText={(unit) => set({ unit })}
-                    placeholder="ganger"
+                    placeholder={tr.habits.defaultUnit}
                     placeholderTextColor={t.faint}
                     accessibilityLabelledBy="unit-label"
                     style={[styles.unit, { backgroundColor: t.field, color: t.text }]}
@@ -202,17 +206,17 @@ export default function HabitFormScreen() {
         ) : null}
 
         <Card style={{ overflow: 'hidden' }}>
-          <SwitchRow first label="Påminnelse" value={f.reminderOn} onChange={(reminderOn) => set({ reminderOn })} />
+          <SwitchRow first label={tr.habitForm.reminder} value={f.reminderOn} onChange={(reminderOn) => set({ reminderOn })} />
           {f.reminderOn ? (
             <Row>
-              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>Klokkeslett</Text>
+              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.habitForm.time}</Text>
               <Stepper
-                value={f.reminder}
+                value={showTime(f.reminder)}
                 minWidth={60}
                 onDecrease={() => set({ reminder: shiftTime(f.reminder, -15) })}
                 onIncrease={() => set({ reminder: shiftTime(f.reminder, 15) })}
-                decreaseLabel="15 minutter tidligere"
-                increaseLabel="15 minutter senere"
+                decreaseLabel={tr.common.earlier15}
+                increaseLabel={tr.common.later15}
               />
             </Row>
           ) : null}

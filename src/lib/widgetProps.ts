@@ -1,8 +1,10 @@
+import { tr } from '@/i18n';
 import { getTheme } from '@/theme';
-import type { LockWidgetMode, LockWidgetProps, TodayWidgetItem, TodayWidgetProps } from '@/widgets/types';
+import type { LockWidgetMode, LockWidgetProps, PengerWidgetProps, TodayWidgetItem, TodayWidgetProps } from '@/widgets/types';
 
 import { addDays, atTime, fromKey, todayKey, type DateKey } from './dates';
 import { amountText, dailyHabitsOn, goalsOn, isDone, isEditable, isWeekly, openHabitsOn, valueOn, weeklyHabitsOn } from './habits';
+import { showTime } from './region';
 import { setValue, toggleGoal } from './state';
 import type { Data } from './types';
 
@@ -39,6 +41,7 @@ export function buildTodayProps(data: Data, day: DateKey, at: Date, waiting = 0)
       value: valueOn(data, h.id, day),
       weekly,
       time: weekly ? '' : (h.reminder ?? ''),
+      timeLabel: !weekly && h.reminder ? showTime(h.reminder) : '',
       unit: kind === 'count' ? (h.unit ?? '') : '',
       light: { solid: light[h.color].solid, soft: light[h.color].soft, ink: light[h.color].ink },
       dark: { solid: dark[h.color].solid, soft: dark[h.color].soft, ink: dark[h.color].ink },
@@ -51,10 +54,14 @@ export function buildTodayProps(data: Data, day: DateKey, at: Date, waiting = 0)
     goalPrompt: lockMode(data, day, at) === 'prompt',
     hasHabits: data.habits.length > 0,
     waiting,
+    text: { ...tr.widgets.today },
   };
 }
 
-const vaner = (n: number) => `${n} ${n === 1 ? 'vane' : 'vaner'}`;
+/** «Penger» på hjemskjermen: antall kjøp som venter, om Penger er slått på, og teksten. */
+export function buildPengerProps(waiting: number, enabled = true): PengerWidgetProps {
+  return { waiting: enabled ? waiting : 0, enabled, text: { ...tr.widgets.money } };
+}
 
 /** Hva låseskjermen viser på dagen `day`, sett fra tidspunktet `at`. Ringen viser daglige vaner gjort. */
 export function buildLockProps(data: Data, day: DateKey, at: Date): LockWidgetProps {
@@ -62,14 +69,15 @@ export function buildLockProps(data: Data, day: DateKey, at: Date): LockWidgetPr
   const total = daily.length;
   const done = daily.filter((h) => isDone(h, valueOn(data, h.id, day))).length;
   const mode = lockMode(data, day, at);
-  const base = { day, mode, done, total, url: 'vane://' };
+  const L = tr.widgets.lock;
+  const base = { day, mode, done, total, short: L.goalsShort, url: 'vane://' };
 
   if (mode === 'prompt') {
     return {
       ...base,
-      main: 'Sett dagens mål',
-      sub: total ? `${vaner(total)} i dag` : 'Hva vil du få til i dag?',
-      inline: 'Sett dagens mål',
+      main: L.setGoal,
+      sub: total ? L.habitsToday(total) : L.prompt,
+      inline: L.setGoal,
       url: 'vane://goals',
     };
   }
@@ -81,7 +89,7 @@ export function buildLockProps(data: Data, day: DateKey, at: Date): LockWidgetPr
     return {
       ...base,
       main: openGoal.text,
-      sub: `${goalsDone} av ${goals.length} mål`,
+      sub: L.goalsOf(goalsDone, goals.length),
       inline: total ? `${openGoal.text} · ${done}/${total}` : openGoal.text,
     };
   }
@@ -90,18 +98,18 @@ export function buildLockProps(data: Data, day: DateKey, at: Date): LockWidgetPr
   const open = openHabitsOn(data, day);
   if (open.length > 1) {
     const names = open.map((h) => h.name).join(', ');
-    return { ...base, main: `${open.length} igjen`, sub: names, inline: `${open.length} igjen: ${names}` };
+    return { ...base, main: L.left(open.length), sub: names, inline: L.leftList(open.length, names) };
   }
   if (open.length === 1) {
     const h = open[0];
-    const sub = h.type === 'count' ? amountText(h, valueOn(data, h.id, day)) : h.reminder ? `kl. ${h.reminder}` : 'Den siste i dag';
-    return { ...base, main: h.name, sub, inline: `Igjen: ${h.name}` };
+    const sub = h.type === 'count' ? amountText(h, valueOn(data, h.id, day)) : h.reminder ? tr.dates.at(showTime(h.reminder)) : L.last;
+    return { ...base, main: h.name, sub, inline: L.leftOne(h.name) };
   }
   if (total || goals.length) {
-    const parts = [total ? vaner(total) : '', goals.length ? `${goals.length} mål` : ''].filter(Boolean);
-    return { ...base, main: 'Alt er gjort', sub: parts.join(' og '), inline: 'Alt er gjort i dag' };
+    const parts = [total ? tr.habits.count(total) : '', goals.length ? L.goals(goals.length) : ''].filter(Boolean);
+    return { ...base, main: L.allDone, sub: parts.join(L.and), inline: L.allDoneToday };
   }
-  return { ...base, main: 'Vane', sub: 'Legg til en vane i appen', inline: 'Vane' };
+  return { ...base, main: 'Vane', sub: L.addHabit, inline: 'Vane' };
 }
 
 /**

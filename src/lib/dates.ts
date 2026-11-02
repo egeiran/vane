@@ -2,16 +2,12 @@
  * Datoer som lokale nøkler på formen 'YYYY-MM-DD'.
  * All aritmetikk går via lokale Date-objekter, så sommertid ikke gir hull.
  */
+import { tr } from '@/i18n';
+
 export type DateKey = string;
 
-export const WEEKDAY_LETTER = ['M', 'T', 'O', 'T', 'F', 'L', 'S'] as const;
-export const WEEKDAY_SHORT = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'] as const;
-export const WEEKDAY_LONG = ['mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag', 'søndag'] as const;
-export const MONTHS = [
-  'januar', 'februar', 'mars', 'april', 'mai', 'juni',
-  'juli', 'august', 'september', 'oktober', 'november', 'desember',
-] as const;
-export const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
+/** Hvilken dag uka starter på. Ukedagene i dataene er alltid mandag = 0, uansett ukestart. */
+export type WeekStart = 'mon' | 'sun';
 
 const pad = (n: number) => (n < 10 ? '0' : '') + n;
 
@@ -47,9 +43,19 @@ export function weekdayIndex(key: DateKey): number {
   return (fromKey(key).getDay() + 6) % 7;
 }
 
-/** Mandagen i uka `key` ligger i. */
-export function startOfWeek(key: DateKey): DateKey {
-  return addDays(key, -weekdayIndex(key));
+/** Hvor mange dager `key` er etter første dag i uka. */
+export function dayOfWeek(key: DateKey, weekStart: WeekStart = 'mon'): number {
+  return weekStart === 'mon' ? weekdayIndex(key) : fromKey(key).getDay();
+}
+
+/** Første dag i uka `key` ligger i: mandagen, eller søndagen når uka starter på søndag. */
+export function startOfWeek(key: DateKey, weekStart: WeekStart = 'mon'): DateKey {
+  return addDays(key, -dayOfWeek(key, weekStart));
+}
+
+/** Ukedagene (mandag = 0) i den rekkefølgen de vises: mandag–søndag eller søndag–lørdag. */
+export function weekOrder(weekStart: WeekStart): number[] {
+  return weekStart === 'mon' ? [0, 1, 2, 3, 4, 5, 6] : [6, 0, 1, 2, 3, 4, 5];
 }
 
 /** ISO-ukenummer. */
@@ -65,25 +71,32 @@ export function compareKeys(a: DateKey, b: DateKey): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-/** «Lørdag 17. oktober» */
+/** «Lørdag 17. oktober» / «Saturday, October 17» */
 export function formatLong(key: DateKey): string {
   const d = fromKey(key);
-  const w = WEEKDAY_LONG[weekdayIndex(key)];
-  return `${w[0].toUpperCase()}${w.slice(1)} ${d.getDate()}. ${MONTHS[d.getMonth()]}`;
+  return tr.dates.long(tr.dates.weekdayLong[weekdayIndex(key)], d.getDate(), tr.dates.months[d.getMonth()]);
 }
 
-/** «17. okt» */
+/** «17. okt» / «Oct 17» */
 export function formatShort(key: DateKey): string {
   const d = fromKey(key);
-  return `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
+  return tr.dates.short(d.getDate(), tr.dates.monthsShort[d.getMonth()]);
 }
 
 /** «I dag», «I går» eller «Fredag 9. oktober». */
 export function relativeDayName(key: DateKey, today: DateKey): string {
   const diff = daysBetween(key, today);
-  if (diff === 0) return 'I dag';
-  if (diff === 1) return 'I går';
+  if (diff === 0) return tr.dates.today;
+  if (diff === 1) return tr.dates.yesterday;
   return formatLong(key);
+}
+
+/** «I dag», «I går» eller bare ukedagen: «Fredag». */
+export function relativeWeekday(key: DateKey, today: DateKey): string {
+  const diff = daysBetween(key, today);
+  if (diff === 0) return tr.dates.today;
+  if (diff === 1) return tr.dates.yesterday;
+  return tr.dates.weekday(tr.dates.weekdayLong[weekdayIndex(key)]);
 }
 
 export type Time = { hour: number; minute: number };
@@ -93,8 +106,16 @@ export function parseTime(value: string): Time {
   return { hour: Number.isFinite(h) ? h : 8, minute: Number.isFinite(m) ? m : 0 };
 }
 
+/** Klokkeslettet slik det lagres: «18:05». Bruk `displayTime` for å vise det. */
 export function formatTime({ hour, minute }: Time): string {
   return `${pad(hour)}:${pad(minute)}`;
+}
+
+/** Et lagret klokkeslett slik det vises: «18:05», eller «6:05 PM» med 12-timersklokke. */
+export function displayTime(value: string, clock24: boolean): string {
+  const { hour, minute } = parseTime(value);
+  if (clock24) return formatTime({ hour, minute });
+  return tr.dates.time12(hour % 12 || 12, pad(minute), hour >= 12);
 }
 
 /** Legger til minutter på et klokkeslett innenfor døgnet (ikke over midnatt). */

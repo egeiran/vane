@@ -2,12 +2,17 @@ This is an Expo/React Native mobile application. Prioritize mobile-first pattern
 
 ## Vane
 
-Vane is a calm, iOS-first habit tracker with a small spending log («Penger»). UI copy is Norwegian (bokmål). See `README.md` for features and structure.
+Vane is a calm, iOS-first habit tracker with a small spending log («Penger»). UI copy is Norwegian (bokmål) and English, following the phone's language. See `README.md` for features and structure.
 
+- All text the user sees goes through `tr` from `src/i18n` (`tr.today.title`, `tr.habits.times(3)`). `nb.ts` is the source of truth; `en.ts` must have the same keys (TypeScript and `i18n.test.ts` check it). Never store translated text in data: default categories and «Ukjent sted» are stored in Norwegian and shown with `categoryName` / `merchantName`. Swift strings, the Shortcuts action and widget-gallery names use the Norwegian text as key, with English in `locales/en.json` (`Localizable.strings`).
+- Week start and main currency follow the phone until the user picks something (`weekStartOf(settings)`, `mainCurrency(money)` in `src/lib/region.ts` / `money.ts`). Pass `weekStart` into functions as a parameter instead of reading it globally, so React Compiler re-renders when it changes. Times are stored as `HH:MM`; show them with `showTime` (12-hour clock when the phone uses it). Habit weekdays in data are always Monday = 0; `weekOrder` only changes the display order.
+- Modules (`settings.modules`) are optional parts of the app; habits are always on. Today only `money` exists. When a module is off, hide it (tab, settings, widgets, notifications) but never delete its data. Swift gets the money flag through `setPurchaseConfig` (`enabled`).
 - Keep pure logic in `src/lib` (`dates.ts`, `habits.ts`, `state.ts`, `reminders.ts`, `money.ts`, `moneyState.ts`, `purchaseIntents.ts`) and cover it with tests in `src/lib/__tests__`.
 - `src/lib/store.ts` wraps the pure reducers in a persisted zustand store; use `useData()` when a component needs the whole data object. Money has its own store in `src/lib/moneyStore.ts` (`useMoneyData()`).
 - Widget layouts in `src/widgets` run in an isolated runtime: only `@expo/ui/swift-ui` components and modifiers, no hooks, no imports of app code, everything declared inside the `'widget'` function.
+- Product direction, pricing (Vane+) and the order of work are in `docs/retning.md`. Read it before adding a feature, and update it when a decision changes.
 - For habits, only today and yesterday may be edited. Purchases can always be edited. No streaks, points, budgets or celebratory UI.
+- No account and no server of our own: data stays on the phone and in the user's private iCloud. Don't add SDKs that collect data (analytics, ads, crash reporters that send data); the App Store privacy label should stay «Data Not Collected».
 - `app-intents/` is app-target Swift (Expo inline modules + `expo-app-intents`). `PurchaseText.swift` mirrors `merchantKey`, `cleanMerchant`, `parseAmount` and `formatAmount` in `src/lib/money.ts`; change both together. Intent and dispatch names must match `src/lib/purchaseIntents.ts`. Never rename `LogPurchaseIntent` or its parameters: saved automations would break. Import Expo modules there as `internal import` (the generated `ExpoModulesProvider.swift` does, and a plain `import` of the same module fails the build).
 
 ## Expo has changed — do not trust your training data

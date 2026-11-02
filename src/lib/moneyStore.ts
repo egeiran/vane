@@ -1,8 +1,8 @@
-import Storage from 'expo-sqlite/kv-store';
 import { create } from 'zustand';
-import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 
+import { kvStorage } from './kvStorage';
 import { EMPTY_MONEY } from './money';
 import * as M from './moneyState';
 import { newId } from './state';
@@ -20,19 +20,13 @@ type Actions = {
   updateCategory: (id: string, patch: Partial<Omit<Category, 'id'>>) => void;
   moveCategory: (id: string, delta: number) => void;
   markSetupSeen: () => void;
+  /** Hovedvalutaen, eller `null` for som telefonen. */
+  setCurrency: (currency: string | null) => void;
   /** Kjører en ren funksjon på dataene (brukes for køen fra Swift og svar på varsler). */
   apply: (fn: (d: MoneyData) => MoneyData) => void;
 };
 
 export type MoneyStore = MoneyData & Actions;
-
-const sqliteStorage: StateStorage = {
-  getItem: (key) => Storage.getItemSync(key),
-  setItem: (key, value) => Storage.setItemSync(key, value),
-  removeItem: (key) => {
-    Storage.removeItemSync(key);
-  },
-};
 
 export const pickMoney = (s: MoneyData): MoneyData => ({
   categories: s.categories,
@@ -40,6 +34,7 @@ export const pickMoney = (s: MoneyData): MoneyData => ({
   merchants: s.merchants,
   imported: s.imported,
   setupSeen: s.setupSeen,
+  currency: s.currency,
 });
 
 /**
@@ -71,24 +66,16 @@ export const useMoney = create<MoneyStore>()(
         updateCategory: (id, patch) => apply((d) => M.updateCategory(d, id, patch)),
         moveCategory: (id, delta) => apply((d) => M.moveCategory(d, id, delta)),
         markSetupSeen: () => apply(M.markSetupSeen),
+        setCurrency: (currency) => apply((d) => ({ ...d, currency })),
         apply,
       };
     },
     {
       name: 'vane-penger',
       version: 1,
-      storage: createJSONStorage(() => sqliteStorage),
+      storage: createJSONStorage(() => kvStorage),
       partialize: (s) => pickMoney(s),
-      merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<MoneyData>;
-        return {
-          ...current,
-          ...p,
-          categories: p.categories?.length ? p.categories : EMPTY_MONEY.categories,
-          merchants: p.merchants ?? {},
-          imported: p.imported ?? [],
-        };
-      },
+      merge: (persisted, current) => ({ ...current, ...M.loadMoney(persisted) }),
     }
   )
 );

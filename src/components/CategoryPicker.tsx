@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { tr } from '@/i18n';
+import { categoryName } from '@/lib/money';
 import type { Category } from '@/lib/types';
 import { useTheme } from '@/theme';
 
@@ -18,7 +20,7 @@ export function CategoryPicker({
 }) {
   const t = useTheme();
   return (
-    <View style={styles.wrap} accessibilityRole="radiogroup" accessibilityLabel="Kategori">
+    <View style={styles.wrap} accessibilityRole="radiogroup" accessibilityLabel={tr.common.category}>
       {categories.map((c) => {
         const on = c.id === value;
         const color = t.colors[c.color];
@@ -30,7 +32,7 @@ export function CategoryPicker({
               onChange(c.id);
             }}
             accessibilityRole="radio"
-            accessibilityLabel={c.name}
+            accessibilityLabel={categoryName(c)}
             accessibilityState={{ selected: on }}
             style={({ pressed }) => [
               styles.chip,
@@ -38,7 +40,7 @@ export function CategoryPicker({
             ]}>
             <Icon name={c.icon} size={15} color={on ? t.card : color.ink} />
             <Text style={[styles.label, { color: on ? t.card : color.ink }]} numberOfLines={1}>
-              {c.name}
+              {categoryName(c)}
             </Text>
           </Pressable>
         );

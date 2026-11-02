@@ -20,11 +20,16 @@
         "usesNonExemptEncryption": false
       },
       "infoPlist": {
-        "CFBundleDevelopmentRegion": "nb",
+        "CFBundleDevelopmentRegion": "en",
         "CFBundleLocalizations": [
-          "nb"
+          "nb",
+          "en"
         ]
       }
+    },
+    "locales": {
+      "nb": "./locales/nb.json",
+      "en": "./locales/en.json"
     },
     "android": {
       "package": "no.egeiran.vane"
@@ -93,7 +98,8 @@
         }
       ],
       "expo-app-intents",
-      "./plugins/withPurchaseNotifications"
+      "./plugins/withPurchaseNotifications",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,

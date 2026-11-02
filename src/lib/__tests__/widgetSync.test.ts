@@ -105,10 +105,22 @@ describe('synk med widgeten', () => {
   it('sender antall kjøp som venter til widgetene', async () => {
     useMoney.setState(importPurchase(EMPTY_MONEY, { id: 'k', amountText: '149', merchant: 'Kiwi', at: new Date() }));
     await syncWidgets();
-    expect(mockPenger.timeline[0].props).toEqual({ waiting: 1 });
+    expect(mockPenger.timeline[0].props.waiting).toBe(1);
+    expect(mockPenger.timeline[0].props.text.waiting).toBe('kjøp venter');
     expect(mockWidget.timeline[0].props.waiting).toBe(1);
     useMoney.setState(EMPTY_MONEY);
     await syncWidgets();
-    expect(mockPenger.timeline[0].props).toEqual({ waiting: 0 });
+    expect(mockPenger.timeline[0].props.waiting).toBe(0);
+  });
+
+  it('viser ikke kjøp som venter når Penger er slått av', async () => {
+    useMoney.setState(importPurchase(EMPTY_MONEY, { id: 'k', amountText: '149', merchant: 'Kiwi', at: new Date() }));
+    const settings = useStore.getState().settings;
+    useStore.setState({ settings: { ...settings, modules: { ...settings.modules, money: false } } });
+    await syncWidgets();
+    expect(mockWidget.timeline[0].props.waiting).toBe(0);
+    expect(mockPenger.timeline[0].props).toMatchObject({ waiting: 0, enabled: false });
+    useStore.setState({ settings });
+    useMoney.setState(EMPTY_MONEY);
   });
 });

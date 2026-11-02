@@ -65,7 +65,7 @@ describe('planlegging', () => {
 
   it('beskriver hvor ofte', () => {
     const d = setup();
-    expect(d.habits.map(frequencyText)).toEqual(['Hver dag', 'Hver dag', '3 ganger i uka', 'Man, Ons, Fre']);
+    expect(d.habits.map((h) => frequencyText(h))).toEqual(['Hver dag', 'Hver dag', '3 ganger i uka', 'Man, Ons, Fre']);
   });
 });
 

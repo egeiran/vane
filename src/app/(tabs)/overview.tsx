@@ -5,9 +5,11 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ColumnGrid, Legend, WeekRows, type HeatWeek } from '@/components/HeatGrid';
 import { Icon } from '@/components/Icon';
 import { Card, SectionLabel, Segmented } from '@/components/ui';
-import { addDays, formatShort, isoWeek, relativeDayName, type DateKey } from '@/lib/dates';
+import { tr } from '@/i18n';
+import { addDays, formatShort, isoWeek, relativeDayName, relativeWeekday, type DateKey } from '@/lib/dates';
 import { daysInRange, isFuture, weekColumns, weekRows } from '@/lib/grid';
 import { dayStats, fractionOn, goalsOn, periodSummary, summaryText } from '@/lib/habits';
+import { showsWeekNumber, weekStartOf } from '@/lib/region';
 import { useData } from '@/lib/store';
 import { useToday } from '@/lib/useToday';
 import { shade, useTheme } from '@/theme';
@@ -15,11 +17,7 @@ import { shade, useTheme } from '@/theme';
 type Range = 'week' | 'month' | 'year';
 
 const RANGE_WEEKS: Record<Range, number> = { week: 1, month: 4, year: 53 };
-const RANGE_TITLE: Record<Range, string> = {
-  week: 'Denne uka',
-  month: 'Siste fire uker',
-  year: 'Siste 12 måneder',
-};
+const rangeTitle = (range: Range) => ({ week: tr.overview.rangeWeek, month: tr.overview.rangeMonth, year: tr.overview.rangeYear })[range];
 
 export default function OverviewScreen() {
   const t = useTheme();
@@ -28,11 +26,12 @@ export default function OverviewScreen() {
   const [range, setRange] = useState<Range>('month');
   const [picked, setPicked] = useState<DateKey>(today);
   const weeks = RANGE_WEEKS[range];
+  const weekStart = weekStartOf(data.settings);
 
   const dayColor = (day: DateKey) => (isFuture(day, today) ? 'transparent' : shade(t, t.slate, dayStats(data, day).average));
 
-  const heroWeeks: HeatWeek[] = weekRows(today, weeks).map((row) => ({
-    label: range === 'week' ? `uke ${isoWeek(today)}` : formatShort(row[0]),
+  const heroWeeks: HeatWeek[] = weekRows(today, weeks, weekStart).map((row) => ({
+    label: range === 'week' && showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(today)) : formatShort(row[0]),
     cells: row.map((day) => {
       const future = isFuture(day, today);
       const s = dayStats(data, day);
@@ -41,7 +40,7 @@ export default function OverviewScreen() {
         color: dayColor(day),
         today: day === today,
         selected: day === picked,
-        label: future ? 'Fremtidig dag' : `${relativeDayName(day, today)}: ${s.done} av ${s.total} gjort`,
+        label: future ? tr.overview.futureDay : tr.overview.dayDone(relativeDayName(day, today), s.done, s.total),
         onPress: future ? undefined : () => setPicked(day),
       };
     }),
@@ -50,14 +49,12 @@ export default function OverviewScreen() {
   const pickedStats = dayStats(data, picked);
   const pickedGoals = goalsOn(data, picked);
   const dayLine =
-    `${relativeDayName(picked, today)}: ${pickedStats.done} av ${pickedStats.total} gjort` +
-    (pickedGoals.length
-      ? ` · ${pickedGoals.filter((g) => g.done).length} av ${pickedGoals.length} mål`
-      : ' · ingen mål satt');
+    tr.overview.dayDone(relativeDayName(picked, today), pickedStats.done, pickedStats.total) +
+    (pickedGoals.length ? tr.overview.goalsDone(pickedGoals.filter((g) => g.done).length, pickedGoals.length) : tr.overview.noGoals);
 
   const legend = [0, 0.25, 0.5, 0.75, 1].map((f) => shade(t, t.slate, f));
-  const nDays = daysInRange(today, weeks);
-  const yearCols = range === 'year' ? weekColumns(today, 53) : [];
+  const nDays = daysInRange(today, weeks, weekStart);
+  const yearCols = range === 'year' ? weekColumns(today, 53, weekStart) : [];
 
   const recentGoals = Array.from({ length: 7 }, (_, i) => addDays(today, -i)).flatMap((day) =>
     goalsOn(data, day).map((g) => ({ day, goal: g }))
@@ -66,38 +63,38 @@ export default function OverviewScreen() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={[styles.sub, { color: t.sub }]}>{RANGE_TITLE[range]}</Text>
+        <Text style={[styles.sub, { color: t.sub }]}>{rangeTitle(range)}</Text>
         <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-          Oversikt
+          {tr.overview.title}
         </Text>
       </View>
 
       <View style={{ paddingHorizontal: 16 }}>
         <Segmented
-          label="Periode"
+          label={tr.overview.period}
           value={range}
           onChange={(r) => {
             setRange(r);
             setPicked(today);
           }}
           options={[
-            { value: 'week', label: 'Uke' },
-            { value: 'month', label: '4 uker' },
-            { value: 'year', label: 'År' },
+            { value: 'week', label: tr.overview.segWeek },
+            { value: 'month', label: tr.overview.segMonth },
+            { value: 'year', label: tr.overview.segYear },
           ]}
         />
       </View>
 
       <Card style={styles.card}>
         <View style={styles.cardHeader}>
-          <Text style={[styles.cardTitle, { color: t.text }]}>Alt samlet</Text>
-          <Text style={{ fontSize: 13, color: t.sub }}>vaner og dagens mål</Text>
+          <Text style={[styles.cardTitle, { color: t.text }]}>{tr.overview.all}</Text>
+          <Text style={{ fontSize: 13, color: t.sub }}>{tr.overview.allSub}</Text>
         </View>
         {range === 'year' ? (
           <ColumnGrid columns={yearCols.map((col) => col.map(dayColor))} size={5} gap={1} />
         ) : (
           <>
-            <WeekRows weeks={heroWeeks} />
+            <WeekRows weeks={heroWeeks} weekStart={weekStart} />
             <Text accessibilityLiveRegion="polite" style={[styles.dayLine, { backgroundColor: t.bg, color: t.text }]}>
               {dayLine}
             </Text>
@@ -108,7 +105,7 @@ export default function OverviewScreen() {
 
       {data.habits.length ? (
         <View style={styles.section}>
-          <SectionLabel>Hver vane</SectionLabel>
+          <SectionLabel>{tr.overview.each}</SectionLabel>
           {data.habits.map((h) => {
             const c = t.colors[h.color];
             const color = (day: DateKey) => (isFuture(day, today) ? 'transparent' : shade(t, c.solid, fractionOn(data, h, day)));
@@ -118,7 +115,7 @@ export default function OverviewScreen() {
                 key={h.id}
                 onPress={() => router.push({ pathname: '/habit/[id]', params: { id: h.id } })}
                 accessibilityRole="button"
-                accessibilityLabel={`${h.name}, ${summary}`}
+                accessibilityLabel={tr.overview.habitSummary(h.name, summary)}
                 style={({ pressed }) => [styles.habitCard, { backgroundColor: t.card, opacity: pressed ? 0.8 : 1 }]}>
                 <View style={styles.habitTop}>
                   <View style={{ flex: 1, gap: 3 }}>
@@ -130,7 +127,7 @@ export default function OverviewScreen() {
                     </View>
                     <Text style={{ fontSize: 13, color: t.sub }}>{summary}</Text>
                   </View>
-                  {range !== 'year' ? <MiniRows rows={weekRows(today, weeks)} color={color} today={today} big={range === 'week'} /> : null}
+                  {range !== 'year' ? <MiniRows rows={weekRows(today, weeks, weekStart)} color={color} today={today} big={range === 'week'} /> : null}
                 </View>
                 {range === 'year' ? <ColumnGrid columns={yearCols.map((col) => col.map(color))} size={5} gap={1} /> : null}
               </Pressable>
@@ -141,11 +138,11 @@ export default function OverviewScreen() {
 
       {recentGoals.length ? (
         <View style={styles.section}>
-          <SectionLabel>Siste mål</SectionLabel>
+          <SectionLabel>{tr.overview.lastGoals}</SectionLabel>
           <Card style={{ paddingHorizontal: 16, paddingVertical: 4 }}>
             {recentGoals.map(({ day, goal }, i) => (
               <View key={goal.id} style={[styles.goalRow, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }]}>
-                <Text style={[styles.goalDay, { color: t.sub }]}>{relativeDayName(day, today).replace(/ \d.*$/, '')}</Text>
+                <Text style={[styles.goalDay, { color: t.sub }]}>{relativeWeekday(day, today)}</Text>
                 <Text style={[styles.goalText, { color: t.text }]} numberOfLines={1}>
                   {goal.text}
                 </Text>

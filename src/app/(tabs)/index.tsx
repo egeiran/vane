@@ -6,8 +6,10 @@ import { GoalsCard } from '@/components/GoalsCard';
 import { HabitRow, WeeklyRow } from '@/components/HabitRow';
 import { Card, IconButton, PrimaryButton, SectionLabel, TextButton } from '@/components/ui';
 import { WeekStrip } from '@/components/WeekStrip';
+import { tr } from '@/i18n';
 import { addDays, formatLong, isoWeek, type DateKey } from '@/lib/dates';
 import { dailyHabitsOn, frequencyText, isDone, restingHabitsOn, weeklyHabitsOn } from '@/lib/habits';
+import { showsWeekNumber, weekStartOf } from '@/lib/region';
 import { useStore } from '@/lib/store';
 import { useToday } from '@/lib/useToday';
 import { useTheme } from '@/theme';
@@ -22,6 +24,7 @@ export default function TodayScreen() {
   const isToday = day === today;
 
   const habits = useStore((s) => s.habits);
+  const weekStart = useStore((s) => weekStartOf(s.settings));
   const logs = useStore((s) => s.logs[day]);
   const daily = dailyHabitsOn(habits, day);
   const resting = restingHabitsOn(habits, day);
@@ -37,19 +40,19 @@ export default function TodayScreen() {
         <View style={{ gap: 2 }}>
           <Text style={[styles.date, { color: t.sub }]}>{formatLong(day)}</Text>
           <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-            {isToday ? 'I dag' : 'I går'}
+            {isToday ? tr.today.title : tr.today.yesterdayTitle}
           </Text>
         </View>
         {isToday ? (
-          <IconButton icon="plus" label="Ny vane" onPress={() => router.push('/habit-form')} />
+          <IconButton icon="plus" label={tr.today.newHabit} onPress={() => router.push('/habit-form')} />
         ) : (
-          <TextButton label="Til i dag" bold onPress={() => setPicked(today)} />
+          <TextButton label={tr.today.backToToday} bold onPress={() => setPicked(today)} />
         )}
       </View>
 
       <WeekStrip today={today} selected={day} onSelect={setPicked} />
       {!isToday ? (
-        <Text style={[styles.note, { color: t.sub }]}>Du kan rette i går. Eldre dager er låst.</Text>
+        <Text style={[styles.note, { color: t.sub }]}>{tr.today.yesterdayNote}</Text>
       ) : null}
 
       <View style={styles.section}>
@@ -58,24 +61,21 @@ export default function TodayScreen() {
 
       {habits.length === 0 ? (
         <Card style={styles.empty}>
-          <Text style={[styles.emptyTitle, { color: t.text }]}>Ingen vaner ennå</Text>
-          <Text style={[styles.emptyText, { color: t.sub }]}>
-            Start med én liten ting du vil gjøre hver dag. Du kan alltid legge til flere senere.
-          </Text>
-          <PrimaryButton label="Legg til en vane" onPress={() => router.push('/habit-form')} />
+          <Text style={[styles.emptyTitle, { color: t.text }]}>{tr.today.emptyTitle}</Text>
+          <Text style={[styles.emptyText, { color: t.sub }]}>{tr.today.emptyText}</Text>
+          <PrimaryButton label={tr.today.addFirst} onPress={() => router.push('/habit-form')} />
         </Card>
       ) : null}
 
       {daily.length > 0 || resting.length > 0 ? (
         <View style={styles.section}>
-          <SectionLabel right={daily.length ? `${doneCount} av ${daily.length}` : undefined}>Daglig</SectionLabel>
+          <SectionLabel right={daily.length ? tr.today.doneOf(doneCount, daily.length) : undefined}>{tr.today.daily}</SectionLabel>
           {daily.map((h) => (
             <HabitRow key={h.id} habit={h} day={day} showReminder={isToday} />
           ))}
           {resting.length ? (
             <Text style={[styles.note, styles.resting, { color: t.sub }]}>
-              {(isToday ? 'Ikke i dag: ' : 'Ikke i går: ') +
-                resting.map((h) => `${h.name} (${frequencyText(h).toLowerCase()})`).join(', ')}
+              {tr.today.resting(isToday, resting.map((h) => tr.today.restingItem(h.name, frequencyText(h, weekStart))).join(', '))}
             </Text>
           ) : null}
         </View>
@@ -83,7 +83,7 @@ export default function TodayScreen() {
 
       {weekly.length > 0 ? (
         <View style={styles.section}>
-          <SectionLabel right={`uke ${isoWeek(day)}`}>Denne uka</SectionLabel>
+          <SectionLabel right={showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(day)) : undefined}>{tr.today.thisWeek}</SectionLabel>
           {weekly.map((h) => (
             <WeeklyRow key={h.id} habit={h} day={day} />
           ))}

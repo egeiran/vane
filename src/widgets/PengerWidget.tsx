@@ -26,11 +26,24 @@ const PengerWidget = (props: PengerWidgetProps, environment: WidgetEnvironment) 
   const text = dark ? '#F2F2F0' : '#1C1C1E';
   const sub = dark ? '#A1A1A6' : '#6A6A6F';
   const waiting = props.waiting ?? 0;
+  // Teksten kommer fra appen, på telefonens språk.
+  const T = props.text ?? { label: '', waiting: '', tapToPick: '', add: '', off: '' };
 
   const label = (
-    <Text modifiers={[font({ size: 11, weight: 'bold' }), kerning(0.6), foregroundStyle(sub), lineLimit(1)]}>PENGER</Text>
+    <Text modifiers={[font({ size: 11, weight: 'bold' }), kerning(0.6), foregroundStyle(sub), lineLimit(1)]}>{T.label}</Text>
   );
   const base = [containerBackground(bg, 'widget'), frame({ maxWidth: Infinity, maxHeight: Infinity, alignment: 'topLeading' })];
+
+  // Penger er slått av i appen: si det, uten knapp. Trykk åpner appen.
+  if (props.enabled === false) {
+    return (
+      <VStack alignment="leading" spacing={4} modifiers={[...base, widgetURL('vane://')]}>
+        {label}
+        <Spacer />
+        <Text modifiers={[font({ size: 15, weight: 'semibold' }), foregroundStyle(sub), lineLimit(3)]}>{T.off}</Text>
+      </VStack>
+    );
+  }
 
   if (waiting > 0) {
     return (
@@ -38,8 +51,8 @@ const PengerWidget = (props: PengerWidgetProps, environment: WidgetEnvironment) 
         {label}
         <Spacer />
         <Text modifiers={[font({ size: 34, weight: 'bold' }), foregroundStyle(text), monospacedDigit(), lineLimit(1)]}>{`${waiting}`}</Text>
-        <Text modifiers={[font({ size: 15, weight: 'semibold' }), foregroundStyle(text), lineLimit(2)]}>kjøp venter</Text>
-        <Text modifiers={[font({ size: 12 }), foregroundStyle(sub), lineLimit(1)]}>Trykk for å velge kategori</Text>
+        <Text modifiers={[font({ size: 15, weight: 'semibold' }), foregroundStyle(text), lineLimit(2)]}>{T.waiting}</Text>
+        <Text modifiers={[font({ size: 12 }), foregroundStyle(sub), lineLimit(1)]}>{T.tapToPick}</Text>
       </VStack>
     );
   }
@@ -50,11 +63,15 @@ const PengerWidget = (props: PengerWidgetProps, environment: WidgetEnvironment) 
       <Spacer />
       <HStack spacing={8}>
         <Image systemName="plus.circle.fill" size={30} color={text} />
-        <Text modifiers={[font({ size: 15, weight: 'semibold' }), foregroundStyle(text), lineLimit(2)]}>Legg inn kjøp</Text>
+        <Text modifiers={[font({ size: 15, weight: 'semibold' }), foregroundStyle(text), lineLimit(2)]}>{T.add}</Text>
         <Spacer />
       </HStack>
     </VStack>
   );
 };
 
-export default createWidget<PengerWidgetProps>('PengerWidget', PengerWidget, { waiting: 0 });
+export default createWidget<PengerWidgetProps>('PengerWidget', PengerWidget, {
+  waiting: 0,
+  enabled: true,
+  text: { label: 'PENGER', waiting: 'kjøp venter', tapToPick: 'Trykk for å velge kategori', add: 'Legg inn kjøp', off: 'Penger er slått av i Vane' },
+});

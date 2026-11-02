@@ -1,16 +1,24 @@
 import type { SFSymbol } from 'sf-symbols-typescript';
 
-import { formatShort, MONTHS, MONTHS_SHORT, relativeDayName, type DateKey } from './dates';
+import { getLang, stringsFor, tr, type Lang } from '@/i18n';
+
+import { daysBetween, formatShort, relativeDayName, type DateKey } from './dates';
+import { getDeviceRegion, showTime } from './region';
 import type { Category, MoneyData, Purchase } from './types';
 
 /**
  * Penger: kjøp fra Apple Pay (via Snarveier) eller lagt inn for hånd, sortert i kategorier.
- * Beløp er alltid i øre. Bare kroner telles med i summene; andre valutaer vises for seg.
+ * Beløp er alltid i hundredeler (øre, cent). Bare hovedvalutaen telles med i summene; andre
+ * valutaer vises for seg.
  *
  * Stedsnavn og beløp leses også i Swift når varselet lages (`app-intents/PurchaseText.swift`).
  * `merchantKey`, `cleanMerchant`, `parseAmount` og `formatAmount` må gjøre det samme der.
  */
 
+/**
+ * Standardkategoriene lagres med norske navn. Så lenge navnet er det samme, vises det på brukerens
+ * språk (`categoryName`). Gir man kategorien nytt navn, vises det man skrev.
+ */
 export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'dagligvarer', name: 'Dagligvarer', icon: 'cart', color: 'salvie', hidden: false },
   { id: 'spise-ute', name: 'Spise ute', icon: 'fork.knife', color: 'fersken', hidden: false },
@@ -20,6 +28,15 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'fritid', name: 'Fritid', icon: 'ticket', color: 'lavendel', hidden: false },
   { id: 'annet', name: 'Annet', icon: 'ellipsis.circle', color: 'skifer', hidden: false },
 ];
+
+/** Stedet når et kjøp ikke har noe. Lagres alltid slik, og vises oversatt (`merchantName`). */
+export const UNKNOWN_PLACE = stringsFor('nb').money.unknownPlace;
+
+/** Navnet på en kategori slik brukeren skal se det: oversatt for standardkategorier som ikke har fått nytt navn. */
+export function categoryName(c: Pick<Category, 'id' | 'name'>): string {
+  const original = stringsFor('nb').defaultCategories[c.id];
+  return original !== undefined && c.name === original ? (tr.defaultCategories[c.id] ?? c.name) : c.name;
+}
 
 /** Ikonene man kan velge for en kategori. */
 export const CATEGORY_ICONS: SFSymbol[] = [
@@ -71,6 +88,7 @@ export const EMPTY_MONEY: MoneyData = {
   merchants: {},
   imported: [],
   setupSeen: false,
+  currency: null,
 };
 
 const NBSP = ' ';
@@ -126,25 +144,57 @@ export function cleanMerchant(raw: string): string {
   while (words.length > 1 && DROP_LAST.includes(words[words.length - 1])) words.pop();
   s = words.join(' ');
   if (s === s.toUpperCase() && [...s].some(isCased)) s = titleCase(s);
-  return s || raw.trim() || 'Ukjent sted';
+  return s || raw.trim() || UNKNOWN_PLACE;
 }
 
-function currencyIn(s: string): string {
-  const code = s.match(/(?:^|[^A-Za-z])([A-Z]{3})(?![A-Za-z])/);
-  if (code) return code[1];
-  if (s.includes('€')) return 'EUR';
-  if (s.includes('$')) return 'USD';
-  if (s.includes('£')) return 'GBP';
-  return 'NOK';
+/** Valutaer som skrives med `$`. Er hovedvalutaen en av dem, betyr `$` hovedvalutaen. */
+export const DOLLARS = ['USD', 'CAD', 'AUD', 'NZD', 'SGD', 'HKD'];
+/** Valutaer som skrives «kr». */
+export const KRONER = ['NOK', 'SEK', 'DKK', 'ISK'];
+
+/** Dollar med landskode foran, slik iOS skriver dollar fra andre land: «US$», «CA$», «A$», «R$». */
+const DOLLAR_PREFIXES: Record<string, string> = {
+  US: 'USD',
+  CA: 'CAD',
+  A: 'AUD',
+  AU: 'AUD',
+  NZ: 'NZD',
+  HK: 'HKD',
+  S: 'SGD',
+  SG: 'SGD',
+  MX: 'MXN',
+  R: 'BRL',
+};
+
+/** Hovedvalutaen: den brukeren har valgt, ellers den telefonen bruker. */
+export function mainCurrency(data: Pick<MoneyData, 'currency'>, device = getDeviceRegion().currency): string {
+  return data.currency ?? device;
 }
 
 /**
- * Leser et beløp slik Snarveier eller et tekstfelt gir det: «kr 149,00», «1 234,50 kr», «149,-»,
- * «€12.50», «149». Tre siffer etter siste skilletegn er tusenskille («1.234»), ellers desimaler.
- * Gir beløpet i øre og valutaen (kroner hvis ingen er nevnt), eller null uten tall eller med over
- * 15 siffer i kronene.
+ * Valutaen i et beløp: en kode med tre store bokstaver, ellers et tegn, ellers hovedvalutaen.
+ * «US$», «CA$» osv. er den dollaren. En `$` alene er hovedvalutaen når den er en dollar (ellers
+ * USD), og «kr» er hovedvalutaen når den er en krone (ellers NOK).
  */
-export function parseAmount(text: string): { amount: number; currency: string } | null {
+function currencyIn(s: string, main: string): string {
+  const code = s.match(/(?:^|[^A-Za-z])([A-Z]{3})(?![A-Za-z])/);
+  if (code) return code[1];
+  const prefixed = s.match(/([A-Z]{1,2})\$/);
+  if (prefixed && DOLLAR_PREFIXES[prefixed[1]]) return DOLLAR_PREFIXES[prefixed[1]];
+  if (s.includes('€')) return 'EUR';
+  if (s.includes('$')) return DOLLARS.includes(main) ? main : 'USD';
+  if (s.includes('£')) return 'GBP';
+  if (/kr/i.test(s)) return KRONER.includes(main) ? main : 'NOK';
+  return main;
+}
+
+/**
+ * Leser et beløp slik Snarveier eller et tekstfelt gir det, på norsk, engelsk eller tysk telefon:
+ * «kr 149,00», «1 234,50 kr», «149,-», «€12.50», «12,50 €», «$1,234.50», «149». Tre siffer etter
+ * siste skilletegn er tusenskille («1.234», «1,234»), ellers desimaler. Gir beløpet i hundredeler
+ * og valutaen (hovedvalutaen hvis ingen er nevnt), eller null uten tall eller med over 15 siffer.
+ */
+export function parseAmount(text: string, main = 'NOK'): { amount: number; currency: string } | null {
   const s = nfkc(text);
   const match = s.match(/\d[\d .,']*/);
   if (!match) return null;
@@ -161,27 +211,47 @@ export function parseAmount(text: string): { amount: number; currency: string } 
   if (digits.length > 15) return null;
   const kroner = Number(digits || '0');
   const ore = frac ? Math.round(Number(`0.${frac}`) * 100) : 0;
-  return { amount: kroner * 100 + ore, currency: currencyIn(s) };
+  return { amount: kroner * 100 + ore, currency: currencyIn(s, main) };
 }
 
-/** «149 kr», «1 234,50 kr», «12,50 EUR». */
-export function formatAmount(amount: number, currency = 'NOK'): string {
+/** Tegnet foran beløpet på engelsk. Andre valutaer skrives med koden. */
+const SYMBOLS: Record<string, string> = { USD: '$', EUR: '€', GBP: '£' };
+
+/**
+ * Norsk: «149 kr», «1 234,50 kr», «12,50 EUR». Engelsk: «$1,234.50», «€12.50», «NOK 149».
+ * `PurchaseText.formatAmount` i Swift gjør det samme.
+ */
+export function formatAmount(amount: number, currency = 'NOK', lang: Lang = getLang()): string {
   const abs = Math.abs(Math.round(amount));
-  const whole = String(Math.floor(abs / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, NBSP);
   const ore = abs % 100;
-  const num = ore ? `${whole},${String(ore).padStart(2, '0')}` : whole;
+  const fraction = ore ? String(ore).padStart(2, '0') : '';
+  if (lang === 'en') {
+    const whole = String(Math.floor(abs / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const num = fraction ? `${whole}.${fraction}` : whole;
+    return SYMBOLS[currency] ? `${SYMBOLS[currency]}${num}` : `${currency}${NBSP}${num}`;
+  }
+  const whole = String(Math.floor(abs / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, NBSP);
+  const num = fraction ? `${whole},${fraction}` : whole;
   return `${num}${NBSP}${currency === 'NOK' ? 'kr' : currency}`;
 }
 
-/** Beløpet slik det står i et tekstfelt: «149» eller «149,50». */
-export function amountInputText(amount: number): string {
+/** Valutaen ved et tekstfelt for beløp: «kr», «$», «EUR». */
+export function currencyLabel(currency: string, lang: Lang = getLang()): string {
+  if (lang === 'en') return SYMBOLS[currency] ?? currency;
+  return currency === 'NOK' ? 'kr' : currency;
+}
+
+/** Beløpet slik det står i et tekstfelt: «149» eller «149,50» (på engelsk «149.50»). */
+export function amountInputText(amount: number, lang: Lang = getLang()): string {
   if (!amount) return '';
   const ore = amount % 100;
-  return ore ? `${Math.floor(amount / 100)},${String(ore).padStart(2, '0')}` : String(amount / 100);
+  const sep = lang === 'en' ? '.' : ',';
+  return ore ? `${Math.floor(amount / 100)}${sep}${String(ore).padStart(2, '0')}` : String(amount / 100);
 }
 
 export function merchantName(data: MoneyData, p: Pick<Purchase, 'merchant' | 'merchantKey'>): string {
-  return data.merchants[p.merchantKey]?.name || p.merchant;
+  const name = data.merchants[p.merchantKey]?.name || p.merchant;
+  return name === UNKNOWN_PLACE ? tr.money.unknownPlace : name;
 }
 
 export function categoryById(data: MoneyData, id: string): Category | undefined {
@@ -211,8 +281,8 @@ export function suggestionFor(data: MoneyData, p: Purchase): Category | null {
 
 /** «I dag 14:32», «I går 09:10», «23. okt 18:00». */
 export function purchaseWhen(p: Purchase, today: DateKey): string {
-  const day = relativeDayName(p.day, today);
-  return `${day === 'I dag' || day === 'I går' ? day : formatShort(p.day)} ${p.time}`;
+  const diff = daysBetween(p.day, today);
+  return `${diff === 0 || diff === 1 ? relativeDayName(p.day, today) : formatShort(p.day)} ${showTime(p.time)}`;
 }
 
 // Måneder
@@ -232,20 +302,22 @@ const monthIndex = (month: MonthKey) => Number(month.slice(5, 7)) - 1;
 
 /** «oktober», eller «oktober 2025» når det ikke er i år. */
 export function monthName(month: MonthKey, today: DateKey): string {
-  const name = MONTHS[monthIndex(month)];
-  return month.slice(0, 4) === today.slice(0, 4) ? name : `${name} ${month.slice(0, 4)}`;
+  const name = tr.dates.months[monthIndex(month)];
+  return month.slice(0, 4) === today.slice(0, 4) ? name : tr.dates.monthYear(name, month.slice(0, 4));
 }
 
 /** «okt» */
-export const monthShort = (month: MonthKey) => MONTHS_SHORT[monthIndex(month)];
+export const monthShort = (month: MonthKey) => tr.dates.monthsShort[monthIndex(month)];
 
 export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export type MonthSummary = {
   month: MonthKey;
-  /** Kroner brukt, også det som venter. Kjøp som ikke telles med, er ikke med. */
+  /** Hovedvalutaen, som `total`, `pending` og `byCategory` er i. */
+  currency: string;
+  /** Brukt i hovedvalutaen, også det som venter. Kjøp som ikke telles med, er ikke med. */
   total: number;
-  /** Kroner som venter på kategori. */
+  /** Det som venter på kategori, i hovedvalutaen. */
   pending: number;
   /** Per kategori, størst først. */
   byCategory: { categoryId: string; amount: number }[];
@@ -258,6 +330,7 @@ export type MonthSummary = {
 };
 
 export function monthSummary(data: MoneyData, month: MonthKey): MonthSummary {
+  const currency = mainCurrency(data);
   const sums = new Map<string, number>();
   const other: Record<string, number> = {};
   let total = 0;
@@ -271,7 +344,7 @@ export function monthSummary(data: MoneyData, month: MonthKey): MonthSummary {
       continue;
     }
     count++;
-    if (p.currency !== 'NOK') {
+    if (p.currency !== currency) {
       other[p.currency] = (other[p.currency] ?? 0) + p.amount;
       continue;
     }
@@ -286,7 +359,7 @@ export function monthSummary(data: MoneyData, month: MonthKey): MonthSummary {
   const byCategory = [...sums.entries()]
     .map(([categoryId, amount]) => ({ categoryId, amount }))
     .sort((a, b) => b.amount - a.amount || order(a.categoryId) - order(b.categoryId));
-  return { month, total, pending, byCategory, other, count, skipped };
+  return { month, currency, total, pending, byCategory, other, count, skipped };
 }
 
 /** De siste `n` månedene til og med denne, eldste først. */
@@ -310,15 +383,18 @@ export function findPurchases(data: MoneyData, filter: PurchaseFilter): Purchase
 
 /**
  * Det Swift-koden trenger for å lage varselet når et kjøp kommer inn, uten at appen kjører:
- * navnene på kategoriene som er i bruk, og hva hvert sted heter og fikk sist.
+ * navnene på kategoriene som er i bruk, hva hvert sted heter og fikk sist, hovedvalutaen, og om
+ * Penger er slått på. Er Penger av, lagres kjøp fra Snarveier, men Swift sender ikke varsel.
  */
 export type NativePurchaseConfig = {
   categories: Record<string, string>;
   merchants: Record<string, { name?: string; categoryId?: string }>;
+  currency: string;
+  enabled: boolean;
 };
 
-export function nativePurchaseConfig(data: MoneyData): NativePurchaseConfig {
-  const categories = Object.fromEntries(visibleCategories(data).map((c) => [c.id, c.name]));
+export function nativePurchaseConfig(data: MoneyData, enabled = true): NativePurchaseConfig {
+  const categories = Object.fromEntries(visibleCategories(data).map((c) => [c.id, categoryName(c)]));
   const merchants: NativePurchaseConfig['merchants'] = {};
   for (const [key, m] of Object.entries(data.merchants)) {
     const entry: { name?: string; categoryId?: string } = {};
@@ -326,5 +402,5 @@ export function nativePurchaseConfig(data: MoneyData): NativePurchaseConfig {
     if (m.categoryId && categories[m.categoryId]) entry.categoryId = m.categoryId;
     if (entry.name || entry.categoryId) merchants[key] = entry;
   }
-  return { categories, merchants };
+  return { categories, merchants, currency: mainCurrency(data), enabled };
 }

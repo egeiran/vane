@@ -12,6 +12,9 @@ internal import ExpoAppIntents
 /// Begge parameterne er valgfrie. En automatisering kan ikke spørre om noe, så mangler et beløp
 /// eller et sted i transaksjonen, ville en påkrevd parameter fått hele automatiseringen til å
 /// feile. Da registreres kjøpet likevel, og man fyller inn resten i appen.
+///
+/// Tittelen og navnene på parameterne vises på telefonens språk: den norske teksten under er nøkkelen,
+/// og den engelske står i `locales/en.json` (Localizable.strings). Bare teksten som vises, oversettes.
 struct LogPurchaseIntent: AppIntent {
   static let title: LocalizedStringResource = "Registrer kjøp"
   static let openAppWhenRun: Bool = false
@@ -28,15 +31,21 @@ struct LogPurchaseIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult {
+    // Er Penger slått av i appen, lagres kjøpet likevel, men uten varsel og uten tall i widgetene.
+    let moneyEnabled = PurchaseConfig.load().moneyEnabled
     // Før kjøpet legges i køen: kjører appen, synker den widgetene med riktig tall straks etterpå.
-    WaitingCount.adjust(by: 1)
+    if moneyEnabled {
+      WaitingCount.adjust(by: 1)
+    }
     let amountText = amount ?? ""
     let merchantText = merchant ?? ""
     let purchaseId = await AppIntentDispatcher.shared.dispatch(
       name: "logPurchase",
       params: ["amount": .string(amountText), "merchant": .string(merchantText)]
     )
-    await PurchaseNotifications.notify(purchaseId: purchaseId, amount: amountText, merchant: merchantText, at: Date())
+    if moneyEnabled {
+      await PurchaseNotifications.notify(purchaseId: purchaseId, amount: amountText, merchant: merchantText, at: Date())
+    }
     return .result()
   }
 }

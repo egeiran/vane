@@ -37,10 +37,16 @@ final class PurchaseNotifications: NotificationDelegate {
   static func notify(purchaseId: String, amount: String, merchant: String, at date: Date) async {
     let config = PurchaseConfig.load()
     let memory = config.merchants[PurchaseText.merchantKey(merchant)]
-    let name = memory?.name ?? PurchaseText.cleanMerchant(merchant)
+    let cleaned = memory?.name ?? PurchaseText.cleanMerchant(merchant)
+    // Teksten i varselet er på telefonens språk: nøkkelen er den norske teksten, og den engelske
+    // står i `locales/en.json` (Localizable.strings). Navnene på kategoriene kommer oversatt fra appen.
+    let name = cleaned == PurchaseText.unknownPlace ? String(localized: "Ukjent sted") : cleaned
+    // Hovedvalutaen kommer fra appen. Beløpet skrives som i appen, på norsk eller engelsk.
+    let main = config.currency ?? "NOK"
+    let english = Bundle.main.preferredLocalizations.first?.hasPrefix("nb") != true
     let amountText: String
-    if let parsed = PurchaseText.parseAmount(amount) {
-      amountText = PurchaseText.formatAmount(parsed.amount, currency: parsed.currency)
+    if let parsed = PurchaseText.parseAmount(amount, main: main) {
+      amountText = PurchaseText.formatAmount(parsed.amount, currency: parsed.currency, english: english)
     } else {
       amountText = amount.trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -48,10 +54,13 @@ final class PurchaseNotifications: NotificationDelegate {
     let content = UNMutableNotificationContent()
     content.title = amountText.isEmpty ? name : "\(amountText) · \(name)"
     if let categoryId = memory?.categoryId, let categoryName = config.categories[categoryId] {
-      content.body = "Forslag: \(categoryName). Hold inne for å svare."
+      content.body = String(localized: "Forslag: \(categoryName). Hold inne for å svare.")
       content.categoryIdentifier = suggestPrefix + categoryId
     } else {
-      content.body = memory == nil ? "Nytt sted. Trykk for å velge kategori." : "Trykk for å velge kategori."
+      content.body =
+        memory == nil
+        ? String(localized: "Nytt sted. Trykk for å velge kategori.")
+        : String(localized: "Trykk for å velge kategori.")
       content.categoryIdentifier = newCategory
     }
     content.threadIdentifier = "purchases"
@@ -121,6 +130,15 @@ struct PurchaseConfig: Decodable {
 
   let categories: [String: String]
   let merchants: [String: Merchant]
+  /// Hovedvalutaen. Valgfri, så en config lagret av en eldre versjon av appen fortsatt kan leses.
+  let currency: String?
+  /// Penger er slått på i appen. Valgfri som `currency`; mangler den, er Penger på.
+  let enabled: Bool?
+
+  /// Er Penger av, lagres kjøp fra Snarveier, men det kommer ikke noe varsel.
+  var moneyEnabled: Bool {
+    return enabled ?? true
+  }
 
   private static let key = "vane.purchaseConfig"
 
@@ -133,7 +151,7 @@ struct PurchaseConfig: Decodable {
       let data = json.data(using: .utf8),
       let config = try? JSONDecoder().decode(PurchaseConfig.self, from: data)
     else {
-      return PurchaseConfig(categories: [:], merchants: [:])
+      return PurchaseConfig(categories: [:], merchants: [:], currency: nil, enabled: nil)
     }
     return config
   }

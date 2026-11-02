@@ -1,6 +1,9 @@
+import type { Strings } from '@/i18n';
+
 /**
- * Data widgetene får fra appen. Fargene sendes med, fordi widget-koden ikke kan importere noe.
- * Ingen felt kan være `null` eller `undefined`: iOS kan ikke lagre det, og da feiler hele sendingen.
+ * Data widgetene får fra appen. Fargene og teksten sendes med, fordi widget-koden ikke kan
+ * importere noe. Ingen felt kan være `null` eller `undefined`: iOS kan ikke lagre det, og da feiler
+ * hele sendingen.
  */
 
 export type WidgetColors = { solid: string; soft: string; ink: string };
@@ -15,6 +18,8 @@ export type TodayWidgetItem = {
   weekly: boolean;
   /** Påminnelsen ('HH:MM'), eller '' uten påminnelse. Vaner med påminnelse tas først, etter klokkeslett. */
   time: string;
+  /** Påminnelsen slik telefonen viser klokka: «18:00» eller «6:00 PM». '' uten påminnelse. */
+  timeLabel: string;
   /** «glass» i «5 av 8 glass». */
   unit: string;
   light: WidgetColors;
@@ -22,6 +27,10 @@ export type TodayWidgetItem = {
 };
 
 export type TodayWidgetGoal = { id: string; text: string; done: boolean };
+
+/** Teksten på telefonens språk. Tekst med tall er maler med {navn} som widgeten fyller inn. */
+export type TodayWidgetText = Strings['widgets']['today'];
+export type PengerWidgetText = Strings['widgets']['money'];
 
 export type TodayWidgetProps = {
   /** Dagen innholdet gjelder ('YYYY-MM-DD'). Appen leser det tilbake for å fange opp trykk. */
@@ -33,6 +42,7 @@ export type TodayWidgetProps = {
   hasHabits: boolean;
   /** Kjøp som venter på kategori. Vises som et lite merke i hjørnet når det er noen. */
   waiting: number;
+  text: TodayWidgetText;
 };
 
 /**
@@ -41,6 +51,9 @@ export type TodayWidgetProps = {
  */
 export type PengerWidgetProps = {
   waiting: number;
+  /** Penger er slått på. Er den av, sier widgeten det, uten knapp. */
+  enabled: boolean;
+  text: PengerWidgetText;
 };
 
 /**
@@ -62,5 +75,7 @@ export type LockWidgetProps = {
   /** Linja under: «1 av 2 mål», «Lese, Skjermfri kveld». */
   sub: string;
   inline: string;
+  /** Ordet under sola i den runde varianten om morgenen: «Mål». */
+  short: string;
   url: string;
 };

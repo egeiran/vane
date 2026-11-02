@@ -40,7 +40,7 @@ const LockWidget = (props: LockWidgetProps, environment: WidgetEnvironment) => {
           <AccessoryWidgetBackground />
           <VStack spacing={1}>
             <Image systemName="sunrise" size={18} />
-            <Text modifiers={[font({ size: 11, weight: 'semibold' })]}>Mål</Text>
+            <Text modifiers={[font({ size: 11, weight: 'semibold' })]}>{props.short}</Text>
           </VStack>
         </ZStack>
       );
@@ -75,5 +75,6 @@ export default createWidget<LockWidgetProps>('LockWidget', LockWidget, {
   main: 'Sett dagens mål',
   sub: 'Hva vil du få til i dag?',
   inline: 'Sett dagens mål',
+  short: 'Mål',
   url: 'vane://goals',
 });

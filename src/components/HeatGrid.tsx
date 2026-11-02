@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { WEEKDAY_LETTER } from '@/lib/dates';
+import { tr } from '@/i18n';
+import { weekOrder, type WeekStart } from '@/lib/dates';
 import { useTheme } from '@/theme';
 
 export type HeatCell = {
@@ -15,16 +16,16 @@ export type HeatCell = {
 
 export type HeatWeek = { label: string; cells: HeatCell[] };
 
-/** Uker som rader (mandag–søndag), med dato for mandagen til venstre. */
-export function WeekRows({ weeks, cellHeight = 34 }: { weeks: HeatWeek[]; cellHeight?: number }) {
+/** Uker som rader (mandag–søndag eller søndag–lørdag), med datoen for første dag til venstre. */
+export function WeekRows({ weeks, weekStart = 'mon', cellHeight = 34 }: { weeks: HeatWeek[]; weekStart?: WeekStart; cellHeight?: number }) {
   const t = useTheme();
   return (
     <View style={{ gap: 5 }}>
       <View style={styles.row} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <View style={styles.label} />
-        {WEEKDAY_LETTER.map((l, i) => (
-          <Text key={i} style={[styles.letter, { color: t.sub }]}>
-            {l}
+        {weekOrder(weekStart).map((d) => (
+          <Text key={d} style={[styles.letter, { color: t.sub }]}>
+            {tr.dates.weekdayLetters[d]}
           </Text>
         ))}
       </View>
@@ -77,11 +78,11 @@ export function Legend({ colors }: { colors: string[] }) {
   const t = useTheme();
   return (
     <View style={styles.legend} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Text style={[styles.legendText, { color: t.sub }]}>Mindre</Text>
+      <Text style={[styles.legendText, { color: t.sub }]}>{tr.overview.less}</Text>
       {colors.map((c, i) => (
         <View key={i} style={[styles.legendCell, { backgroundColor: c }]} />
       ))}
-      <Text style={[styles.legendText, { color: t.sub }]}>Mer</Text>
+      <Text style={[styles.legendText, { color: t.sub }]}>{tr.overview.more}</Text>
     </View>
   );
 }

@@ -5,9 +5,11 @@ import { CheckButton } from '@/components/CheckButton';
 import { ColumnGrid, WeekRows, type HeatWeek } from '@/components/HeatGrid';
 import { Icon } from '@/components/Icon';
 import { Card, TextButton, tick } from '@/components/ui';
+import { tr } from '@/i18n';
 import { formatShort, relativeDayName } from '@/lib/dates';
 import { weekColumns, weekRows, isFuture, daysInRange, monthLabels } from '@/lib/grid';
 import { amountText, fractionOn, frequencyText, isDone, isWeekly, periodSummary, summaryText, weekCount, weeklyTarget } from '@/lib/habits';
+import { showTime, weekStartOf } from '@/lib/region';
 import { useData, useStore } from '@/lib/store';
 import { useToday } from '@/lib/useToday';
 import { shade, useTheme } from '@/theme';
@@ -34,26 +36,27 @@ export default function HabitScreen() {
   if (!habit) {
     return (
       <View style={[styles.missing, { backgroundColor: t.bg }]}>
-        <Text style={{ color: t.sub, fontSize: 16 }}>Vanen finnes ikke lenger.</Text>
-        <TextButton label="Tilbake" bold onPress={back} />
+        <Text style={{ color: t.sub, fontSize: 16 }}>{tr.habitDetail.missing}</Text>
+        <TextButton label={tr.common.back} bold onPress={back} />
       </View>
     );
   }
 
   const c = t.colors[habit.color];
+  const weekStart = weekStartOf(data.settings);
   const value = data.logs[today]?.[habit.id] ?? 0;
   const isCount = habit.type === 'count' && !isWeekly(habit);
   const done = isDone(habit, value);
 
   const meta = [
-    isCount ? `I dag ${amountText(habit, value)}` : isWeekly(habit) ? `${weekCount(data, habit, today)} av ${weeklyTarget(habit)} denne uka` : null,
-    frequencyText(habit),
-    habit.reminder ? `kl. ${habit.reminder}` : null,
+    isCount ? tr.habitDetail.todayAmount(amountText(habit, value)) : isWeekly(habit) ? tr.habits.weekCount(weekCount(data, habit, today, weekStart), weeklyTarget(habit)) : null,
+    frequencyText(habit, weekStart),
+    habit.reminder ? tr.dates.at(showTime(habit.reminder)) : null,
   ]
     .filter(Boolean)
     .join(' · ');
 
-  const weeks: HeatWeek[] = weekRows(today, 5).map((row) => ({
+  const weeks: HeatWeek[] = weekRows(today, 5, weekStart).map((row) => ({
     label: formatShort(row[0]),
     cells: row.map((day) => {
       const future = isFuture(day, today);
@@ -62,22 +65,22 @@ export default function HabitScreen() {
         key: day,
         color: future ? 'transparent' : shade(t, c.solid, f),
         today: day === today,
-        label: `${relativeDayName(day, today)}: ${f === null ? 'gjaldt ikke' : f >= 1 ? 'gjort' : f > 0 ? 'delvis' : 'ikke gjort'}`,
+        label: tr.habitDetail.dayState(relativeDayName(day, today), f === null ? 'none' : f >= 1 ? 'done' : f > 0 ? 'partly' : 'not'),
       };
     }),
   }));
 
-  const columns = weekColumns(today, HALF_YEAR);
+  const columns = weekColumns(today, HALF_YEAR, weekStart);
   const colors = columns.map((col) =>
     col.map((day) => (isFuture(day, today) ? 'transparent' : shade(t, c.solid, fractionOn(data, habit, day))))
   );
   const labels = monthLabels(columns);
 
   const confirmDelete = () =>
-    Alert.alert(`Slette «${habit.name}»?`, 'Rutenettet for vanen forsvinner også. Dette kan ikke angres.', [
-      { text: 'Avbryt', style: 'cancel' },
+    Alert.alert(tr.habitDetail.deleteTitle(habit.name), tr.habitDetail.deleteBody, [
+      { text: tr.common.cancel, style: 'cancel' },
       {
-        text: 'Slett',
+        text: tr.common.delete,
         style: 'destructive',
         onPress: () => {
           back();
@@ -89,11 +92,11 @@ export default function HabitScreen() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
       <View style={styles.bar}>
-        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel="Tilbake" style={styles.backButton}>
+        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel={tr.common.back} style={styles.backButton}>
           <Icon name="chevron.left" size={20} color={t.text} />
-          <Text style={{ fontSize: 17, color: t.text, fontWeight: '500' }}>Tilbake</Text>
+          <Text style={{ fontSize: 17, color: t.text, fontWeight: '500' }}>{tr.common.back}</Text>
         </Pressable>
-        <TextButton label="Endre" onPress={() => router.push({ pathname: '/habit-form', params: { id: habit.id } })} />
+        <TextButton label={tr.common.edit} onPress={() => router.push({ pathname: '/habit-form', params: { id: habit.id } })} />
       </View>
 
       <View style={styles.header}>
@@ -113,7 +116,7 @@ export default function HabitScreen() {
               increment(habit.id, today, 1);
             }}
             accessibilityRole="button"
-            accessibilityLabel={`Legg til én ${habit.unit}`.trim()}
+            accessibilityLabel={tr.habits.addOne(habit.unit)}
             style={[styles.plusOne, { backgroundColor: c.soft }]}>
             <Text style={{ fontSize: 17, fontWeight: '700', color: c.ink }}>+1</Text>
           </Pressable>
@@ -122,7 +125,7 @@ export default function HabitScreen() {
             size={52}
             done={done}
             color={c.solid}
-            label={`${habit.name} i dag`}
+            label={tr.habitDetail.today(habit.name)}
             onPress={() => {
               tick();
               toggle(habit.id, today);
@@ -133,14 +136,14 @@ export default function HabitScreen() {
 
       <Card style={styles.card}>
         <View style={styles.cardHeader}>
-          <Text style={[styles.cardTitle, { color: t.text }]}>Siste fem uker</Text>
-          <Text style={{ fontSize: 13, color: t.sub }}>{summaryText(periodSummary(data, habit, today, daysInRange(today, 5)))}</Text>
+          <Text style={[styles.cardTitle, { color: t.text }]}>{tr.habitDetail.lastFiveWeeks}</Text>
+          <Text style={{ fontSize: 13, color: t.sub }}>{summaryText(periodSummary(data, habit, today, daysInRange(today, 5, weekStart)))}</Text>
         </View>
-        <WeekRows weeks={weeks} />
+        <WeekRows weeks={weeks} weekStart={weekStart} />
       </Card>
 
       <Card style={styles.card}>
-        <Text style={[styles.cardTitle, { color: t.text, fontSize: 15 }]}>Siste halvår</Text>
+        <Text style={[styles.cardTitle, { color: t.text, fontSize: 15 }]}>{tr.habitDetail.lastHalfYear}</Text>
         <View style={{ height: 14 }}>
           {labels.map((l) => (
             <Text key={l.index} style={[styles.month, { color: t.sub, left: l.index * (CELL + GAP) }]}>
@@ -152,7 +155,7 @@ export default function HabitScreen() {
       </Card>
 
       <View style={{ alignItems: 'center', marginTop: 8 }}>
-        <TextButton label="Slett vane" color={t.danger} onPress={confirmDelete} />
+        <TextButton label={tr.habitDetail.deleteHabit} color={t.danger} onPress={confirmDelete} />
       </View>
     </ScrollView>
   );
