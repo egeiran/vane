@@ -30,6 +30,16 @@ node "$SKILL/scripts/skjermbilde.cjs" --sjekk
   etter-bilder (`pkill -f "[e]xpo start --web --port 8091"`). Typed routes
   (`.expo/types/router.d.ts`) lages også på nytt da, så en ny skjerm typesjekker.
 - Kjør serveren i bakgrunnen med lang `timeout`, ellers stoppes den midt i runden.
+  Skal den startes på nytt mange ganger, er det enklest å starte den løsrevet i samme
+  kommando som omstarten, så skallet ikke venter:
+
+  ```bash
+  pkill -f "[e]xpo start --web --port 8091"; sleep 2
+  (CI=1 BROWSER=none nohup npx expo start --web --port 8091 --clear > <scratchpad>/expo.log 2>&1 &)
+  for i in $(seq 1 40); do node "$SKILL/scripts/skjermbilde.cjs" --sjekk | grep -q "svarer på" && break; sleep 3; done
+  ```
+- En ny rute i en `Stack.Protected` krever omstart før `tsc` kjenner den
+  (typed routes).
 - Krasjer appen på web etter en endring, er det nesten alltid en native modul
   som importeres på toppen av en fil. Gi den en `.web.ts`-variant, eller importer
   den der den brukes. Det er en del av issuet, ikke en egen oppgave.
@@ -68,7 +78,17 @@ node "$SKILL/scripts/skjermbilde.cjs" --ut $SP --navn 006-before-en --sprak en-U
   `node_modules` som symlink) og kjører Expo web derfra på port 8092
   (`--url http://localhost:8092`).
 - Trenger du klikk, skriver du et eget Playwright-skript i scratchpaden med
-  samme oppsett (se `skjermbilde.cjs`).
+  samme oppsett (se `skjermbilde.cjs`). Det som virket i runde 2:
+  - en gjennomgang steg for steg (oppstarten) med et bilde per steg, og til slutt
+    `localStorage` lest med `page.evaluate`, så resultatet er tall og ikke bare bilder,
+  - en rute åpnet direkte (`page.goto('/goals')`) er det samme som en lenke fra en
+    widget ved kald oppstart. Tell om fanene finnes i siden for å se hva som ligger under,
+  - eksport med `acceptDownloads: true` og `page.waitForEvent('download')`, og import
+    med `page.waitForEvent('filechooser')` og `setFiles`. Det krever en `.web.ts` for
+    filene (`src/lib/backupFiles.web.ts`),
+  - bruk `exact: true` i `getByRole`: «God» treffer også «Veldig god».
+- Moduler og data som ikke er i testdataene, legges inn med `--lagre`, for eksempel
+  dagboken: `--lagre '{"vane-data.settings":{"modules":{"journal":true}},"vane-data.journal":{"2026-11-04":{"mood":4,"text":"Fin tur."}}}'`.
 - Ruter: `/` (I dag), `/overview`, `/money`, `/settings`, `/purchases`,
   `/categories`, `/goals`, `/habit-form`, `/purchase-form`, `/money-setup`,
   `/habit/<id>` (testdataene har `h-tur`, `h-vann`, `h-les`, `h-trene`).
@@ -85,6 +105,17 @@ git archive HEAD | tar -x -C $P            # siste commit
 # tar --exclude=./node_modules --exclude=./.git -cf - . | tar -x -C $P
 ln -s "$PWD/node_modules" $P/node_modules
 (cd $P && npx expo prebuild --platform ios --no-install)
+```
+
+Har runden nye pakker, eller endrer `package-lock.json` en delt pakke, lager du
+prebuild av `origin/main` på samme måte og sammenligner. Bare tilfeldige ID-er
+skal skille i `project.pbxproj`:
+
+```bash
+diff $P0/ios/Vane/Info.plist $P/ios/Vane/Info.plist
+diff $P0/ios/Vane/Vane.entitlements $P/ios/Vane/Vane.entitlements
+diff <(grep -o 'name = [A-Za-z]*;' $P0/ios/Vane.xcodeproj/project.pbxproj | sort -u) \
+     <(grep -o 'name = [A-Za-z]*;' $P/ios/Vane.xcodeproj/project.pbxproj | sort -u)
 ```
 
 Se så etter det endringen skal gi: `ios/Vane/Info.plist`, språkfilene i
