@@ -241,6 +241,7 @@ export const en: Strings = {
     categories: 'Categories',
     applePay: 'Purchases from Apple Pay',
     sendTest: 'Send test notification',
+    rateApp: 'Rate Vane on the App Store',
     version: (version: string) => `Vane · version ${version}`,
     weekStart: 'Week starts on',
     phone: 'Automatic',

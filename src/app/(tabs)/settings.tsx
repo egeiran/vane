@@ -1,4 +1,3 @@
-import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, AppState, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -11,6 +10,8 @@ import { mainCurrency } from '@/lib/money';
 import { useMoney } from '@/lib/moneyStore';
 import { permissionStatus, requestPermission, scheduleNotificationSync, sendTestNotification, type PermissionStatus } from '@/lib/notifications';
 import { showTime } from '@/lib/region';
+import { WRITE_REVIEW_URL } from '@/lib/review';
+import { appVersion } from '@/lib/reviewPrompt';
 import { useStore } from '@/lib/store';
 import { useTheme } from '@/theme';
 
@@ -171,10 +172,17 @@ export default function SettingsScreen() {
               <Icon name="chevron.right" size={14} color={t.sub} />
             </Row>
           </Pressable>
+          {/* Åpner skrivefeltet for en vurdering i App Store direkte. */}
+          <Pressable onPress={() => Linking.openURL(WRITE_REVIEW_URL).catch(() => {})} accessibilityRole="link">
+            <Row>
+              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.rateApp}</Text>
+              <Icon name="arrow.up.right" size={14} color={t.sub} />
+            </Row>
+          </Pressable>
         </Card>
       </View>
 
-      <Text style={[styles.version, { color: t.sub }]}>{tr.settings.version(Constants.expoConfig?.version ?? '1.0.0')}</Text>
+      <Text style={[styles.version, { color: t.sub }]}>{tr.settings.version(appVersion())}</Text>
     </ScrollView>
   );
 }

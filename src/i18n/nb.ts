@@ -255,6 +255,7 @@ export const nb = {
     categories: 'Kategorier',
     applePay: 'Kjøp fra Apple Pay',
     sendTest: 'Send testvarsel',
+    rateApp: 'Gi Vane en vurdering',
     version: (version: string) => `Vane · versjon ${version}`,
     weekStart: 'Uka starter',
     /** Følger telefonen. Samme ord som iOS bruker. */

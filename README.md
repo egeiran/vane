@@ -13,6 +13,7 @@ Små vaner, i ro og mak. En rolig vaneapp for iPhone, uten streaks, poeng eller 
 - **Moduler**: Penger kan slås av under Innstillinger → Moduler. Da er fanen borte, og kjøp fra Apple Pay lagres uten varsel. Ingenting slettes.
 - **Penger-widget**: «Penger» på hjemskjermen viser hvor mange kjøp som venter, eller er en knapp for å legge inn et kjøp. «I dag» får et lite merke i hjørnet når noe venter.
 - **Eksport og import**: Innstillinger → Data. Eksporter alt til én JSON-fil og kjøpene som CSV, og del dem med delingsarket (lagre i Filer, AirDrop, e-post). Importer en fil igjen på en ny telefon: Vane viser hva filen inneholder og spør før noe erstattes. En skadet fil endrer ingenting.
+- **Vurdering i App Store**: etter minst 14 dager og 20 avhukinger (eller 20 kjøp med kategori) spør Vane én gang per versjon, når appen åpnes og aldri rett etter en avhuking. «Gi Vane en vurdering» i Innstillinger åpner App Store.
 - **Norsk og engelsk**: appen, widgetene, varslene og Snarveier-handlingen følger språket på telefonen.
 - **Valuta, ukestart og klokke**: følger telefonen. Hovedvaluta og om uka starter på mandag eller søndag kan endres i Innstillinger. Bare hovedvalutaen telles i summene.
 - Ingen konto, ingen server. Alt lagres lokalt på telefonen.
