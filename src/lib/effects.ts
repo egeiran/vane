@@ -5,7 +5,6 @@ import { AppState, Platform } from 'react-native';
 import {
   configureNotifications,
   handleNotificationResponse,
-  requestPermission,
   scheduleNotificationSync,
   syncNotifications,
 } from './notifications';
@@ -33,10 +32,10 @@ export function useAppEffects() {
       Notifications.clearLastNotificationResponse();
     }
 
+    // Appen spør ikke om lov til varsler her. Det gjør oppstarten, etter en forklaring, eller
+    // Innstillinger når et varsel slås på.
     syncWidgets().finally(() => {
-      requestPermission()
-        .then(() => syncNotifications())
-        .catch(() => {});
+      syncNotifications().catch(() => {});
     });
 
     const unsubscribe = useStore.subscribe((state, prev) => {

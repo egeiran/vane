@@ -2,6 +2,7 @@
 
 Små vaner, i ro og mak. En rolig vaneapp for iPhone, uten streaks, poeng eller mas. Med en enkel oversikt over hva pengene går til.
 
+- **Oppstart**: første gang appen åpnes, forteller Vane kort hva den er, lar deg velge moduler og opptil tre vaner, forklarer varslene før iOS spør om lov, og viser hvordan du legger til widgetene. Alt kan hoppes over. De som allerede bruker appen, ser den ikke.
 - **I dag**: huk av daglige vaner (ja/nei eller antall, f.eks. 5 av 8 glass) og ukentlige vaner («3 ganger i uka»).
 - **Dagens mål**: ett eller flere små mål for dagen. Morgenvarselet (standard kl. 07) spør hva du vil få til.
 - **Rett i går**: trykk på i går i ukestripen for å rette. Eldre dager er låst.
@@ -101,6 +102,7 @@ Appen kan også kjøres i nettleseren (`npx expo start --web`), bare for skjermb
 
 - **Språk:** `tr` fra `src/i18n` gir teksten på telefonens språk (norsk for nb, nn og no, ellers engelsk). Språket velges når appen starter, og iOS starter appen på nytt når det endres (Innstillinger → Vane → Språk). Widgetene får teksten som props, fordi widget-koden ikke kan importere noe. Swift-tekstene bruker den norske teksten som nøkkel, og den engelske står i `locales/en.json`. Data lagres aldri oversatt: standardkategoriene vises på engelsk så lenge de ikke har fått nytt navn.
 - **Lagring:** `zustand` med SQLite-basert nøkkel/verdi-lager (`expo-sqlite/kv-store`). Ren logikk ligger i `src/lib/state.ts` og `src/lib/habits.ts` og er testet.
+- **Oppstart:** `src/app/onboarding.tsx`. Rotlayouten holder resten av appen bak `Stack.Protected` til `settings.onboarded` er satt (`needsOnboarding` i `src/lib/onboarding.ts`, lest én gang når appen starter). Data fra før oppstarten fantes, får `onboarded: true` i `loadData`. Appen spør ikke om lov til varsler når den starter. Det gjør oppstarten etter en forklaring, og Innstillinger når et varsel slås på.
 - **Varsler:** Morgenvarselet gjentas daglig. Påminnelser for vaner legges inn sju dager fram og fylles på hver gang appen åpnes. Vaner som allerede er gjort, får ingen påminnelse.
 - **Penger:** Egen lagring (`src/lib/moneyStore.ts`, nøkkel `vane-penger`), ren logikk i `money.ts` og `moneyState.ts`. Beløp er i hundredeler (øre, cent). Hovedvalutaen (`mainCurrency`) er den brukeren har valgt, ellers telefonens. Et beløp uten valuta får hovedvalutaen, `$` er hovedvalutaen når den er en dollar, og «kr» når den er en krone.
 - **Region:** `src/lib/region.ts` leser valuta, ukestart og 12/24-timersklokke fra telefonen én gang ved oppstart. Ukestart velges i Innstillinger (`settings.weekStart`, `null` er som telefonen). Ukedagene i vanene lagres alltid med mandag = 0.

@@ -57,6 +57,8 @@ export type Settings = {
   weekStart: WeekStart | null;
   /** Ingen data slettes når en modul slås av. */
   modules: Modules;
+  /** Oppstarten er vist (eller hoppet over). Alle som brukte appen før oppstarten fantes, har `true`. */
+  onboarded: boolean;
 };
 
 /** Verdi per vane for én dag: 1 for gjort (ja/nei) eller antall. */
@@ -76,8 +78,9 @@ export const DEFAULT_SETTINGS: Settings = {
   morningTime: '07:00',
   remindersEnabled: true,
   weekStart: null,
-  // Penger er på for alle til oppstarten (#9) lar nye brukere velge.
+  // Penger er på for alle som brukte appen før moduler fantes. Nye brukere velger i oppstarten.
   modules: { money: true, journal: false, health: false, recurring: false },
+  onboarded: false,
 };
 
 export const EMPTY_DATA: Data = {

@@ -9,20 +9,20 @@ import { tr } from '@/i18n';
 import { shiftTime } from '@/lib/dates';
 import { mainCurrency } from '@/lib/money';
 import { useMoney } from '@/lib/moneyStore';
-import { hasPermission, requestPermission, sendTestNotification } from '@/lib/notifications';
+import { permissionStatus, requestPermission, scheduleNotificationSync, sendTestNotification, type PermissionStatus } from '@/lib/notifications';
 import { showTime } from '@/lib/region';
 import { useStore } from '@/lib/store';
 import { useTheme } from '@/theme';
 
 function usePermission() {
-  const [granted, setGranted] = useState<boolean | null>(null);
+  const [status, setStatus] = useState<PermissionStatus | null>(null);
   useEffect(() => {
-    const check = () => hasPermission().then(setGranted);
+    const check = () => permissionStatus().then(setStatus);
     check();
     const sub = AppState.addEventListener('change', (s) => s === 'active' && check());
     return () => sub.remove();
   }, []);
-  return [granted, setGranted] as const;
+  return [status, () => permissionStatus().then(setStatus)] as const;
 }
 
 export default function SettingsScreen() {
@@ -30,17 +30,31 @@ export default function SettingsScreen() {
   const settings = useStore((s) => s.settings);
   const update = useStore((s) => s.updateSettings);
   const currency = useMoney((s) => mainCurrency(s));
-  const [granted, setGranted] = usePermission();
+  const [permission, recheck] = usePermission();
+  // Banneret vises bare når et varsel er slått på, men ikke kan komme.
+  const wantsNotifications = settings.morningEnabled || settings.remindersEnabled || settings.modules.money;
 
   const enable = async (patch: Parameters<typeof update>[0]) => {
     update(patch);
-    if (Object.values(patch).includes(true)) setGranted(await requestPermission());
+    if (Object.values(patch).includes(true)) {
+      await requestPermission();
+      recheck();
+    }
   };
 
   const test = async () => {
     const ok = await sendTestNotification();
     if (ok) Alert.alert(tr.settings.testSent, tr.settings.testSentBody);
-    else setGranted(false);
+    else recheck();
+  };
+
+  // Har iOS ikke spurt ennå (for eksempel etter «Ikke nå» i oppstarten), spør vi her. Har brukeren
+  // sagt nei, finnes bryteren bare i Innstillinger på telefonen.
+  const fixPermission = async () => {
+    if (permission === 'ask') {
+      if (await requestPermission()) scheduleNotificationSync(0);
+      recheck();
+    } else Linking.openSettings();
   };
 
   return (
@@ -49,10 +63,12 @@ export default function SettingsScreen() {
         {tr.settings.title}
       </Text>
 
-      {granted === false ? (
-        <Pressable onPress={() => Linking.openSettings()} accessibilityRole="button" style={[styles.warning, { backgroundColor: t.card }]}>
+      {(permission === 'ask' || permission === 'denied') && wantsNotifications ? (
+        <Pressable onPress={fixPermission} accessibilityRole="button" style={[styles.warning, { backgroundColor: t.card }]}>
           <Icon name="bell.slash" size={18} color={t.sub} />
-          <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: t.text }}>{tr.settings.notificationsOff}</Text>
+          <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: t.text }}>
+            {permission === 'ask' ? tr.settings.notificationsAsk : tr.settings.notificationsOff}
+          </Text>
         </Pressable>
       ) : null}
 

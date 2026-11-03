@@ -52,6 +52,15 @@ export async function hasPermission(): Promise<boolean> {
   return allowed(await Notifications.getPermissionsAsync());
 }
 
+/** `ask`: iOS har ikke spurt ennå. `denied`: brukeren har sagt nei, og må slå det på i Innstillinger. */
+export type PermissionStatus = 'granted' | 'ask' | 'denied';
+
+export async function permissionStatus(): Promise<PermissionStatus> {
+  if (!supported) return 'denied';
+  const p = await Notifications.getPermissionsAsync();
+  return allowed(p) ? 'granted' : p.canAskAgain ? 'ask' : 'denied';
+}
+
 /** Spør om lov til varsler hvis vi ikke har spurt før. Returnerer om vi har lov. */
 export async function requestPermission(): Promise<boolean> {
   if (!supported) return false;
@@ -133,6 +142,8 @@ function markHandled(r: Notifications.NotificationResponse): boolean {
 }
 
 function navigate(href: '/goals' | '/') {
+  // Under oppstarten er resten av appen låst. Da blir man der man er.
+  if (!getData().settings.onboarded) return;
   // Ved kald oppstart er ikke navigasjonen alltid klar på første tikk.
   setTimeout(() => {
     try {

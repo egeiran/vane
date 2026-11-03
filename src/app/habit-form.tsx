@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, Row, Segmented, Stepper, SwitchRow, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
 import { shiftTime, weekOrder } from '@/lib/dates';
+import { requestPermission, scheduleNotificationSync } from '@/lib/notifications';
 import { showTime, weekStartOf } from '@/lib/region';
 import { useStore } from '@/lib/store';
 import type { ColorKey, Habit, HabitInput, Schedule } from '@/lib/types';
@@ -65,6 +66,8 @@ export default function HabitFormScreen() {
     };
     if (existing) updateHabit(existing.id, input);
     else addHabit(input, today);
+    // En påminnelse trenger lov til å sende varsler. iOS spør bare hvis den ikke har spurt før.
+    if (input.reminder) requestPermission().then((ok) => ok && scheduleNotificationSync(0)).catch(() => {});
     close();
   };
 

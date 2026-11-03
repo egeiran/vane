@@ -1,9 +1,12 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useAppEffects } from '@/lib/effects';
+import { getMoney } from '@/lib/moneyStore';
+import { needsOnboarding } from '@/lib/onboarding';
+import { getData, useStore } from '@/lib/store';
 import { useTheme } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -18,6 +21,11 @@ export const unstable_settings = { anchor: '(tabs)' };
 export default function RootLayout() {
   const t = useTheme();
   useAppEffects();
+  // Avgjøres når appen starter (dataene leses synkront). Vanene man legger til i oppstarten,
+  // lukker den ikke. Det gjør `onboarded`, når man er ferdig eller hopper over.
+  const [firstRun] = useState(() => needsOnboarding(getData(), getMoney()));
+  const onboarded = useStore((s) => s.settings.onboarded);
+  const onboarding = firstRun && !onboarded;
 
   useEffect(() => {
     SplashScreen.hideAsync();
@@ -33,17 +41,24 @@ export default function RootLayout() {
     <ThemeProvider value={navTheme}>
       <StatusBar style="auto" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.bg } }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="habit/[id]" />
-        <Stack.Screen name="goals" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="habit-form" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="purchases" />
-        <Stack.Screen name="categories" />
-        {/* Et annet kjøp (eller et nytt) får sitt eget skjema, også når skjemaet allerede er åpent. */}
-        <Stack.Screen name="purchase-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
-        <Stack.Screen name="category-form" options={{ presentation: 'modal' }} />
+        {/* En ny bruker ser oppstarten først. Også en lenke fra en widget går dit. */}
+        <Stack.Protected guard={!onboarding} redirectTo="/onboarding">
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="habit/[id]" />
+          <Stack.Screen name="goals" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="habit-form" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="purchases" />
+          <Stack.Screen name="categories" />
+          {/* Et annet kjøp (eller et nytt) får sitt eget skjema, også når skjemaet allerede er åpent. */}
+          <Stack.Screen name="purchase-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
+          <Stack.Screen name="category-form" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="currency" options={{ presentation: 'modal' }} />
+        </Stack.Protected>
+        <Stack.Protected guard={onboarding}>
+          <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
+        </Stack.Protected>
+        {/* Oppstarten åpner veiviseren for Apple Pay. */}
         <Stack.Screen name="money-setup" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="currency" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
   );
