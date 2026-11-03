@@ -77,6 +77,12 @@ export function formatLong(key: DateKey): string {
   return tr.dates.long(tr.dates.weekdayLong[weekdayIndex(key)], d.getDate(), tr.dates.months[d.getMonth()]);
 }
 
+/** «4. november 2026» / «November 4, 2026» */
+export function formatFull(key: DateKey): string {
+  const d = fromKey(key);
+  return tr.dates.full(d.getDate(), tr.dates.months[d.getMonth()], d.getFullYear());
+}
+
 /** «17. okt» / «Oct 17» */
 export function formatShort(key: DateKey): string {
   const d = fromKey(key);

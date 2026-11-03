@@ -152,6 +152,18 @@ export default function SettingsScreen() {
       ) : null}
 
       <View style={styles.section}>
+        <SectionLabel>{tr.backup.title}</SectionLabel>
+        <Card style={{ overflow: 'hidden' }}>
+          <Pressable onPress={() => router.push('/data')} accessibilityRole="button">
+            <Row first>
+              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.backup.settingsRow}</Text>
+              <Icon name="chevron.right" size={14} color={t.sub} />
+            </Row>
+          </Pressable>
+        </Card>
+      </View>
+
+      <View style={styles.section}>
         <Card style={{ overflow: 'hidden' }}>
           <Pressable onPress={test} accessibilityRole="button">
             <Row first>

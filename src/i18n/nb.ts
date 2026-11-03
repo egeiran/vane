@@ -46,6 +46,8 @@ export const nb = {
     tomorrow: 'I morgen',
     /** «Lørdag 17. oktober» */
     long: (weekday: string, day: number, month: string) => `${cap(weekday)} ${day}. ${month}`,
+    /** «4. november 2026» */
+    full: (day: number, month: string, year: number) => `${day}. ${month} ${year}`,
     /** «17. okt» */
     short: (day: number, month: string) => `${day}. ${month}`,
     /** «Lørdag» */
@@ -263,6 +265,41 @@ export const nb = {
     modules: 'Moduler',
     moneyModule: 'Penger',
     modulesHelp: 'Vanene er alltid med. Slår du av Penger, er fanen borte og kjøp fra Apple Pay kommer uten varsel. Ingenting slettes, og alt er der når du slår den på igjen.',
+  },
+
+  backup: {
+    title: 'Data',
+    settingsRow: 'Eksport og import',
+    lead: 'Alt ligger bare på denne telefonen. Med en fil kan du ta vare på det selv, eller flytte det til en ny telefon.',
+    exportSection: 'Eksport',
+    exportAll: 'Eksporter alt',
+    exportAllHelp: 'Vaner, avhukinger, mål, kjøp og innstillinger i én fil (JSON). Lagre den i Filer, eller send den til deg selv.',
+    exportCsv: 'Eksporter kjøp som CSV',
+    exportCsvHelp: 'Til et regneark. Et oppdelt kjøp blir én rad per kategori.',
+    importSection: 'Import',
+    importFile: 'Importer fra fil',
+    importHelp: 'Velg en fil du har eksportert fra Vane. Du ser hva den inneholder før noe endres.',
+    previewTitle: 'Erstatte dataene?',
+    previewFrom: (date: string) => `Filen ble eksportert ${date}. Den inneholder:`,
+    previewHabits: (n: number) => vaner(n),
+    previewDays: (n: number) => `${n} ${n === 1 ? 'dag' : 'dager'} med avhuking`,
+    previewGoals: (n: number) => `${n} mål`,
+    previewPurchases: (n: number) => `${n} kjøp`,
+    previewWarning: 'Alt som ligger i Vane nå, blir erstattet av det som er i filen. Det kan ikke angres. Eksporter først hvis du vil ta vare på det.',
+    replace: 'Erstatt dataene',
+    replaced: 'Dataene fra filen er hentet inn.',
+    errors: {
+      notJson: 'Filen kan ikke leses. Velg en fil som Vane har eksportert (.json).',
+      notVane: 'Filen er ikke en eksport fra Vane.',
+      newer: 'Filen er laget med en nyere versjon av Vane. Oppdater appen og prøv igjen.',
+      damaged: 'Filen er skadet eller endret, så den kan ikke hentes inn. Ingenting i Vane er endret.',
+      tooBig: 'Filen er for stor til å være en eksport fra Vane.',
+      read: 'Filen kunne ikke åpnes.',
+      share: 'Filen kunne ikke lages.',
+    },
+    /** Filnavnet for CSV: «vane-kjop-2026-11-04.csv». */
+    csvPrefix: 'vane-kjop',
+    csv: { date: 'Dato', time: 'Tid', place: 'Sted', amount: 'Beløp', currency: 'Valuta', category: 'Kategori', note: 'Notat', notCounted: 'Telles ikke', yes: 'ja' },
   },
 
   currency: {

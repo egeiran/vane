@@ -66,6 +66,11 @@ export const useStore = create<Store>()(
   )
 );
 
+/** Erstatter alle dataene, for eksempel fra en sikkerhetskopi (se `backup.ts`). */
+export function replaceData(data: Data) {
+  useStore.setState(pickData(data));
+}
+
 /** Nåværende data uten handlinger, til bruk utenfor React. */
 export const getData = (): Data => pickData(useStore.getState());
 

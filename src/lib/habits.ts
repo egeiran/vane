@@ -21,7 +21,8 @@ export function isScheduled(h: Habit, day: DateKey): boolean {
 }
 
 export function valueOn(data: Pick<Data, 'logs'>, habitId: string, day: DateKey): number {
-  return data.logs[day]?.[habitId] ?? 0;
+  const v = data.logs[day]?.[habitId];
+  return typeof v === 'number' ? v : 0;
 }
 
 /** Andel gjort, 0–1. */

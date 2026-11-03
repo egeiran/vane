@@ -53,6 +53,7 @@ export default function RootLayout() {
           <Stack.Screen name="purchase-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
           <Stack.Screen name="category-form" options={{ presentation: 'modal' }} />
           <Stack.Screen name="currency" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="data" />
         </Stack.Protected>
         <Stack.Protected guard={onboarding}>
           <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
