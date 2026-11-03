@@ -118,6 +118,20 @@ export const nb = {
     cardLabelYesterday: 'MÅL I GÅR',
   },
 
+  journal: {
+    question: 'Hvordan er dagen?',
+    questionYesterday: 'Hvordan var dagen i går?',
+    /** Fra 1 til 5. */
+    moods: ['Tung', 'Litt tung', 'Grei', 'God', 'Veldig god'],
+    moodLabel: 'Humør',
+    placeholder: 'Én setning om dagen',
+    textLabel: 'Én setning om dagen',
+    overviewTitle: 'Dagbok og humør',
+    overviewSub: 'humøret per dag',
+    dayEntry: (day: string, mood: string, text: string) => `${day}: ${[mood, text ? `«${text}»` : ''].filter(Boolean).join(' · ')}`,
+    dayEmpty: (day: string) => `${day}: ingenting skrevet`,
+  },
+
   habitForm: {
     editTitle: 'Endre vane',
     newTitle: 'Ny vane',
@@ -198,6 +212,7 @@ export const nb = {
     habitsModule: 'Vaner',
     always: 'Alltid med',
     moneyModuleSub: 'Hva pengene går til: kjøp du legger inn selv, og kjøp med Apple Pay',
+    journalModuleSub: 'Én setning og ett humør per dag',
     habitsTitle: 'Hva vil du starte med?',
     habitsLead: 'Velg opptil tre. Det er lettere å holde på noen få, og du kan endre dem senere.',
     chosen: (n: number, max: number) => `${n} av ${max} valgt`,
@@ -265,7 +280,11 @@ export const nb = {
     currency: 'Hovedvaluta',
     modules: 'Moduler',
     moneyModule: 'Penger',
-    modulesHelp: 'Vanene er alltid med. Slår du av Penger, er fanen borte og kjøp fra Apple Pay kommer uten varsel. Ingenting slettes, og alt er der når du slår den på igjen.',
+    journalModule: 'Dagbok og humør',
+    journal: 'Dagbok',
+    eveningNotification: 'Kveldsvarsel',
+    eveningHelp: 'Hver kveld: «God kveld. Hvordan var dagen?»',
+    modulesHelp: 'Vanene er alltid med. Slår du av Penger, er fanen borte og kjøp fra Apple Pay kommer uten varsel. Slår du av dagboken, er kortene på I dag og i Oversikt borte. Ingenting slettes, og alt er der når du slår den på igjen.',
   },
 
   backup: {
@@ -274,7 +293,7 @@ export const nb = {
     lead: 'Alt ligger bare på denne telefonen. Med en fil kan du ta vare på det selv, eller flytte det til en ny telefon.',
     exportSection: 'Eksport',
     exportAll: 'Eksporter alt',
-    exportAllHelp: 'Vaner, avhukinger, mål, kjøp og innstillinger i én fil (JSON). Lagre den i Filer, eller send den til deg selv.',
+    exportAllHelp: 'Vaner, avhukinger, mål, dagbok, kjøp og innstillinger i én fil (JSON). Lagre den i Filer, eller send den til deg selv.',
     exportCsv: 'Eksporter kjøp som CSV',
     exportCsvHelp: 'Til et regneark. Et oppdelt kjøp blir én rad per kategori.',
     importSection: 'Import',
@@ -285,6 +304,7 @@ export const nb = {
     previewHabits: (n: number) => vaner(n),
     previewDays: (n: number) => `${n} ${n === 1 ? 'dag' : 'dager'} med avhuking`,
     previewGoals: (n: number) => `${n} mål`,
+    previewJournal: (n: number) => `${n} ${n === 1 ? 'dag' : 'dager'} i dagboken`,
     previewPurchases: (n: number) => `${n} kjøp`,
     previewWarning: 'Alt som ligger i Vane nå, blir erstattet av det som er i filen. Det kan ikke angres. Eksporter først hvis du vil ta vare på det.',
     replace: 'Erstatt dataene',
@@ -326,6 +346,8 @@ export const nb = {
   notifications: {
     morningTitle: 'God morgen',
     morningBody: 'Hva vil du få til i dag?',
+    eveningTitle: 'God kveld',
+    eveningBody: 'Hvordan var dagen?',
     weeklyBody: (count: number, target: number) => `${count} av ${target} denne uka.`,
     countBody: (target: number, unit: string) => `Målet i dag er ${target} ${unit}.`,
     checkBody: 'Har du fått gjort det i dag?',

@@ -48,7 +48,7 @@ describe('sikkerhetskopi', () => {
 
   it('oppsummerer hva filen inneholder', () => {
     const { data, money } = sample();
-    expect(summarizeBackup(createBackup(data, money, NOW))).toEqual({ habits: 2, days: 2, goals: 1, purchases: 4, exportedAt: NOW });
+    expect(summarizeBackup(createBackup(data, money, NOW))).toEqual({ habits: 2, days: 2, goals: 1, journal: 0, purchases: 4, exportedAt: NOW });
   });
 
   it('avviser filer som ikke er JSON, ikke er fra Vane, eller er fra en nyere versjon', () => {

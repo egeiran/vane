@@ -106,6 +106,19 @@ export const en: Strings = {
     cardLabelYesterday: 'GOALS YESTERDAY',
   },
 
+  journal: {
+    question: 'How is your day going?',
+    questionYesterday: 'How was yesterday?',
+    moods: ['Tough', 'A bit tough', 'Okay', 'Good', 'Very good'],
+    moodLabel: 'Mood',
+    placeholder: 'One sentence about the day',
+    textLabel: 'One sentence about the day',
+    overviewTitle: 'Journal and mood',
+    overviewSub: 'mood per day',
+    dayEntry: (day: string, mood: string, text: string) => `${day}: ${[mood, text ? `“${text}”` : ''].filter(Boolean).join(' · ')}`,
+    dayEmpty: (day: string) => `${day}: nothing written`,
+  },
+
   habitForm: {
     editTitle: 'Edit habit',
     newTitle: 'New habit',
@@ -185,6 +198,7 @@ export const en: Strings = {
     habitsModule: 'Habits',
     always: 'Always included',
     moneyModuleSub: 'Where your money goes: purchases you add yourself, and purchases with Apple Pay',
+    journalModuleSub: 'One sentence and one mood per day',
     habitsTitle: 'What would you like to start with?',
     habitsLead: 'Choose up to three. A few are easier to keep, and you can change them later.',
     chosen: (n: number, max: number) => `${n} of ${max} chosen`,
@@ -250,7 +264,11 @@ export const en: Strings = {
     currency: 'Main currency',
     modules: 'Modules',
     moneyModule: 'Money',
-    modulesHelp: 'Habits are always included. If you turn off Money, the tab is gone and purchases from Apple Pay come in without a notification. Nothing is deleted, and everything is there when you turn it back on.',
+    journalModule: 'Journal and mood',
+    journal: 'Journal',
+    eveningNotification: 'Evening notification',
+    eveningHelp: 'Every evening: “Good evening. How was your day?”',
+    modulesHelp: 'Habits are always included. If you turn off Money, the tab is gone and purchases from Apple Pay come in without a notification. If you turn off the journal, its cards on Today and in Overview are gone. Nothing is deleted, and everything is there when you turn it back on.',
   },
 
   backup: {
@@ -259,7 +277,7 @@ export const en: Strings = {
     lead: 'Everything is stored only on this phone. With a file, you can keep a copy yourself or move it to a new phone.',
     exportSection: 'Export',
     exportAll: 'Export everything',
-    exportAllHelp: 'Habits, check-offs, goals, purchases and settings in one file (JSON). Save it in Files, or send it to yourself.',
+    exportAllHelp: 'Habits, check-offs, goals, journal, purchases and settings in one file (JSON). Save it in Files, or send it to yourself.',
     exportCsv: 'Export purchases as CSV',
     exportCsvHelp: 'For a spreadsheet. A split purchase becomes one row per category.',
     importSection: 'Import',
@@ -270,6 +288,7 @@ export const en: Strings = {
     previewHabits: (n: number) => habits(n),
     previewDays: (n: number) => `${n} ${n === 1 ? 'day' : 'days'} with check-offs`,
     previewGoals: (n: number) => `${n} ${n === 1 ? 'goal' : 'goals'}`,
+    previewJournal: (n: number) => `${n} ${n === 1 ? 'day' : 'days'} in the journal`,
     previewPurchases: (n: number) => `${n} ${n === 1 ? 'purchase' : 'purchases'}`,
     previewWarning: 'Everything currently in Vane will be replaced by the contents of the file. This can’t be undone. Export first if you want to keep it.',
     replace: 'Replace data',
@@ -309,6 +328,8 @@ export const en: Strings = {
 
   notifications: {
     morningTitle: 'Good morning',
+    eveningTitle: 'Good evening',
+    eveningBody: 'How was your day?',
     morningBody: 'What would you like to get done today?',
     weeklyBody: (count: number, target: number) => `${count} of ${target} this week.`,
     countBody: (target: number, unit: string) => `Today’s goal is ${target} ${unit}.`,

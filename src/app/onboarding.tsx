@@ -49,6 +49,7 @@ export default function OnboardingScreen() {
   // Åpnes oppstarten på nytt underveis, fortsetter den der den var (se `rememberOnboarding`).
   const [step, setStepState] = useState<Step>(() => onboardingProgress()?.step ?? onboardingStart(getData()));
   const [money, setMoney] = useState(settings.modules.money);
+  const [journal, setJournal] = useState(settings.modules.journal);
   const [chosen, setChosenState] = useState<FirstHabit[]>(() => onboardingProgress()?.chosen ?? []);
   const [own, setOwn] = useState('');
   const [setupOpened, setSetupOpenedState] = useState(() => onboardingProgress()?.setupOpened ?? false);
@@ -80,7 +81,7 @@ export default function OnboardingScreen() {
   const next = () => (last ? finish() : setStep(steps[index + 1]));
 
   const saveModules = () => {
-    if (money !== settings.modules.money) update({ modules: { ...settings.modules, money } });
+    if (money !== settings.modules.money || journal !== settings.modules.journal) update({ modules: { ...settings.modules, money, journal } });
     next();
   };
   const saveHabits = () => {
@@ -148,6 +149,13 @@ export default function OnboardingScreen() {
                 <Text style={[styles.rowSub, { color: t.sub }]}>{tr.onboarding.moneyModuleSub}</Text>
               </View>
               <Switch value={money} onValueChange={setMoney} trackColor={{ true: t.switchOn }} accessibilityLabel={tr.settings.moneyModule} />
+            </Row>
+            <Row>
+              <View style={styles.rowText}>
+                <Text style={[styles.rowTitle, { color: t.text }]}>{tr.settings.journalModule}</Text>
+                <Text style={[styles.rowSub, { color: t.sub }]}>{tr.onboarding.journalModuleSub}</Text>
+              </View>
+              <Switch value={journal} onValueChange={setJournal} trackColor={{ true: t.switchOn }} accessibilityLabel={tr.settings.journalModule} />
             </Row>
           </Card>
         </>

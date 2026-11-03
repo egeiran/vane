@@ -1,5 +1,6 @@
 import { tr } from '@/i18n';
 
+import { isMood, MAX_JOURNAL_TEXT } from './journal';
 import { categoryById, categoryName, merchantName } from './money';
 import { loadMoney, MAX_IMPORTED, partsAreValid } from './moneyState';
 import { loadData } from './state';
@@ -105,7 +106,9 @@ function validSettings(s: unknown): boolean {
     optional(s.remindersEnabled, isBool) &&
     optional(s.weekStart, (v) => v === null || v === 'mon' || v === 'sun') &&
     optional(s.modules, (v) => isObject(v) && Object.values(v).every(isBool)) &&
-    optional(s.onboarded, isBool)
+    optional(s.onboarded, isBool) &&
+    optional(s.eveningEnabled, isBool) &&
+    optional(s.eveningTime, isTime)
   );
 }
 
@@ -120,7 +123,12 @@ function validData(d: unknown): boolean {
   for (const [day, list] of Object.entries(d.goals)) {
     if (!isDay(day) || !validList(list, MAX.goalsPerDay, validGoal)) return false;
   }
-  return optional(d.goalsSkipped, (v) => isObject(v) && Object.keys(v).every(isDay));
+  if (!optional(d.goalsSkipped, (v) => isObject(v) && Object.keys(v).every(isDay))) return false;
+  // Dagboken kom etter de første eksportene, så den kan mangle.
+  return optional(
+    d.journal,
+    (v) => isObject(v) && Object.entries(v).every(([day, e]) => isDay(day) && isObject(e) && (e.mood === null || isMood(e.mood)) && typeof e.text === 'string' && e.text.length <= MAX_JOURNAL_TEXT)
+  );
 }
 
 function validPart(x: unknown) {
@@ -180,7 +188,7 @@ export function readBackup(text: string): ReadResult {
   };
 }
 
-export type BackupSummary = { habits: number; days: number; goals: number; purchases: number; exportedAt: Date | null };
+export type BackupSummary = { habits: number; days: number; goals: number; journal: number; purchases: number; exportedAt: Date | null };
 
 export function summarizeBackup(b: BackupFile): BackupSummary {
   const at = new Date(b.exportedAt);
@@ -188,6 +196,7 @@ export function summarizeBackup(b: BackupFile): BackupSummary {
     habits: b.data.habits.length,
     days: Object.keys(b.data.logs).length,
     goals: Object.values(b.data.goals).reduce((n, list) => n + list.length, 0),
+    journal: Object.keys(b.data.journal).length,
     purchases: b.money.purchases.length,
     exportedAt: Number.isNaN(at.getTime()) ? null : at,
   };

@@ -3,7 +3,7 @@ import { tr } from '@/i18n';
 import { addDays, atTime, todayKey, type DateKey } from './dates';
 import { isDone, isScheduled, isWeekly, valueOn, weekCount, weeklyTarget } from './habits';
 import { weekStartOf } from './region';
-import type { Data, Habit } from './types';
+import type { Data, Habit, Settings } from './types';
 
 export const CATEGORY_CHECK = 'habit-check';
 export const CATEGORY_COUNT = 'habit-count';
@@ -16,7 +16,7 @@ export const ACTION_SNOOZE = 'snooze';
  * få påminnelser, rekker de lenger fram, så lenge de holder seg under `MAX_REMINDERS`.
  */
 export const DAYS_AHEAD = 28;
-/** iOS holder maks 64 planlagte varsler per app; morgenvarselet og «om 1 time» trenger også plass. */
+/** iOS holder maks 64 planlagte varsler per app; morgen- og kveldsvarselet og «om 1 time» trenger også plass. */
 export const MAX_REMINDERS = 56;
 
 export type PlannedReminder = {
@@ -38,6 +38,19 @@ export const MORNING = {
     return tr.notifications.morningBody;
   },
 };
+
+/** Kveldsvarselet for dagboken. Bare når dagboken er på og varselet er slått på. */
+export const EVENING = {
+  id: 'evening',
+  get title() {
+    return tr.notifications.eveningTitle;
+  },
+  get body() {
+    return tr.notifications.eveningBody;
+  },
+};
+
+export const wantsEvening = (s: Settings) => s.modules.journal && s.eveningEnabled;
 
 function bodyFor(data: Data, h: Habit, day: DateKey): string {
   if (isWeekly(h)) return tr.notifications.weeklyBody(weekCount(data, h, day, weekStartOf(data.settings)), weeklyTarget(h));

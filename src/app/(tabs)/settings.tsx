@@ -10,6 +10,7 @@ import { mainCurrency } from '@/lib/money';
 import { useMoney } from '@/lib/moneyStore';
 import { permissionStatus, requestPermission, scheduleNotificationSync, sendTestNotification, type PermissionStatus } from '@/lib/notifications';
 import { showTime } from '@/lib/region';
+import { wantsEvening } from '@/lib/reminders';
 import { WRITE_REVIEW_URL } from '@/lib/review';
 import { appVersion } from '@/lib/reviewPrompt';
 import { useStore } from '@/lib/store';
@@ -33,7 +34,7 @@ export default function SettingsScreen() {
   const currency = useMoney((s) => mainCurrency(s));
   const [permission, recheck] = usePermission();
   // Banneret vises bare når et varsel er slått på, men ikke kan komme.
-  const wantsNotifications = settings.morningEnabled || settings.remindersEnabled || settings.modules.money;
+  const wantsNotifications = settings.morningEnabled || settings.remindersEnabled || settings.modules.money || wantsEvening(settings);
 
   const enable = async (patch: Parameters<typeof update>[0]) => {
     update(patch);
@@ -121,9 +122,35 @@ export default function SettingsScreen() {
         <SectionLabel>{tr.settings.modules}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
           <SwitchRow first label={tr.settings.moneyModule} value={settings.modules.money} onChange={(money) => update({ modules: { ...settings.modules, money } })} />
+          <SwitchRow label={tr.settings.journalModule} value={settings.modules.journal} onChange={(journal) => update({ modules: { ...settings.modules, journal } })} />
         </Card>
         <Text style={[styles.footnote, { color: t.sub }]}>{tr.settings.modulesHelp}</Text>
       </View>
+
+      {settings.modules.journal ? (
+        <View style={styles.section}>
+          <SectionLabel>{tr.settings.journal}</SectionLabel>
+          <Card style={{ overflow: 'hidden' }}>
+            <SwitchRow first label={tr.settings.eveningNotification} value={settings.eveningEnabled} onChange={(v) => enable({ eveningEnabled: v })} />
+            {settings.eveningEnabled ? (
+              <>
+                <Row>
+                  <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.time}</Text>
+                  <Stepper
+                    value={showTime(settings.eveningTime)}
+                    minWidth={60}
+                    onDecrease={() => update({ eveningTime: shiftTime(settings.eveningTime, -15, 17 * 60, 23 * 60 + 45) })}
+                    onIncrease={() => update({ eveningTime: shiftTime(settings.eveningTime, 15, 17 * 60, 23 * 60 + 45) })}
+                    decreaseLabel={tr.common.earlier15}
+                    increaseLabel={tr.common.later15}
+                  />
+                </Row>
+                <Text style={[styles.help, { color: t.sub, borderTopColor: t.border }]}>{tr.settings.eveningHelp}</Text>
+              </>
+            ) : null}
+          </Card>
+        </View>
+      ) : null}
 
       {settings.modules.money ? (
         <View style={styles.section}>

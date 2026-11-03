@@ -43,6 +43,7 @@ export function useAppEffects() {
     scheduleReviewCheck();
 
     const unsubscribe = useStore.subscribe((state, prev) => {
+      if (state.journal !== prev.journal) noteActivity();
       if (
         state.habits === prev.habits &&
         state.logs === prev.logs &&

@@ -114,6 +114,8 @@ export default function DataScreen() {
               tr.backup.previewHabits(summary.habits),
               tr.backup.previewDays(summary.days),
               tr.backup.previewGoals(summary.goals),
+              // Dagboken vises når filen har noe, eller når den som er her nå, ville blitt borte.
+              ...(summary.journal || Object.keys(getData().journal).length ? [tr.backup.previewJournal(summary.journal)] : []),
               tr.backup.previewPurchases(summary.purchases),
             ].map((line) => (
               <Text key={line} style={[styles.fact, { color: t.text }]}>

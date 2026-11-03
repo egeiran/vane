@@ -14,8 +14,10 @@ import {
   ACTION_SNOOZE,
   CATEGORY_CHECK,
   CATEGORY_COUNT,
+  EVENING,
   MORNING,
   planReminders,
+  wantsEvening,
 } from './reminders';
 import { getData, useStore } from './store';
 
@@ -94,7 +96,7 @@ export async function syncNotifications(): Promise<void> {
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   await Promise.all(
     scheduled
-      .filter((n) => n.identifier === MORNING.id || n.identifier.startsWith('habit:'))
+      .filter((n) => n.identifier === MORNING.id || n.identifier === EVENING.id || n.identifier.startsWith('habit:'))
       .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier))
   );
 
@@ -103,6 +105,15 @@ export async function syncNotifications(): Promise<void> {
     await Notifications.scheduleNotificationAsync({
       identifier: MORNING.id,
       content: { title: MORNING.title, body: MORNING.body, data: { kind: 'morning' } },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute },
+    });
+  }
+
+  if (wantsEvening(data.settings)) {
+    const { hour, minute } = parseTime(data.settings.eveningTime);
+    await Notifications.scheduleNotificationAsync({
+      identifier: EVENING.id,
+      content: { title: EVENING.title, body: EVENING.body, data: { kind: 'evening' } },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute },
     });
   }
@@ -168,6 +179,11 @@ export function handleNotificationResponse(r: Notifications.NotificationResponse
 
   if (data.kind === 'morning') {
     if (opened) navigate('/goals');
+    return;
+  }
+  // Kveldsvarselet åpner I dag, der dagboken er.
+  if (data.kind === 'evening') {
+    if (opened) navigate('/');
     return;
   }
   if (data.kind !== 'habit' || !data.habitId || !data.day) return;

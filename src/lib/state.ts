@@ -18,6 +18,7 @@ export function loadData(persisted: unknown): Data {
     ...EMPTY_DATA,
     ...p,
     goalsSkipped: p.goalsSkipped ?? {},
+    journal: p.journal ?? {},
     settings: {
       ...DEFAULT_SETTINGS,
       ...settings,

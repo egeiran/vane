@@ -59,7 +59,16 @@ export type Settings = {
   modules: Modules;
   /** Oppstarten er vist (eller hoppet over). Alle som brukte appen før oppstarten fantes, har `true`. */
   onboarded: boolean;
+  /** Kveldsvarselet for dagboken: «Hvordan var dagen?». Av som standard, og bare når dagboken er på. */
+  eveningEnabled: boolean;
+  eveningTime: string;
 };
+
+/** Humøret en dag, fra tungt (1) til veldig godt (5). */
+export type Mood = 1 | 2 | 3 | 4 | 5;
+
+/** Dagboken for én dag: én setning og ett humør. Begge kan mangle. */
+export type JournalEntry = { mood: Mood | null; text: string };
 
 /** Verdi per vane for én dag: 1 for gjort (ja/nei) eller antall. */
 export type DayLog = Record<string, number>;
@@ -70,6 +79,8 @@ export type Data = {
   goals: Record<DateKey, Goal[]>;
   /** Dager der man har svart «Ikke i dag» på dagens mål – da spør vi ikke mer. */
   goalsSkipped: Record<DateKey, true>;
+  /** Dagbok og humør (modulen `journal`). Dagens setning og humør, per dag. */
+  journal: Record<DateKey, JournalEntry>;
   settings: Settings;
 };
 
@@ -81,6 +92,8 @@ export const DEFAULT_SETTINGS: Settings = {
   // Penger er på for alle som brukte appen før moduler fantes. Nye brukere velger i oppstarten.
   modules: { money: true, journal: false, health: false, recurring: false },
   onboarded: false,
+  eveningEnabled: false,
+  eveningTime: '21:00',
 };
 
 export const EMPTY_DATA: Data = {
@@ -88,6 +101,7 @@ export const EMPTY_DATA: Data = {
   logs: {},
   goals: {},
   goalsSkipped: {},
+  journal: {},
   settings: DEFAULT_SETTINGS,
 };
 
