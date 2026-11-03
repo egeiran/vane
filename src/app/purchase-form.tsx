@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -74,6 +74,7 @@ export default function PurchaseFormScreen() {
   const insets = useSafeAreaInsets();
   const today = useToday();
   const { id } = useLocalSearchParams<{ id?: string }>();
+  const navigation = useNavigation();
   const data = useMoneyData();
   const existing = id ? data.purchases.find((p) => p.id === id) : undefined;
   const addPurchase = useMoney((s) => s.addPurchase);
@@ -128,6 +129,10 @@ export default function PurchaseFormScreen() {
         skipped: f.skipped,
         note: f.note,
       });
+      // Et nytt kjøp vises i Penger, også når skjemaet ble åpnet fra widgeten over en annen fane.
+      // Ligger det en annen skjerm under skjemaet, går vi bare tilbake til den.
+      const state = navigation.getState();
+      if (state?.routes[state.index - 1]?.name === '(tabs)') return router.dismissTo(moneyHome());
     }
     close();
   };

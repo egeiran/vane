@@ -8,6 +8,13 @@ import { useTheme } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
 
+/**
+ * Fanene ligger alltid nederst i stabelen. Åpnes appen fra en lenke (widgetene åpner
+ * `vane://purchase-form` og `vane://goals`), legges skjermen oppå fanene. Uten dette blir et ark
+ * den eneste skjermen og vises i full skjerm, med knappene under statuslinja der trykk ikke når fram.
+ */
+export const unstable_settings = { anchor: '(tabs)' };
+
 export default function RootLayout() {
   const t = useTheme();
   useAppEffects();
@@ -32,7 +39,8 @@ export default function RootLayout() {
         <Stack.Screen name="habit-form" options={{ presentation: 'modal' }} />
         <Stack.Screen name="purchases" />
         <Stack.Screen name="categories" />
-        <Stack.Screen name="purchase-form" options={{ presentation: 'modal' }} />
+        {/* Et annet kjøp (eller et nytt) får sitt eget skjema, også når skjemaet allerede er åpent. */}
+        <Stack.Screen name="purchase-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
         <Stack.Screen name="category-form" options={{ presentation: 'modal' }} />
         <Stack.Screen name="money-setup" options={{ presentation: 'modal' }} />
         <Stack.Screen name="currency" options={{ presentation: 'modal' }} />
