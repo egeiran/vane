@@ -107,13 +107,16 @@ export async function syncNotifications(): Promise<void> {
     });
   }
 
-  for (const r of planReminders(data)) {
-    await Notifications.scheduleNotificationAsync({
-      identifier: r.id,
-      content: { title: r.title, body: r.body, data: r.data, categoryIdentifier: r.category },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.date },
-    });
-  }
+  // Alle på én gang: appen kan ha kort tid når den bare er startet i bakgrunnen.
+  await Promise.all(
+    planReminders(data).map((r) =>
+      Notifications.scheduleNotificationAsync({
+        identifier: r.id,
+        content: { title: r.title, body: r.body, data: r.data, categoryIdentifier: r.category },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.date },
+      })
+    )
+  );
 }
 
 /** Et morgenvarsel om fem sekunder, så man kan se hvordan det ser ut. */
@@ -184,7 +187,8 @@ export function handleNotificationResponse(r: Notifications.NotificationResponse
         identifier: `snooze:${data.habitId}:${Date.now()}`,
         content: {
           title: content.title ?? '',
-          body: content.body ?? '',
+          // Den siste påminnelsens «Åpne Vane …» hører ikke med i en utsatt påminnelse.
+          body: (content.body ?? '').replace(` ${tr.notifications.openToContinue}`, ''),
           data: content.data,
           categoryIdentifier: content.categoryIdentifier ?? CATEGORY_CHECK,
         },

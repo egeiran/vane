@@ -329,6 +329,8 @@ export const nb = {
     weeklyBody: (count: number, target: number) => `${count} av ${target} denne uka.`,
     countBody: (target: number, unit: string) => `Målet i dag er ${target} ${unit}.`,
     checkBody: 'Har du fått gjort det i dag?',
+    /** Lagt til på den siste planlagte påminnelsen. */
+    openToContinue: 'Åpne Vane, så fortsetter påminnelsene.',
     snooze: 'Om 1 time',
     done: 'Gjort',
     // Kjøpsvarsler (knappene registreres fra appen, teksten i varselet lages i Swift)

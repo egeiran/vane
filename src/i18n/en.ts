@@ -313,6 +313,7 @@ export const en: Strings = {
     weeklyBody: (count: number, target: number) => `${count} of ${target} this week.`,
     countBody: (target: number, unit: string) => `Today’s goal is ${target} ${unit}.`,
     checkBody: 'Have you done it today?',
+    openToContinue: 'Open Vane to keep getting reminders.',
     snooze: 'In 1 hour',
     done: 'Done',
     later: 'Later',
