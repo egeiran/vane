@@ -3,7 +3,7 @@ import { tr } from '@/i18n';
 import { addDays, atTime, todayKey, type DateKey } from './dates';
 import { isDone, isScheduled, isWeekly, valueOn, weekCount, weeklyTarget } from './habits';
 import { weekStartOf } from './region';
-import type { Data, Habit } from './types';
+import type { Data, Habit, Settings } from './types';
 
 export const CATEGORY_CHECK = 'habit-check';
 export const CATEGORY_COUNT = 'habit-count';
@@ -11,9 +11,12 @@ export const ACTION_DONE = 'done';
 export const ACTION_INC = 'inc';
 export const ACTION_SNOOZE = 'snooze';
 
-/** Hvor mange dager fram påminnelser legges inn. Appen fyller på hver gang den åpnes. */
-export const DAYS_AHEAD = 7;
-/** iOS holder maks 64 planlagte varsler per app; morgenvarselet og «om 1 time» trenger også plass. */
+/**
+ * Hvor mange dager fram påminnelser kan legges inn. Appen fyller på hver gang den åpnes. Har man
+ * få påminnelser, rekker de lenger fram, så lenge de holder seg under `MAX_REMINDERS`.
+ */
+export const DAYS_AHEAD = 28;
+/** iOS holder maks 64 planlagte varsler per app; morgen- og kveldsvarselet og «om 1 time» trenger også plass. */
 export const MAX_REMINDERS = 56;
 
 export type PlannedReminder = {
@@ -35,6 +38,19 @@ export const MORNING = {
     return tr.notifications.morningBody;
   },
 };
+
+/** Kveldsvarselet for dagboken. Bare når dagboken er på og varselet er slått på. */
+export const EVENING = {
+  id: 'evening',
+  get title() {
+    return tr.notifications.eveningTitle;
+  },
+  get body() {
+    return tr.notifications.eveningBody;
+  },
+};
+
+export const wantsEvening = (s: Settings) => s.modules.journal && s.eveningEnabled;
 
 function bodyFor(data: Data, h: Habit, day: DateKey): string {
   if (isWeekly(h)) return tr.notifications.weeklyBody(weekCount(data, h, day, weekStartOf(data.settings)), weeklyTarget(h));
@@ -69,5 +85,20 @@ export function planReminders(data: Data, now: Date = new Date()): PlannedRemind
     }
   }
   out.sort((a, b) => a.date.getTime() - b.date.getTime());
-  return out.slice(0, MAX_REMINDERS);
+  // Blir det for mange, kuttes de ved en hel dag, så alle vanene har påminnelser like langt fram.
+  // Ville det bare blitt i dag igjen, fylles det heller opp til grensen.
+  let planned = out;
+  if (out.length > MAX_REMINDERS) {
+    const cutDay = out[MAX_REMINDERS].data.day;
+    const whole = out.filter((r) => r.data.day < cutDay);
+    planned = whole.some((r) => r.data.day > today) ? whole : out.slice(0, MAX_REMINDERS);
+  }
+  // Påminnelsene legges inn på nytt hver gang appen åpnes. Åpnes den ikke, er dette den siste, og
+  // da sier den rolig fra. Er den nærmere enn to dager, åpner man appen før den kommer, så da sier
+  // den ingenting. Morgenvarselet gjentas av seg selv og fortsetter uansett.
+  const last = planned[planned.length - 1];
+  if (last && last.data.day >= addDays(today, 2)) {
+    planned = [...planned.slice(0, -1), { ...last, body: `${last.body} ${tr.notifications.openToContinue}` }];
+  }
+  return planned;
 }

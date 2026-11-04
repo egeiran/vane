@@ -9,6 +9,7 @@ import { tr } from '@/i18n';
 import { addDays, formatShort, isoWeek, relativeDayName, relativeWeekday, type DateKey } from '@/lib/dates';
 import { daysInRange, isFuture, weekColumns, weekRows } from '@/lib/grid';
 import { dayStats, fractionOn, goalsOn, periodSummary, summaryText } from '@/lib/habits';
+import { journalOn, moodFraction } from '@/lib/journal';
 import { showsWeekNumber, weekStartOf } from '@/lib/region';
 import { useData } from '@/lib/store';
 import { useToday } from '@/lib/useToday';
@@ -25,6 +26,7 @@ export default function OverviewScreen() {
   const data = useData();
   const [range, setRange] = useState<Range>('month');
   const [picked, setPicked] = useState<DateKey>(today);
+  const [journalPicked, setJournalPicked] = useState<DateKey>(today);
   const weeks = RANGE_WEEKS[range];
   const weekStart = weekStartOf(data.settings);
 
@@ -56,6 +58,35 @@ export default function OverviewScreen() {
   const nDays = daysInRange(today, weeks, weekStart);
   const yearCols = range === 'year' ? weekColumns(today, 53, weekStart) : [];
 
+  // Dagboken: humøret som fargestyrke, og setningen for dagen man trykker på. Ingen snitt og ingen trend.
+  const journalOnModule = data.settings.modules.journal;
+  const moodColor = (day: DateKey) => {
+    if (isFuture(day, today)) return 'transparent';
+    const e = journalOn(data, day);
+    // En dag med bare tekst er grå, så den kan finnes, uten å si noe om humøret.
+    if (e && !e.mood) return t.border;
+    return shade(t, t.colors.lavendel.solid, moodFraction(e));
+  };
+  const journalLine = (day: DateKey) => {
+    const e = journalOn(data, day);
+    const name = relativeDayName(day, today);
+    return e ? tr.journal.dayEntry(name, e.mood ? tr.journal.moods[e.mood - 1] : '', e.text.trim()) : tr.journal.dayEmpty(name);
+  };
+  const journalWeeks: HeatWeek[] = weekRows(today, weeks, weekStart).map((row) => ({
+    label: range === 'week' && showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(today)) : formatShort(row[0]),
+    cells: row.map((day) => {
+      const future = isFuture(day, today);
+      return {
+        key: day,
+        color: moodColor(day),
+        today: day === today,
+        selected: day === journalPicked,
+        label: future ? tr.overview.futureDay : journalLine(day),
+        onPress: future ? undefined : () => setJournalPicked(day),
+      };
+    }),
+  }));
+
   const recentGoals = Array.from({ length: 7 }, (_, i) => addDays(today, -i)).flatMap((day) =>
     goalsOn(data, day).map((g) => ({ day, goal: g }))
   );
@@ -76,6 +107,7 @@ export default function OverviewScreen() {
           onChange={(r) => {
             setRange(r);
             setPicked(today);
+            setJournalPicked(today);
           }}
           options={[
             { value: 'week', label: tr.overview.segWeek },
@@ -102,6 +134,25 @@ export default function OverviewScreen() {
         )}
         <Legend colors={legend} />
       </Card>
+
+      {journalOnModule ? (
+        <Card style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={[styles.cardTitle, { color: t.text }]}>{tr.journal.overviewTitle}</Text>
+            <Text style={{ fontSize: 13, color: t.sub }}>{tr.journal.overviewSub}</Text>
+          </View>
+          {range === 'year' ? (
+            <ColumnGrid columns={yearCols.map((col) => col.map(moodColor))} size={5} gap={1} />
+          ) : (
+            <>
+              <WeekRows weeks={journalWeeks} weekStart={weekStart} />
+              <Text accessibilityLiveRegion="polite" style={[styles.dayLine, { backgroundColor: t.bg, color: t.text }]}>
+                {journalLine(journalPicked)}
+              </Text>
+            </>
+          )}
+        </Card>
+      ) : null}
 
       {data.habits.length ? (
         <View style={styles.section}>

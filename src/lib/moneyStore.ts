@@ -83,5 +83,10 @@ export const useMoney = create<MoneyStore>()(
 /** Nåværende pengedata uten handlinger, til bruk utenfor React. */
 export const getMoney = (): MoneyData => pickMoney(useMoney.getState());
 
+/** Erstatter alle pengedataene, for eksempel fra en sikkerhetskopi (se `backup.ts`). */
+export function replaceMoney(money: MoneyData) {
+  useMoney.setState(pickMoney(money));
+}
+
 /** Alle pengedata som et stabilt objekt (rendrer bare på nytt når noe faktisk endres). */
 export const useMoneyData = (): MoneyData => useMoney(useShallow(pickMoney));

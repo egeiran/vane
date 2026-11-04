@@ -14,8 +14,10 @@ import {
   ACTION_SNOOZE,
   CATEGORY_CHECK,
   CATEGORY_COUNT,
+  EVENING,
   MORNING,
   planReminders,
+  wantsEvening,
 } from './reminders';
 import { getData, useStore } from './store';
 
@@ -52,6 +54,15 @@ export async function hasPermission(): Promise<boolean> {
   return allowed(await Notifications.getPermissionsAsync());
 }
 
+/** `ask`: iOS har ikke spurt ennå. `denied`: brukeren har sagt nei, og må slå det på i Innstillinger. */
+export type PermissionStatus = 'granted' | 'ask' | 'denied';
+
+export async function permissionStatus(): Promise<PermissionStatus> {
+  if (!supported) return 'denied';
+  const p = await Notifications.getPermissionsAsync();
+  return allowed(p) ? 'granted' : p.canAskAgain ? 'ask' : 'denied';
+}
+
 /** Spør om lov til varsler hvis vi ikke har spurt før. Returnerer om vi har lov. */
 export async function requestPermission(): Promise<boolean> {
   if (!supported) return false;
@@ -85,7 +96,7 @@ export async function syncNotifications(): Promise<void> {
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   await Promise.all(
     scheduled
-      .filter((n) => n.identifier === MORNING.id || n.identifier.startsWith('habit:'))
+      .filter((n) => n.identifier === MORNING.id || n.identifier === EVENING.id || n.identifier.startsWith('habit:'))
       .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier))
   );
 
@@ -98,13 +109,25 @@ export async function syncNotifications(): Promise<void> {
     });
   }
 
-  for (const r of planReminders(data)) {
+  if (wantsEvening(data.settings)) {
+    const { hour, minute } = parseTime(data.settings.eveningTime);
     await Notifications.scheduleNotificationAsync({
-      identifier: r.id,
-      content: { title: r.title, body: r.body, data: r.data, categoryIdentifier: r.category },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.date },
+      identifier: EVENING.id,
+      content: { title: EVENING.title, body: EVENING.body, data: { kind: 'evening' } },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute },
     });
   }
+
+  // Alle på én gang: appen kan ha kort tid når den bare er startet i bakgrunnen.
+  await Promise.all(
+    planReminders(data).map((r) =>
+      Notifications.scheduleNotificationAsync({
+        identifier: r.id,
+        content: { title: r.title, body: r.body, data: r.data, categoryIdentifier: r.category },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.date },
+      })
+    )
+  );
 }
 
 /** Et morgenvarsel om fem sekunder, så man kan se hvordan det ser ut. */
@@ -133,6 +156,8 @@ function markHandled(r: Notifications.NotificationResponse): boolean {
 }
 
 function navigate(href: '/goals' | '/') {
+  // Under oppstarten er resten av appen låst. Da blir man der man er.
+  if (!getData().settings.onboarded) return;
   // Ved kald oppstart er ikke navigasjonen alltid klar på første tikk.
   setTimeout(() => {
     try {
@@ -156,6 +181,11 @@ export function handleNotificationResponse(r: Notifications.NotificationResponse
     if (opened) navigate('/goals');
     return;
   }
+  // Kveldsvarselet åpner I dag, der dagboken er.
+  if (data.kind === 'evening') {
+    if (opened) navigate('/');
+    return;
+  }
   if (data.kind !== 'habit' || !data.habitId || !data.day) return;
 
   const store = useStore.getState();
@@ -173,7 +203,8 @@ export function handleNotificationResponse(r: Notifications.NotificationResponse
         identifier: `snooze:${data.habitId}:${Date.now()}`,
         content: {
           title: content.title ?? '',
-          body: content.body ?? '',
+          // Den siste påminnelsens «Åpne Vane …» hører ikke med i en utsatt påminnelse.
+          body: (content.body ?? '').replace(` ${tr.notifications.openToContinue}`, ''),
           data: content.data,
           categoryIdentifier: content.categoryIdentifier ?? CATEGORY_CHECK,
         },

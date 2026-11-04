@@ -4,8 +4,9 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { DateKey } from './dates';
 import { kvStorage } from './kvStorage';
+import * as J from './journal';
 import * as S from './state';
-import { EMPTY_DATA, type Data, type HabitInput, type Settings } from './types';
+import { EMPTY_DATA, type Data, type HabitInput, type Mood, type Settings } from './types';
 
 type Actions = {
   addHabit: (input: HabitInput, today: DateKey) => string;
@@ -19,6 +20,8 @@ type Actions = {
   toggleGoal: (day: DateKey, id: string) => void;
   removeGoal: (day: DateKey, id: string) => void;
   skipGoals: (day: DateKey) => void;
+  setMood: (day: DateKey, mood: Mood) => void;
+  setJournalText: (day: DateKey, text: string) => void;
   updateSettings: (patch: Partial<Settings>) => void;
 };
 
@@ -29,6 +32,7 @@ export const pickData = (s: Data): Data => ({
   logs: s.logs,
   goals: s.goals,
   goalsSkipped: s.goalsSkipped,
+  journal: s.journal,
   settings: s.settings,
 });
 
@@ -53,6 +57,8 @@ export const useStore = create<Store>()(
         toggleGoal: (day, id) => apply((d) => S.toggleGoal(d, day, id)),
         removeGoal: (day, id) => apply((d) => S.removeGoal(d, day, id)),
         skipGoals: (day) => apply((d) => S.skipGoals(d, day)),
+        setMood: (day, mood) => apply((d) => J.setMood(d, day, mood)),
+        setJournalText: (day, text) => apply((d) => J.setJournalText(d, day, text)),
         updateSettings: (patch) => apply((d) => S.updateSettings(d, patch)),
       };
     },
@@ -65,6 +71,11 @@ export const useStore = create<Store>()(
     }
   )
 );
+
+/** Erstatter alle dataene, for eksempel fra en sikkerhetskopi (se `backup.ts`). */
+export function replaceData(data: Data) {
+  useStore.setState(pickData(data));
+}
 
 /** Nåværende data uten handlinger, til bruk utenfor React. */
 export const getData = (): Data => pickData(useStore.getState());

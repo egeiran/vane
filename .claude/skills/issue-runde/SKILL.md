@@ -93,7 +93,8 @@ ls node_modules >/dev/null 2>&1 || npm ci
   branchen økta fikk. Den er integrasjonsbranchen. Hvert issue får en lokal
   branch som squash-merges inn lokalt. Det blir ingen del-PR-er, og CI kjører på
   PR-en til `main`, som åpnes som utkast når runden settes opp. Ingen andre
-  bruker checkouten, så du trenger ingen worktree.
+  bruker checkouten, så du trenger ingen worktree. Har økta ingen `claude/...`-branch
+  (den står på `main`), lager du `claude/runde-<tema>` fra `origin/main`.
 - **Lokal økt:** integrasjonsbranch `feature/<tema>`, del-branch og del-PR per
   issue. Har hovedcheckouten endringer, eller kjører det dev-servere fra den,
   jobber du i en egen worktree. Bruk aldri `git stash`.
@@ -212,8 +213,9 @@ git switch -C <økt-branch> origin/main      # bare hvis den ikke har egne commi
 git push -u origin <økt-branch>
 ```
 
-Åpne PR-en til `main` som utkast med en gang (`references/pr-maler.md`), så CI
-kjører på hver push. Den skriver «Utkast: runden pågår» øverst til den er klar.
+Åpne PR-en til `main` som utkast (`references/pr-maler.md`), så CI kjører på hver
+push. Den skriver «Utkast: runden pågår» øverst til den er klar. GitHub godtar ikke
+en PR uten commits, så en ny branch får PR-en etter første merge inn.
 
 Lokal økt: `git worktree add -b feature/<tema> .claude/worktrees/<tema> origin/main`,
 `npm ci` der, og push.
@@ -264,7 +266,18 @@ Følg `AGENTS.md`. Dette glipper oftest:
   `cleanMerchant`, endrer du `PurchaseText.swift` likt, med de samme
   testtilfellene skrevet som kommentar der. Nye felt i `PurchaseConfig` er
   valgfrie (`String?`), så gammel lagret config fortsatt kan leses.
-- **Nye pakker** med `npx expo install`. Native pakker gir nytt bygg.
+- **Nye pakker** med `npx expo install`. Native pakker gir nytt bygg. Se etter hva
+  den gjør i `app.json` og `package-lock.json`: den legger til config plugins
+  (`expo-sharing` la til en som bare lager en delingsutvidelse, og som ble fjernet
+  igjen), og den kan løfte delte pakker som `@expo/config-plugins`. Da sammenligner
+  du prebuild med `main` (`references/testing.md`).
+- **Sjekk Expo-pakkene som finnes før du legger til nye:** `expo-file-system` 58 har
+  egen filvelger (`File.pickFileAsync`), så `expo-document-picker` trengtes ikke.
+- **Tilstand utenfor komponenten** (en variabel i modulen som endres) avvises av
+  React Compiler-lintingen. Legg den i `src/lib` bak små funksjoner.
+- **Endre tekst i `nb.ts` og `en.ts` med hele linjer som anker.** Samme nøkkel finnes
+  i flere deler (`cardLabelToday` står både under `goals` og fantes en stund under
+  `journal`). En regex uten anker treffer den første.
 - **Dokumentasjon:** oppdater README, `AGENTS.md` og `docs/retning.md` når oppsett
   eller en avgjørelse endres.
 
@@ -283,7 +296,9 @@ Kommandoene står i `references/testing.md`. Kort fortalt:
 
 ### e. Uavhengig review
 
-Send diffen til en subagent som kjører `code-review`-skillen. Rører endringen
+Send diffen til en subagent som kjører `code-review`-skillen. I den andre runden
+fant reviewen ekte feil i hvert eneste issue, også de små (en grense på 14 dager som
+ikke var testet, et kutt som stoppet påminnelsene i dag). Rører endringen
 data som kommer utenfra (filer som importeres, input fra Snarveier, varsler),
 Vane+-status eller iCloud, sender du den også til en som kjører
 `security-review`. Start dem samtidig. De skal bare rapportere. Fortell dem hva

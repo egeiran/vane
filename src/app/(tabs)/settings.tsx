@@ -1,4 +1,3 @@
-import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, AppState, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -9,20 +8,23 @@ import { tr } from '@/i18n';
 import { shiftTime } from '@/lib/dates';
 import { mainCurrency } from '@/lib/money';
 import { useMoney } from '@/lib/moneyStore';
-import { hasPermission, requestPermission, sendTestNotification } from '@/lib/notifications';
+import { permissionStatus, requestPermission, scheduleNotificationSync, sendTestNotification, type PermissionStatus } from '@/lib/notifications';
 import { showTime } from '@/lib/region';
+import { wantsEvening } from '@/lib/reminders';
+import { WRITE_REVIEW_URL } from '@/lib/review';
+import { appVersion } from '@/lib/reviewPrompt';
 import { useStore } from '@/lib/store';
 import { useTheme } from '@/theme';
 
 function usePermission() {
-  const [granted, setGranted] = useState<boolean | null>(null);
+  const [status, setStatus] = useState<PermissionStatus | null>(null);
   useEffect(() => {
-    const check = () => hasPermission().then(setGranted);
+    const check = () => permissionStatus().then(setStatus);
     check();
     const sub = AppState.addEventListener('change', (s) => s === 'active' && check());
     return () => sub.remove();
   }, []);
-  return [granted, setGranted] as const;
+  return [status, () => permissionStatus().then(setStatus)] as const;
 }
 
 export default function SettingsScreen() {
@@ -30,17 +32,31 @@ export default function SettingsScreen() {
   const settings = useStore((s) => s.settings);
   const update = useStore((s) => s.updateSettings);
   const currency = useMoney((s) => mainCurrency(s));
-  const [granted, setGranted] = usePermission();
+  const [permission, recheck] = usePermission();
+  // Banneret vises bare når et varsel er slått på, men ikke kan komme.
+  const wantsNotifications = settings.morningEnabled || settings.remindersEnabled || settings.modules.money || wantsEvening(settings);
 
   const enable = async (patch: Parameters<typeof update>[0]) => {
     update(patch);
-    if (Object.values(patch).includes(true)) setGranted(await requestPermission());
+    if (Object.values(patch).includes(true)) {
+      await requestPermission();
+      recheck();
+    }
   };
 
   const test = async () => {
     const ok = await sendTestNotification();
     if (ok) Alert.alert(tr.settings.testSent, tr.settings.testSentBody);
-    else setGranted(false);
+    else recheck();
+  };
+
+  // Har iOS ikke spurt ennå (for eksempel etter «Ikke nå» i oppstarten), spør vi her. Har brukeren
+  // sagt nei, finnes bryteren bare i Innstillinger på telefonen.
+  const fixPermission = async () => {
+    if (permission === 'ask') {
+      if (await requestPermission()) scheduleNotificationSync(0);
+      recheck();
+    } else Linking.openSettings();
   };
 
   return (
@@ -49,10 +65,12 @@ export default function SettingsScreen() {
         {tr.settings.title}
       </Text>
 
-      {granted === false ? (
-        <Pressable onPress={() => Linking.openSettings()} accessibilityRole="button" style={[styles.warning, { backgroundColor: t.card }]}>
+      {(permission === 'ask' || permission === 'denied') && wantsNotifications ? (
+        <Pressable onPress={fixPermission} accessibilityRole="button" style={[styles.warning, { backgroundColor: t.card }]}>
           <Icon name="bell.slash" size={18} color={t.sub} />
-          <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: t.text }}>{tr.settings.notificationsOff}</Text>
+          <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: t.text }}>
+            {permission === 'ask' ? tr.settings.notificationsAsk : tr.settings.notificationsOff}
+          </Text>
         </Pressable>
       ) : null}
 
@@ -104,9 +122,35 @@ export default function SettingsScreen() {
         <SectionLabel>{tr.settings.modules}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
           <SwitchRow first label={tr.settings.moneyModule} value={settings.modules.money} onChange={(money) => update({ modules: { ...settings.modules, money } })} />
+          <SwitchRow label={tr.settings.journalModule} value={settings.modules.journal} onChange={(journal) => update({ modules: { ...settings.modules, journal } })} />
         </Card>
         <Text style={[styles.footnote, { color: t.sub }]}>{tr.settings.modulesHelp}</Text>
       </View>
+
+      {settings.modules.journal ? (
+        <View style={styles.section}>
+          <SectionLabel>{tr.settings.journal}</SectionLabel>
+          <Card style={{ overflow: 'hidden' }}>
+            <SwitchRow first label={tr.settings.eveningNotification} value={settings.eveningEnabled} onChange={(v) => enable({ eveningEnabled: v })} />
+            {settings.eveningEnabled ? (
+              <>
+                <Row>
+                  <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.time}</Text>
+                  <Stepper
+                    value={showTime(settings.eveningTime)}
+                    minWidth={60}
+                    onDecrease={() => update({ eveningTime: shiftTime(settings.eveningTime, -15, 17 * 60, 23 * 60 + 45) })}
+                    onIncrease={() => update({ eveningTime: shiftTime(settings.eveningTime, 15, 17 * 60, 23 * 60 + 45) })}
+                    decreaseLabel={tr.common.earlier15}
+                    increaseLabel={tr.common.later15}
+                  />
+                </Row>
+                <Text style={[styles.help, { color: t.sub, borderTopColor: t.border }]}>{tr.settings.eveningHelp}</Text>
+              </>
+            ) : null}
+          </Card>
+        </View>
+      ) : null}
 
       {settings.modules.money ? (
         <View style={styles.section}>
@@ -136,6 +180,18 @@ export default function SettingsScreen() {
       ) : null}
 
       <View style={styles.section}>
+        <SectionLabel>{tr.backup.title}</SectionLabel>
+        <Card style={{ overflow: 'hidden' }}>
+          <Pressable onPress={() => router.push('/data')} accessibilityRole="button">
+            <Row first>
+              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.backup.settingsRow}</Text>
+              <Icon name="chevron.right" size={14} color={t.sub} />
+            </Row>
+          </Pressable>
+        </Card>
+      </View>
+
+      <View style={styles.section}>
         <Card style={{ overflow: 'hidden' }}>
           <Pressable onPress={test} accessibilityRole="button">
             <Row first>
@@ -143,10 +199,17 @@ export default function SettingsScreen() {
               <Icon name="chevron.right" size={14} color={t.sub} />
             </Row>
           </Pressable>
+          {/* Åpner skrivefeltet for en vurdering i App Store direkte. */}
+          <Pressable onPress={() => Linking.openURL(WRITE_REVIEW_URL).catch(() => {})} accessibilityRole="link">
+            <Row>
+              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.rateApp}</Text>
+              <Icon name="arrow.up.right" size={14} color={t.sub} />
+            </Row>
+          </Pressable>
         </Card>
       </View>
 
-      <Text style={[styles.version, { color: t.sub }]}>{tr.settings.version(Constants.expoConfig?.version ?? '1.0.0')}</Text>
+      <Text style={[styles.version, { color: t.sub }]}>{tr.settings.version(appVersion())}</Text>
     </ScrollView>
   );
 }

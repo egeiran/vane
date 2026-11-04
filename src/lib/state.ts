@@ -7,6 +7,9 @@ import { DEFAULT_SETTINGS, EMPTY_DATA, type Data, type Goal, type Habit, type Ha
 /**
  * Dataene slik de lastes fra telefonen. Felt som ble lagt til etter at dataene ble lagret, får
  * standardverdien, også inne i `modules` (Penger er på for alle som brukte appen før).
+ *
+ * `onboarded` mangler i data fra før oppstarten fantes. Da har appen vært brukt, så oppstarten skal
+ * ikke vises. Bare en ny installasjon (ingenting lagret) får `false`.
  */
 export function loadData(persisted: unknown): Data {
   const p = (persisted ?? {}) as Partial<Data>;
@@ -15,7 +18,13 @@ export function loadData(persisted: unknown): Data {
     ...EMPTY_DATA,
     ...p,
     goalsSkipped: p.goalsSkipped ?? {},
-    settings: { ...DEFAULT_SETTINGS, ...settings, modules: { ...DEFAULT_SETTINGS.modules, ...(settings.modules ?? {}) } },
+    journal: p.journal ?? {},
+    settings: {
+      ...DEFAULT_SETTINGS,
+      ...settings,
+      modules: { ...DEFAULT_SETTINGS.modules, ...(settings.modules ?? {}) },
+      onboarded: settings.onboarded ?? persisted != null,
+    },
   };
 }
 

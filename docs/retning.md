@@ -72,5 +72,7 @@ Veikartet er [issue #4](https://github.com/egeiran/vane/issues/4), med en sjekkl
 
 1. **Grunnmur:** test på ekte iPhone, språk (norsk og engelsk), valuta og ukestart, moduler.
 2. **Før lansering:** oppstart, eksport og import, iCloud, Vane+ og grenser, påminnelser i bakgrunnen, vurdering i App Store, personvern og App Store-siden.
-3. **Etter lansering:** Siri og Action-knappen, dagbok og humør, Apple Helse, faste utgifter, KI.
+3. **Etter lansering:** Siri og Action-knappen, Apple Helse, faste utgifter, KI.
+
+Dagbok og humør (#19) ble gjort tidligere, i samme runde som oppstarten. Kveldsvarselet er av som standard, og kommer hver kveld når det er på, som morgenvarselet.
 4. **Senere:** Apple Watch.

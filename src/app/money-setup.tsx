@@ -6,12 +6,19 @@ import type { SFSymbol } from 'sf-symbols-typescript';
 import { Icon } from '@/components/Icon';
 import { IconButton, PrimaryButton, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
+import { requestPermission } from '@/lib/notifications';
 import { moneyHome } from '@/lib/store';
 import { useTheme } from '@/theme';
 
 function close() {
   if (router.canGoBack()) router.back();
   else router.replace(moneyHome());
+}
+
+/** Kjøpsvarselet trenger lov til å sende varsler. iOS spør bare hvis den ikke har spurt før. */
+async function openShortcuts() {
+  await requestPermission().catch(() => false);
+  Linking.openURL('shortcuts://').catch(() => {});
 }
 
 /** Ikonene til stegene. Teksten står i `tr.moneySetup.steps`, i samme rekkefølge. */
@@ -50,7 +57,7 @@ export default function MoneySetupScreen() {
       <Text style={[styles.note, { color: t.sub }]}>{tr.moneySetup.note}</Text>
 
       <View style={{ flex: 1, minHeight: 24 }} />
-      <PrimaryButton label={tr.moneySetup.openShortcuts} onPress={() => Linking.openURL('shortcuts://').catch(() => {})} />
+      <PrimaryButton label={tr.moneySetup.openShortcuts} onPress={openShortcuts} />
       <View style={{ alignItems: 'center', marginTop: 4 }}>
         <TextButton label={tr.common.done} color={t.sub} onPress={close} />
       </View>

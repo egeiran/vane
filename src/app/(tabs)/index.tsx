@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { GoalsCard } from '@/components/GoalsCard';
 import { HabitRow, WeeklyRow } from '@/components/HabitRow';
+import { JournalCard } from '@/components/JournalCard';
 import { Card, IconButton, PrimaryButton, SectionLabel, TextButton } from '@/components/ui';
 import { WeekStrip } from '@/components/WeekStrip';
 import { tr } from '@/i18n';
@@ -18,12 +19,15 @@ export default function TodayScreen() {
   const t = useTheme();
   const today = useToday();
   const yesterday = addDays(today, -1);
-  const [picked, setPicked] = useState<DateKey>(today);
-  // Etter midnatt er «i går» ikke lenger det samme – da går vi tilbake til i dag.
-  const day = picked === today || picked === yesterday ? picked : today;
+  // `null` er alltid i dag, også når appen har ligget i bakgrunnen over midnatt (for eksempel når
+  // kveldsvarselet åpner den). Bare i går kan velges i tillegg.
+  const [picked, setPicked] = useState<DateKey | null>(null);
+  const day = picked === yesterday ? picked : today;
+  const pick = (d: DateKey) => setPicked(d === today ? null : d);
   const isToday = day === today;
 
   const habits = useStore((s) => s.habits);
+  const journalOn = useStore((s) => s.settings.modules.journal);
   const weekStart = useStore((s) => weekStartOf(s.settings));
   const logs = useStore((s) => s.logs[day]);
   const daily = dailyHabitsOn(habits, day);
@@ -35,6 +39,10 @@ export default function TodayScreen() {
     <ScrollView
       style={{ flex: 1, backgroundColor: t.bg }}
       contentInsetAdjustmentBehavior="automatic"
+      // Dagboken har et tekstfelt: tastaturet skal ikke dekke det, og et trykk ved siden av skal virke.
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive"
       contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View style={{ gap: 2 }}>
@@ -46,11 +54,11 @@ export default function TodayScreen() {
         {isToday ? (
           <IconButton icon="plus" label={tr.today.newHabit} onPress={() => router.push('/habit-form')} />
         ) : (
-          <TextButton label={tr.today.backToToday} bold onPress={() => setPicked(today)} />
+          <TextButton label={tr.today.backToToday} bold onPress={() => setPicked(null)} />
         )}
       </View>
 
-      <WeekStrip today={today} selected={day} onSelect={setPicked} />
+      <WeekStrip today={today} selected={day} onSelect={pick} />
       {!isToday ? (
         <Text style={[styles.note, { color: t.sub }]}>{tr.today.yesterdayNote}</Text>
       ) : null}
@@ -58,6 +66,14 @@ export default function TodayScreen() {
       <View style={styles.section}>
         <GoalsCard day={day} isToday={isToday} />
       </View>
+
+      {/* Dagboken er en modul. Er den av, er kortet borte, men det som er skrevet, ligger der. */}
+      {journalOn ? (
+        <View style={styles.section}>
+          {/* Ny dag gir nytt kort, så det som er skrevet, lagres før det byttes. */}
+          <JournalCard key={day} day={day} isToday={isToday} />
+        </View>
+      ) : null}
 
       {habits.length === 0 ? (
         <Card style={styles.empty}>

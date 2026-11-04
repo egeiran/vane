@@ -113,6 +113,8 @@ export function dismissResolvedNotifications(prev: MoneyData, next: MoneyData) {
 }
 
 export function openPurchase(id: string) {
+  // Under oppstarten er resten av appen låst. Kjøpet ligger uansett under Venter.
+  if (!getData().settings.onboarded) return;
   // Ved kald oppstart er ikke navigasjonen alltid klar på første tikk.
   setTimeout(() => {
     try {

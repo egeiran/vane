@@ -5,12 +5,12 @@ import { AppState, Platform } from 'react-native';
 import {
   configureNotifications,
   handleNotificationResponse,
-  requestPermission,
   scheduleNotificationSync,
   syncNotifications,
 } from './notifications';
 import { useMoney } from './moneyStore';
 import { dismissResolvedNotifications, syncPurchaseNative, usePurchaseIntents } from './purchases';
+import { cancelReviewCheck, noteActivity, scheduleReviewCheck } from './reviewPrompt';
 import { useStore } from './store';
 import { listenToWidgetTaps, scheduleSyncWidgets, syncWidgets } from './widgetSync';
 
@@ -29,17 +29,21 @@ export function useAppEffects() {
     const responseSub = Notifications.addNotificationResponseReceivedListener(handleNotificationResponse);
     const last = Notifications.getLastNotificationResponse();
     if (last) {
+      // Åpnet fra et varsel: brukeren er midt i noe, så vi spør ikke om en vurdering nå.
+      noteActivity();
       handleNotificationResponse(last);
       Notifications.clearLastNotificationResponse();
     }
 
+    // Appen spør ikke om lov til varsler her. Det gjør oppstarten, etter en forklaring, eller
+    // Innstillinger når et varsel slås på.
     syncWidgets().finally(() => {
-      requestPermission()
-        .then(() => syncNotifications())
-        .catch(() => {});
+      syncNotifications().catch(() => {});
     });
+    scheduleReviewCheck();
 
     const unsubscribe = useStore.subscribe((state, prev) => {
+      if (state.journal !== prev.journal) noteActivity();
       if (
         state.habits === prev.habits &&
         state.logs === prev.logs &&
@@ -48,6 +52,7 @@ export function useAppEffects() {
         state.settings === prev.settings
       )
         return;
+      noteActivity();
       scheduleSyncWidgets();
       scheduleNotificationSync();
       // Penger slått av eller på: Swift skal vite om det skal sendes kjøpsvarsler.
@@ -60,15 +65,22 @@ export function useAppEffects() {
         syncPurchaseNative();
       }
       if (state.purchases !== prev.purchases) {
+        noteActivity();
         dismissResolvedNotifications(prev, state);
         scheduleSyncWidgets();
       }
     });
 
+    let appState = AppState.currentState;
     const appStateSub = AppState.addEventListener('change', (status) => {
+      const fromBackground = appState === 'background';
+      appState = status;
       if (status === 'active') {
         syncWidgets().finally(() => scheduleNotificationSync(0));
+        // Bare når appen åpnes igjen, ikke etter en systemdialog eller Kontrollsenter.
+        if (fromBackground) scheduleReviewCheck();
       } else if (status === 'background') {
+        cancelReviewCheck();
         // Send siste endring før appen legges bort, så widgeten viser det du nettopp gjorde.
         syncWidgets();
       }
