@@ -3,7 +3,7 @@
 Små vaner, i ro og mak. En rolig vaneapp for iPhone, uten streaks, poeng eller mas. Med en enkel oversikt over hva pengene går til.
 
 - **Oppstart**: første gang appen åpnes, forteller Vane kort hva den er, lar deg velge moduler og opptil tre vaner, forklarer varslene før iOS spør om lov, og viser hvordan du legger til widgetene. Alt kan hoppes over. De som allerede bruker appen, ser den ikke.
-- **I dag**: huk av daglige vaner (ja/nei eller antall, f.eks. 5 av 8 glass) og ukentlige vaner («3 ganger i uka»).
+- **I dag**: huk av daglige vaner (ja/nei eller antall, f.eks. 5 av 8 glass; når målet er nådd, blir tallet en hake som de andre) og ukentlige vaner («3 ganger i uka»).
 - **Dagens mål**: ett eller flere små mål for dagen. Morgenvarselet (standard kl. 07) spør hva du vil få til.
 - **Rett i går**: trykk på i går i ukestripen for å rette. Eldre dager er låst.
 - **Oversikt**: rutenett der fargestyrken viser hvor mye som ble gjort. Uke, 4 uker eller år, for alt samlet og for hver vane.
