@@ -39,8 +39,9 @@ export type Goal = {
 };
 
 /**
- * Delene av appen man velger selv. Vanene er alltid med. Bare Penger finnes ennå; de andre slås
- * på når modulene kommer (dagbok #19, Apple Helse #20, faste utgifter #21).
+ * Delene av appen man velger selv. Vanene er alltid med. Penger, dagbok og humør (#19) og faste
+ * utgifter (#21) finnes. Faste utgifter ligger i Penger, og vises bare når Penger også er på
+ * (`recurringOn`). Apple Helse (#20) kommer senere.
  */
 export type Modules = {
   money: boolean;
@@ -138,6 +139,30 @@ export type Purchase = {
   source: 'applepay' | 'manual';
 };
 
+export type RecurringFrequency = 'week' | 'month' | 'year';
+
+/**
+ * En fast utgift: husleie, strøm, et abonnement. Den telles ikke med i kjøpene, så ingenting telles
+ * to ganger. Neste trekk regnes ut fra `anchor` (se `nextCharge`), så den 31. ikke flytter seg.
+ */
+export type RecurringExpense = {
+  id: string;
+  name: string;
+  /** I øre, større enn 0. */
+  amount: number;
+  /** Hovedvalutaen da den ble lagt inn. Bare hovedvalutaen telles med i summen. */
+  currency: string;
+  frequency: RecurringFrequency;
+  /** En dag det trekkes. */
+  anchor: DateKey;
+  categoryId: string | null;
+  note: string;
+  /** Varsel dagen før neste trekk. Av som standard. */
+  remind: boolean;
+  /** Stedet fra kjøpene, når den ble lagt inn fra et forslag. Ellers tom. */
+  merchantKey: string;
+};
+
 /** Det Vane husker om et sted: et eget navn og kategorien man valgte sist. */
 export type MerchantMemory = { name?: string; categoryId?: string };
 
@@ -156,4 +181,8 @@ export type MoneyData = {
    * telefonen (se `mainCurrency`).
    */
   currency: string | null;
+  /** Faste utgifter (modulen `recurring`), i rekkefølgen de ble lagt inn. */
+  recurring: RecurringExpense[];
+  /** Steder man har sagt «Ikke foreslå» til, så de ikke foreslås som fast utgift igjen. */
+  recurringDismissed: string[];
 };

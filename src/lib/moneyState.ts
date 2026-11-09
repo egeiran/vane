@@ -60,6 +60,8 @@ export function loadMoney(persisted: unknown): MoneyData {
     categories: p.categories?.length ? p.categories : EMPTY_MONEY.categories,
     merchants: p.merchants ?? {},
     imported: p.imported ?? [],
+    recurring: p.recurring ?? [],
+    recurringDismissed: p.recurringDismissed ?? [],
     currency: p.currency !== undefined ? p.currency : persisted ? 'NOK' : null,
   };
 }

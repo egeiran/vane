@@ -3,8 +3,9 @@ import { tr } from '@/i18n';
 import { isMood, MAX_JOURNAL_TEXT } from './journal';
 import { categoryById, categoryName, merchantName } from './money';
 import { loadMoney, MAX_IMPORTED, partsAreValid } from './moneyState';
+import { FREQUENCIES, MAX_DISMISSED } from './recurring';
 import { loadData } from './state';
-import type { Data, MoneyData, PurchasePart } from './types';
+import type { Data, MoneyData, PurchasePart, RecurringFrequency } from './types';
 
 /**
  * Sikkerhetskopi som fil: alt i én JSON-fil, og kjøpene som CSV. Ren logikk. Filene skrives og
@@ -42,7 +43,7 @@ export type ReadResult = { ok: true; backup: BackupFile } | { ok: false; error: 
  * skadet fil ikke kan gjøre appen treg eller ubrukelig.
  */
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;
-const MAX = { habits: 500, categories: 200, purchases: 200_000, goalsPerDay: 100, text: 2000 };
+const MAX = { habits: 500, categories: 200, purchases: 200_000, goalsPerDay: 100, recurring: 500, text: 2000 };
 
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const isText = (v: unknown): v is string => typeof v === 'string' && v.length <= MAX.text;
@@ -147,14 +148,23 @@ function validCategory(c: unknown) {
   return isObject(c) && isId(c.id) && isText(c.name) && isText(c.icon) && COLORS.has(c.color as string) && optional(c.hidden, isBool);
 }
 
-/** Kjøpene og kategoriene må være med. */
+/** En fast utgift. Beløpet er over 0, ellers kan den ikke endres senere (se `updateRecurring`). */
+function validRecurring(e: unknown): boolean {
+  if (!isObject(e) || !isId(e.id) || !isText(e.name) || !(e.name as string).trim() || !isCount(e.amount) || e.amount < 1) return false;
+  if (!isCurrency(e.currency) || !FREQUENCIES.includes(e.frequency as RecurringFrequency) || !isDay(e.anchor)) return false;
+  return (e.categoryId === null || isId(e.categoryId)) && isText(e.note) && isBool(e.remind) && (e.merchantKey === '' || isId(e.merchantKey));
+}
+
+/** Kjøpene og kategoriene må være med. Faste utgifter kom senere, så de kan mangle. */
 function validMoney(m: unknown): boolean {
   if (!isObject(m) || !validList(m.purchases, MAX.purchases, validPurchase) || !validList(m.categories, MAX.categories, validCategory)) return false;
   return (
     optional(m.merchants, (v) => isObject(v) && Object.entries(v).every(([k, x]) => isId(k) && isObject(x) && optional(x.name, isText) && optional(x.categoryId, isId))) &&
     optional(m.imported, (v) => Array.isArray(v) && v.every(isId)) &&
     optional(m.setupSeen, isBool) &&
-    optional(m.currency, (v) => v === null || isCurrency(v))
+    optional(m.currency, (v) => v === null || isCurrency(v)) &&
+    optional(m.recurring, (v) => validList(v, MAX.recurring, validRecurring)) &&
+    optional(m.recurringDismissed, (v) => Array.isArray(v) && v.length <= MAX_DISMISSED && v.every(isId))
   );
 }
 
@@ -188,7 +198,7 @@ export function readBackup(text: string): ReadResult {
   };
 }
 
-export type BackupSummary = { habits: number; days: number; goals: number; journal: number; purchases: number; exportedAt: Date | null };
+export type BackupSummary = { habits: number; days: number; goals: number; journal: number; purchases: number; recurring: number; exportedAt: Date | null };
 
 export function summarizeBackup(b: BackupFile): BackupSummary {
   const at = new Date(b.exportedAt);
@@ -198,6 +208,7 @@ export function summarizeBackup(b: BackupFile): BackupSummary {
     goals: Object.values(b.data.goals).reduce((n, list) => n + list.length, 0),
     journal: Object.keys(b.data.journal).length,
     purchases: b.money.purchases.length,
+    recurring: b.money.recurring.length,
     exportedAt: Number.isNaN(at.getTime()) ? null : at,
   };
 }

@@ -89,6 +89,8 @@ export const EMPTY_MONEY: MoneyData = {
   imported: [],
   setupSeen: false,
   currency: null,
+  recurring: [],
+  recurringDismissed: [],
 };
 
 const NBSP = ' ';

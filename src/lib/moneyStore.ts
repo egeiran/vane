@@ -5,6 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { kvStorage } from './kvStorage';
 import { EMPTY_MONEY } from './money';
 import * as M from './moneyState';
+import * as R from './recurring';
 import { newId } from './state';
 import type { Category, MoneyData } from './types';
 
@@ -22,6 +23,10 @@ type Actions = {
   markSetupSeen: () => void;
   /** Hovedvalutaen, eller `null` for som telefonen. */
   setCurrency: (currency: string | null) => void;
+  addRecurring: (input: R.RecurringInput) => string;
+  updateRecurring: (id: string, patch: R.RecurringPatch) => void;
+  deleteRecurring: (id: string) => void;
+  dismissRecurringSuggestion: (key: string) => void;
   /** Kjører en ren funksjon på dataene (brukes for køen fra Swift og svar på varsler). */
   apply: (fn: (d: MoneyData) => MoneyData) => void;
 };
@@ -35,6 +40,8 @@ export const pickMoney = (s: MoneyData): MoneyData => ({
   imported: s.imported,
   setupSeen: s.setupSeen,
   currency: s.currency,
+  recurring: s.recurring,
+  recurringDismissed: s.recurringDismissed,
 });
 
 /**
@@ -67,6 +74,14 @@ export const useMoney = create<MoneyStore>()(
         moveCategory: (id, delta) => apply((d) => M.moveCategory(d, id, delta)),
         markSetupSeen: () => apply(M.markSetupSeen),
         setCurrency: (currency) => apply((d) => ({ ...d, currency })),
+        addRecurring: (input) => {
+          const id = newId('r');
+          apply((d) => R.addRecurring(d, input, id));
+          return id;
+        },
+        updateRecurring: (id, patch) => apply((d) => R.updateRecurring(d, id, patch)),
+        deleteRecurring: (id) => apply((d) => R.deleteRecurring(d, id)),
+        dismissRecurringSuggestion: (key) => apply((d) => R.dismissSuggestion(d, key)),
         apply,
       };
     },
