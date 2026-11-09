@@ -122,6 +122,14 @@ export default function SettingsScreen() {
         <SectionLabel>{tr.settings.modules}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
           <SwitchRow first label={tr.settings.moneyModule} value={settings.modules.money} onChange={(money) => update({ modules: { ...settings.modules, money } })} />
+          {/* Faste utgifter ligger i Penger, så bryteren er bare her når Penger er på. */}
+          {settings.modules.money ? (
+            <SwitchRow
+              label={tr.settings.recurringModule}
+              value={settings.modules.recurring}
+              onChange={(recurring) => update({ modules: { ...settings.modules, recurring } })}
+            />
+          ) : null}
           <SwitchRow label={tr.settings.journalModule} value={settings.modules.journal} onChange={(journal) => update({ modules: { ...settings.modules, journal } })} />
         </Card>
         <Text style={[styles.footnote, { color: t.sub }]}>{tr.settings.modulesHelp}</Text>

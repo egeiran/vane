@@ -1,6 +1,6 @@
 import { tr } from '@/i18n';
 
-import { addDays, atTime, daysBetween, fromKey, todayKey, toKey, type DateKey } from './dates';
+import { addDays, atTime, daysBetween, formatShort, fromKey, todayKey, toKey, type DateKey } from './dates';
 import { addMonths, categoryById, formatAmount, mainCurrency, merchantKey, merchantName, monthOf, type MonthKey } from './money';
 import { newId } from './state';
 import type { MoneyData, Purchase, RecurringExpense, RecurringFrequency, Settings } from './types';
@@ -100,6 +100,14 @@ export function upcomingRecurring(data: MoneyData, today: DateKey): UpcomingChar
   return data.recurring
     .map((expense) => ({ expense, next: nextCharge(expense, today) }))
     .sort((a, b) => (a.next < b.next ? -1 : a.next > b.next ? 1 : b.expense.amount - a.expense.amount));
+}
+
+/** Dagen for et trekk, inne i en setning: «i dag», «i morgen» eller «3. des». */
+export function chargeDay(day: DateKey, today: DateKey): string {
+  const diff = daysBetween(today, day);
+  if (diff === 0) return tr.dates.today.toLowerCase();
+  if (diff === 1) return tr.dates.tomorrow.toLowerCase();
+  return formatShort(day);
 }
 
 // Endringer

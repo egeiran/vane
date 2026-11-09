@@ -498,7 +498,7 @@ export const nb = {
     note: 'Notat',
     notePlaceholder: 'F.eks. bindingstid til mars',
     remind: 'Varsel dagen før',
-    remindHelp: (time: string) => `Kommer ${time} dagen før hvert trekk. Fint før en prøveperiode går over til betalt.`,
+    remindHelp: (time: string) => `Kommer kl. ${time} dagen før hvert trekk. Fint før en prøveperiode går over til betalt.`,
     delete: 'Slett fast utgift',
     deleteTitle: 'Slette den faste utgiften?',
     deleteBody: 'Den forsvinner fra summen. Kjøpene dine endres ikke.',

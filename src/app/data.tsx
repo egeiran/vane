@@ -117,6 +117,8 @@ export default function DataScreen() {
               // Dagboken vises når filen har noe, eller når den som er her nå, ville blitt borte.
               ...(summary.journal || Object.keys(getData().journal).length ? [tr.backup.previewJournal(summary.journal)] : []),
               tr.backup.previewPurchases(summary.purchases),
+              // Faste utgifter vises når filen har noen, eller når de som er her nå, ville blitt borte.
+              ...(summary.recurring || getMoney().recurring.length ? [tr.backup.previewRecurring(summary.recurring)] : []),
             ].map((line) => (
               <Text key={line} style={[styles.fact, { color: t.text }]}>
                 {`· ${line}`}

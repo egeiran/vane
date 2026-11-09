@@ -50,6 +50,7 @@ export default function OnboardingScreen() {
   const [step, setStepState] = useState<Step>(() => onboardingProgress()?.step ?? onboardingStart(getData()));
   const [money, setMoney] = useState(settings.modules.money);
   const [journal, setJournal] = useState(settings.modules.journal);
+  const [recurring, setRecurring] = useState(settings.modules.recurring);
   const [chosen, setChosenState] = useState<FirstHabit[]>(() => onboardingProgress()?.chosen ?? []);
   const [own, setOwn] = useState('');
   const [setupOpened, setSetupOpenedState] = useState(() => onboardingProgress()?.setupOpened ?? false);
@@ -81,7 +82,8 @@ export default function OnboardingScreen() {
   const next = () => (last ? finish() : setStep(steps[index + 1]));
 
   const saveModules = () => {
-    if (money !== settings.modules.money || journal !== settings.modules.journal) update({ modules: { ...settings.modules, money, journal } });
+    const m = settings.modules;
+    if (money !== m.money || journal !== m.journal || recurring !== m.recurring) update({ modules: { ...m, money, journal, recurring } });
     next();
   };
   const saveHabits = () => {
@@ -150,6 +152,16 @@ export default function OnboardingScreen() {
               </View>
               <Switch value={money} onValueChange={setMoney} trackColor={{ true: t.switchOn }} accessibilityLabel={tr.settings.moneyModule} />
             </Row>
+            {/* Faste utgifter ligger i Penger. */}
+            {money ? (
+              <Row>
+                <View style={styles.rowText}>
+                  <Text style={[styles.rowTitle, { color: t.text }]}>{tr.settings.recurringModule}</Text>
+                  <Text style={[styles.rowSub, { color: t.sub }]}>{tr.onboarding.recurringModuleSub}</Text>
+                </View>
+                <Switch value={recurring} onValueChange={setRecurring} trackColor={{ true: t.switchOn }} accessibilityLabel={tr.settings.recurringModule} />
+              </Row>
+            ) : null}
             <Row>
               <View style={styles.rowText}>
                 <Text style={[styles.rowTitle, { color: t.text }]}>{tr.settings.journalModule}</Text>
