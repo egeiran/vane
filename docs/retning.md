@@ -42,7 +42,7 @@ Brukeren velger moduler i oppstarten («Hva vil du ha oversikt over?») og kan e
 
 - Lokalt i SQLite, som i dag.
 - **iCloud (CloudKit, privat database)** for synk og sikkerhetskopi. Ingen innlogging, fordi Apple-ID-en brukes.
-- Eksport og import av fil (JSON for alt, CSV for kjøp).
+- Eksport og import av fil (JSON for alt, CSV for kjøp). JSON-importen erstatter alt. CSV-importen legger bare til kjøp (for eksempel fra banken, for tiden før man begynte med Vane), hopper over kjøp som allerede finnes, og erstatter aldri noe. Et kjøp fra en fil uten klokkeslett får ingen tid og vises bare med dato.
 - Ingen deling med andre foreløpig. Vane er personlig.
 
 ## Marked og språk

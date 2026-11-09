@@ -43,7 +43,8 @@ export type ReadResult = { ok: true; backup: BackupFile } | { ok: false; error: 
  * skadet fil ikke kan gjøre appen treg eller ubrukelig.
  */
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;
-const MAX = { habits: 500, categories: 200, purchases: 200_000, goalsPerDay: 100, recurring: 500, text: 2000 };
+export const MAX_PURCHASES = 200_000;
+const MAX = { habits: 500, categories: 200, purchases: MAX_PURCHASES, goalsPerDay: 100, recurring: 500, text: 2000 };
 
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const isText = (v: unknown): v is string => typeof v === 'string' && v.length <= MAX.text;
@@ -139,7 +140,8 @@ function validPart(x: unknown) {
 function validPurchase(p: unknown): boolean {
   if (!isObject(p) || !isId(p.id) || !isCount(p.amount) || !isCurrency(p.currency)) return false;
   if (!isText(p.merchant) || !(p.merchantKey === '' || isId(p.merchantKey)) || !isText(p.note)) return false;
-  if (!isDay(p.day) || !isTime(p.time) || !isBool(p.skipped) || (p.source !== 'applepay' && p.source !== 'manual')) return false;
+  // Et kjøp importert uten tid har tom tid.
+  if (!isDay(p.day) || !(p.time === '' || isTime(p.time)) || !isBool(p.skipped) || (p.source !== 'applepay' && p.source !== 'manual')) return false;
   // Delene må være hele beløpet, ellers kan kjøpet ikke endres senere (se `partsAreValid`).
   return Array.isArray(p.parts) && p.parts.length <= 50 && p.parts.every(validPart) && partsAreValid(p.amount, p.parts as PurchasePart[]);
 }

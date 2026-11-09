@@ -37,13 +37,16 @@ export async function shareFile(name: string, text: string, kind: FileKind): Pro
 /** Filen som ble valgt: teksten, eller at den er for stor til å leses inn. */
 export type PickedFile = { text: string } | { tooBig: true };
 
+/** Filtypene filvelgeren viser. En CSV fra et regneark kan også være merket som ren tekst. */
+const PICK: Record<FileKind, string[]> = { json: [TYPES.json.mimeType], csv: [TYPES.csv.mimeType, 'text/plain'] };
+
 /**
- * Åpner filvelgeren for en JSON-fil. Gir `null` hvis man avbrøt (også når velgeren ikke kunne
- * åpnes), og kaster hvis filen ikke kunne leses. En fil som er større enn noen eksport, leses ikke
- * inn i minnet.
+ * Åpner filvelgeren for en JSON- eller CSV-fil. Gir `null` hvis man avbrøt (også når velgeren ikke
+ * kunne åpnes), og kaster hvis filen ikke kunne leses. En fil som er større enn noen eksport, leses
+ * ikke inn i minnet.
  */
-export async function pickJsonFile(): Promise<PickedFile | null> {
-  const res = await File.pickFileAsync({ mimeTypes: TYPES.json.mimeType });
+export async function pickFile(kind: FileKind): Promise<PickedFile | null> {
+  const res = await File.pickFileAsync({ mimeTypes: PICK[kind] });
   if (res.canceled) return null;
   if ((res.result.size ?? 0) > MAX_FILE_BYTES) return { tooBig: true };
   return { text: await res.result.text() };

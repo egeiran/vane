@@ -59,6 +59,8 @@ export function weekStartOf(settings: Pick<Settings, 'weekStart'>): WeekStart {
 
 /** Et lagret klokkeslett ('HH:MM') slik telefonen viser klokka: «18:00» eller «6:00 PM». */
 export function showTime(value: string): string {
+  // Et kjøp importert uten tid har tom tid.
+  if (!value) return '';
   return displayTime(value, device.clock24);
 }
 

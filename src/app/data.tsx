@@ -17,9 +17,10 @@ import {
   type BackupError,
   type BackupFile,
 } from '@/lib/backup';
-import { pickJsonFile, shareFile, type PickedFile } from '@/lib/backupFiles';
+import { pickFile, shareFile, type FileKind, type PickedFile } from '@/lib/backupFiles';
 import { formatFull, todayKey, toKey } from '@/lib/dates';
-import { getMoney, replaceMoney } from '@/lib/moneyStore';
+import { getMoney, replaceMoney, useMoney } from '@/lib/moneyStore';
+import { applyPurchaseImport, readPurchasesCsv, type CsvImportError, type PurchaseImport } from '@/lib/purchaseImport';
 import { getData, replaceData, useStore } from '@/lib/store';
 import { useTheme } from '@/theme';
 
@@ -28,16 +29,20 @@ function back() {
   else router.replace('/settings');
 }
 
-type Message = { kind: 'error'; error: BackupError | 'read' | 'share' } | { kind: 'done' };
+type Message = { kind: 'error'; error: BackupError | CsvImportError | 'read' | 'share' } | { kind: 'done' } | { kind: 'added'; count: number };
+
+/** «5, 9, 12, 14, 20 …» */
+const listOf = (items: (string | number)[], max = 5) => items.slice(0, max).join(', ') + (items.length > max ? ' …' : '');
 
 /**
- * Innstillinger → Data: eksporter alt som JSON, kjøpene som CSV, og importer en JSON-fil. Før en
- * import erstatter noe, viser skjermen hva filen inneholder og spør.
+ * Innstillinger → Data: eksporter alt som JSON, kjøpene som CSV, importer en JSON-fil og legg til
+ * kjøp fra en CSV-fil. Før en import endrer noe, viser skjermen hva filen inneholder og spør.
  */
 export default function DataScreen() {
   const t = useTheme();
   const moneyOn = useStore((s) => s.settings.modules.money);
   const [pending, setPending] = useState<BackupFile | null>(null);
+  const [csvPlan, setCsvPlan] = useState<PurchaseImport | null>(null);
   const [message, setMessage] = useState<Message | null>(null);
 
   const exportAll = async () => {
@@ -52,20 +57,47 @@ export default function DataScreen() {
     if (!ok) setMessage({ kind: 'error', error: 'share' });
   };
 
-  const pick = async () => {
+  /** Teksten i filen man velger, eller `null` når man avbrøt eller filen ikke kunne leses. */
+  const choose = async (kind: FileKind): Promise<string | null> => {
     setMessage(null);
     setPending(null);
+    setCsvPlan(null);
     let picked: PickedFile | null;
     try {
-      picked = await pickJsonFile();
+      picked = await pickFile(kind);
     } catch {
-      return setMessage({ kind: 'error', error: 'read' });
+      setMessage({ kind: 'error', error: 'read' });
+      return null;
     }
-    if (picked === null) return;
-    if ('tooBig' in picked) return setMessage({ kind: 'error', error: 'tooBig' });
-    const res = readBackup(picked.text);
+    if (picked === null) return null;
+    if ('tooBig' in picked) {
+      setMessage({ kind: 'error', error: 'tooBig' });
+      return null;
+    }
+    return picked.text;
+  };
+
+  const pick = async () => {
+    const text = await choose('json');
+    if (text === null) return;
+    const res = readBackup(text);
     if (res.ok) setPending(res.backup);
     else setMessage({ kind: 'error', error: res.error });
+  };
+
+  const pickCsv = async () => {
+    const text = await choose('csv');
+    if (text === null) return;
+    const res = readPurchasesCsv(text, getMoney());
+    if (res.ok) setCsvPlan(res.plan);
+    else setMessage({ kind: 'error', error: res.error });
+  };
+
+  const addPurchases = () => {
+    if (!csvPlan) return;
+    useMoney.getState().apply((d) => applyPurchaseImport(d, csvPlan));
+    setCsvPlan(null);
+    setMessage({ kind: 'added', count: csvPlan.purchases.length });
   };
 
   const replace = () => {
@@ -94,9 +126,9 @@ export default function DataScreen() {
 
       {message ? (
         <View style={[styles.message, { backgroundColor: t.card }]} accessibilityLiveRegion="polite">
-          <Icon name={message.kind === 'done' ? 'checkmark.circle' : 'exclamationmark.circle'} size={18} color={t.sub} />
+          <Icon name={message.kind === 'error' ? 'exclamationmark.circle' : 'checkmark.circle'} size={18} color={t.sub} />
           <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: t.text }}>
-            {message.kind === 'done' ? tr.backup.replaced : tr.backup.errors[message.error]}
+            {message.kind === 'done' ? tr.backup.replaced : message.kind === 'added' ? tr.backup.csvAdded(message.count) : tr.backup.errors[message.error]}
           </Text>
         </View>
       ) : null}
@@ -133,6 +165,41 @@ export default function DataScreen() {
         </Card>
       ) : null}
 
+      {csvPlan ? (
+        <Card style={styles.preview}>
+          <Text style={[styles.previewTitle, { color: t.text }]} accessibilityRole="header">
+            {tr.backup.csvPreviewTitle}
+          </Text>
+          {csvPlan.first && csvPlan.last ? (
+            <Text style={[styles.body, { color: t.sub }]}>{tr.backup.csvPreviewPeriod(formatFull(csvPlan.first), formatFull(csvPlan.last))}</Text>
+          ) : null}
+          <View style={styles.facts}>
+            {[
+              tr.backup.csvPreviewNew(csvPlan.purchases.length),
+              ...(csvPlan.duplicates ? [tr.backup.csvPreviewDuplicates(csvPlan.duplicates)] : []),
+              ...(csvPlan.pending ? [tr.backup.csvPreviewPending(csvPlan.pending)] : []),
+              ...(csvPlan.badRows.length ? [tr.backup.csvPreviewBadRows(csvPlan.badRows.length, listOf(csvPlan.badRows))] : []),
+            ].map((line) => (
+              <Text key={line} style={[styles.fact, { color: t.text }]}>
+                {`· ${line}`}
+              </Text>
+            ))}
+          </View>
+          {csvPlan.unknownCategories.length ? (
+            <Text style={[styles.body, { color: t.sub }]}>{tr.backup.csvPreviewUnknown(listOf(csvPlan.unknownCategories))}</Text>
+          ) : null}
+          {csvPlan.purchases.length ? (
+            <>
+              <Text style={[styles.body, { color: t.sub }]}>{tr.backup.csvPreviewNote}</Text>
+              <PrimaryButton label={tr.backup.csvAdd(csvPlan.purchases.length)} onPress={addPurchases} />
+            </>
+          ) : null}
+          <View style={{ alignItems: 'center' }}>
+            <TextButton label={tr.common.cancel} color={t.sub} onPress={() => setCsvPlan(null)} />
+          </View>
+        </Card>
+      ) : null}
+
       <View style={styles.section}>
         <SectionLabel>{tr.backup.exportSection}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
@@ -146,6 +213,7 @@ export default function DataScreen() {
         <SectionLabel>{tr.backup.importSection}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
           <ActionRow first label={tr.backup.importFile} help={tr.backup.importHelp} icon="square.and.arrow.down" onPress={pick} />
+          {moneyOn ? <ActionRow label={tr.backup.importCsv} help={tr.backup.importCsvHelp} icon="tablecells" onPress={pickCsv} /> : null}
         </Card>
       </View>
     </ScrollView>

@@ -281,10 +281,11 @@ export function suggestionFor(data: MoneyData, p: Purchase): Category | null {
   return suggestionForKey(data, p.merchantKey);
 }
 
-/** «I dag 14:32», «I går 09:10», «23. okt 18:00». */
+/** «I dag 14:32», «I går 09:10», «23. okt 18:00», eller «23. okt» for et kjøp uten tid. */
 export function purchaseWhen(p: Purchase, today: DateKey): string {
   const diff = daysBetween(p.day, today);
-  return `${diff === 0 || diff === 1 ? relativeDayName(p.day, today) : formatShort(p.day)} ${showTime(p.time)}`;
+  const day = diff === 0 || diff === 1 ? relativeDayName(p.day, today) : formatShort(p.day);
+  return p.time ? `${day} ${showTime(p.time)}` : day;
 }
 
 // Måneder

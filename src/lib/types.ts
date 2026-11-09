@@ -129,7 +129,7 @@ export type Purchase = {
   /** Stedet huskes under denne nøkkelen (se `merchantKey`). */
   merchantKey: string;
   day: DateKey;
-  /** 'HH:MM' */
+  /** 'HH:MM', eller tom når tiden ikke er kjent (kjøp importert fra en fil uten tid). */
   time: string;
   /** Tom betyr at kjøpet venter på kategori. */
   parts: PurchasePart[];

@@ -18,11 +18,11 @@ export async function shareFile(name: string, text: string, kind: FileKind): Pro
   return true;
 }
 
-export function pickJsonFile(): Promise<PickedFile | null> {
+export function pickFile(kind: FileKind): Promise<PickedFile | null> {
   return new Promise((resolve, reject) => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'application/json,.json';
+    input.accept = kind === 'json' ? 'application/json,.json' : 'text/csv,.csv,text/plain';
     input.oncancel = () => resolve(null);
     input.onchange = () => {
       const file = input.files?.[0];
