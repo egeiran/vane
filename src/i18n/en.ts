@@ -446,7 +446,6 @@ export const en: Strings = {
     next: (name: string, day: string) => `Next charge: ${name}, ${day}`,
     empty: 'Rent, utilities and subscriptions. Add them once, and you’ll see what goes out each month.',
     suggestionCount: (n: number) => (n === 1 ? 'One suggestion from your purchases' : `${n} suggestions from your purchases`),
-    otherCurrencies: (list: string) => `Also: ${list} a month.`,
     notCounted: 'Recurring expenses aren’t counted in the month’s total, so nothing is counted twice.',
     frequency: { week: 'Every week', month: 'Every month', year: 'Every year' },
     frequencyPick: { week: 'Week', month: 'Month', year: 'Year' },

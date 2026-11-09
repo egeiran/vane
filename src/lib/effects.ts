@@ -69,8 +69,8 @@ export function useAppEffects() {
         dismissResolvedNotifications(prev, state);
         scheduleSyncWidgets();
       }
-      // Varslene dagen før faste utgifter. Hovedvalutaen står i teksten.
-      if (state.recurring !== prev.recurring || state.currency !== prev.currency) scheduleNotificationSync();
+      // Varslene dagen før faste utgifter.
+      if (state.recurring !== prev.recurring) scheduleNotificationSync();
     });
 
     let appState = AppState.currentState;

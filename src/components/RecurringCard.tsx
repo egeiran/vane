@@ -20,7 +20,7 @@ export function RecurringCard({ data, today }: { data: MoneyData; today: DateKey
   const summary = recurringSummary(data);
   const next = upcomingRecurring(data, today)[0];
   const suggestions = suggestRecurring(data, today).length;
-  const amount = formatAmount(summary.perMonth, summary.currency);
+  const amount = summary.totals.map((x) => formatAmount(x.amount, x.currency)).join(' + ');
   const lines = [
     next ? tr.recurring.next(next.expense.name, chargeDay(next.next, today)) : tr.recurring.empty,
     suggestions ? tr.recurring.suggestionCount(suggestions) : '',

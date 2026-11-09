@@ -10,6 +10,7 @@ import {
   deleteRecurring,
   dismissSuggestion,
   MAX_RECURRING_REMINDERS,
+  RECURRING_DAYS_AHEAD,
   MAX_SUGGESTIONS,
   monthlyAmount,
   nextCharge,
@@ -93,8 +94,22 @@ describe('hva som går ut i måneden', () => {
     d = addRecurring(d, input({ name: 'Forsikring', amount: 120000, frequency: 'year' }), 'c');
     d = { ...d, recurring: [...d.recurring, { ...d.recurring[1], id: 'd', name: 'Spotify', currency: 'EUR', amount: 999 }] };
     // 433,33 + 149 + 100 kr, avrundet én gang.
-    expect(recurringSummary(d)).toEqual({ currency: 'NOK', perMonth: 68233, other: { EUR: 999 }, count: 4 });
-    expect(recurringSummary(NOK)).toEqual({ currency: 'NOK', perMonth: 0, other: {}, count: 0 });
+    expect(recurringSummary(d)).toEqual({
+      currency: 'NOK',
+      perMonth: 68233,
+      other: { EUR: 999 },
+      totals: [
+        { currency: 'NOK', amount: 68233 },
+        { currency: 'EUR', amount: 999 },
+      ],
+      count: 4,
+    });
+    expect(recurringSummary(NOK)).toEqual({ currency: 'NOK', perMonth: 0, other: {}, totals: [], count: 0 });
+  });
+
+  it('viser ikke «0 kr» først når alle er i en annen valuta enn hovedvalutaen', () => {
+    const d = addRecurring(NOK, input({ name: 'Husleie', amount: 950000 }), 'a');
+    expect(recurringSummary({ ...d, currency: 'EUR' }).totals).toEqual([{ currency: 'NOK', amount: 950000 }]);
   });
 
   it('er en egen linje: kjøpene og månedens sum endres ikke', () => {
@@ -274,10 +289,20 @@ describe('varsel dagen før', () => {
 
   it('legger inn bare de nærmeste', () => {
     let d = NOK;
-    for (let i = 0; i < 6; i++) d = addRecurring(d, input({ remind: true, anchor: `2026-11-${10 + i}` }), `r${i}`);
+    for (let i = 0; i < 10; i++) d = addRecurring(d, input({ remind: true, anchor: `2026-11-${10 + i}` }), `r${i}`);
     const plan = planRecurringReminders(d, on, NOW);
     expect(plan).toHaveLength(MAX_RECURRING_REMINDERS);
-    expect(plan.map((r) => r.data.recurringId)).toEqual(['r0', 'r1', 'r2', 'r3']);
+    expect(plan.map((r) => r.data.recurringId)).toEqual(['r0', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7']);
+  });
+
+  it('varsler før hvert trekk de neste ukene, og alltid før neste', () => {
+    // Hver mandag: 9., 16., 23., 30. november og 7. desember er innenfor fem uker.
+    const weekly = addRecurring(NOK, input({ remind: true, frequency: 'week', anchor: '2026-11-02' }), 'w');
+    expect(RECURRING_DAYS_AHEAD).toBe(35);
+    expect(planRecurringReminders(weekly, on, NOW).map((r) => r.data.day)).toEqual(['2026-11-09', '2026-11-16', '2026-11-23', '2026-11-30', '2026-12-07']);
+    // Et årlig trekk om ti måneder får likevel varsel.
+    const yearly = addRecurring(NOK, input({ remind: true, frequency: 'year', anchor: '2026-09-01' }), 'y');
+    expect(planRecurringReminders(yearly, on, NOW).map((r) => r.id)).toEqual(['recurring:y:2027-09-01']);
   });
 });
 

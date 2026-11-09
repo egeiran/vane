@@ -164,6 +164,13 @@ describe('sikkerhetskopi', () => {
     expect(res.backup.money.recurringDismissed).toEqual([]);
   });
 
+  it('beholder «Ikke foreslå» fra telefonen når en fil importeres', () => {
+    const { data, money } = sample();
+    const onPhone = dismissSuggestion(EMPTY_MONEY, 'NETFLIX');
+    expect(restoreBackup(createBackup(data, money, NOW), onPhone).money.recurringDismissed).toEqual(['KIWI', 'NETFLIX']);
+    expect(restoreBackup(createBackup(data, money, NOW), onPhone).money.recurring).toEqual(money.recurring);
+  });
+
   it('tar ikke inn et kjøp fra Snarveier på nytt etter import', () => {
     const { data, money } = sample();
     const onPhone = importPurchase(EMPTY_MONEY, { id: 'ap-ny', amountText: '10', merchant: 'Kiosk', at: NOW });

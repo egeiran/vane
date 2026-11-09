@@ -81,6 +81,11 @@ export type RecurringSummary = {
   perMonth: number;
   /** Faste utgifter i andre valutaer, per måned per valuta. */
   other: Record<string, number>;
+  /**
+   * Det som vises som summen: hovedvalutaen først når noen er i den, så de andre. Er alle i en annen
+   * valuta (hovedvalutaen er byttet), står ikke «0 kr» først.
+   */
+  totals: { currency: string; amount: number }[];
   count: number;
 };
 
@@ -90,7 +95,12 @@ export function recurringSummary(data: MoneyData): RecurringSummary {
   for (const e of data.recurring) sums[e.currency] = (sums[e.currency] ?? 0) + perMonthExact(e);
   const other: Record<string, number> = {};
   for (const [cur, sum] of Object.entries(sums)) if (cur !== currency) other[cur] = Math.round(sum);
-  return { currency, perMonth: Math.round(sums[currency] ?? 0), other, count: data.recurring.length };
+  const perMonth = Math.round(sums[currency] ?? 0);
+  const totals = [
+    ...(sums[currency] !== undefined ? [{ currency, amount: perMonth }] : []),
+    ...Object.entries(other).map(([cur, amount]) => ({ currency: cur, amount })),
+  ];
+  return { currency, perMonth, other, totals, count: data.recurring.length };
 }
 
 export type UpcomingCharge = { expense: RecurringExpense; next: DateKey };
@@ -221,9 +231,10 @@ export function suggestRecurring(data: MoneyData, today: DateKey): RecurringSugg
   // flere kjøp stopper rekka, og det holder tiden lineær også med mange kjøp fra samme sted.
   const byPlace = new Map<string, Map<MonthKey, { first: Purchase; count: number }>>();
   for (const p of data.purchases) {
-    if (!p.merchantKey || taken.has(p.merchantKey) || p.skipped || p.amount <= 0 || p.currency !== currency) continue;
     const month = monthOf(p.day);
-    if (month < first || p.day > today) continue;
+    // Kjøpene ligger nyeste først, så resten er eldre enn de fire månedene.
+    if (month < first) break;
+    if (!p.merchantKey || taken.has(p.merchantKey) || p.skipped || p.amount <= 0 || p.currency !== currency || p.day > today) continue;
     let months = byPlace.get(p.merchantKey);
     if (!months) byPlace.set(p.merchantKey, (months = new Map()));
     const seen = months.get(month);
@@ -255,7 +266,12 @@ export function suggestRecurring(data: MoneyData, today: DateKey): RecurringSugg
 /** Varselet kommer dagen før trekket, på dette klokkeslettet. */
 export const RECURRING_REMINDER_TIME = '09:00';
 /** Så mange varsler for faste utgifter legges inn (de nærmeste). Vanepåminnelsene får resten. */
-export const MAX_RECURRING_REMINDERS = 4;
+export const MAX_RECURRING_REMINDERS = 8;
+/**
+ * Trekk så langt fram får varsel. Neste trekk får det alltid, også et årlig trekk om ti måneder.
+ * Appen legger dem inn på nytt hver gang den åpnes, som vanepåminnelsene.
+ */
+export const RECURRING_DAYS_AHEAD = 35;
 
 export type PlannedRecurringReminder = {
   id: string;
@@ -266,29 +282,31 @@ export type PlannedRecurringReminder = {
 };
 
 /**
- * Ett varsel kl. 09 dagen før neste trekk, for de faste utgiftene som har varsel på. Er det
- * tidspunktet passert (det trekkes i dag eller i morgen tidlig), gjelder varselet trekket etter.
- * Legges inn på nytt hver gang appen åpnes, som vanepåminnelsene.
+ * Varsel kl. 09 dagen før hvert trekk de neste fem ukene (og alltid før neste trekk), for de faste
+ * utgiftene som har varsel på. Er tidspunktet passert (det trekkes i dag eller i morgen tidlig),
+ * begynner det med trekket etter. De nærmeste først, høyst `MAX_RECURRING_REMINDERS`.
  */
 export function planRecurringReminders(data: MoneyData, settings: Pick<Settings, 'modules'>, now: Date = new Date()): PlannedRecurringReminder[] {
   if (!recurringOn(settings)) return [];
   const today = todayKey(now);
+  const until = addDays(today, RECURRING_DAYS_AHEAD);
   const out: PlannedRecurringReminder[] = [];
+  const reminderFor = (charge: DateKey) => atTime(addDays(charge, -1), RECURRING_REMINDER_TIME);
   for (const e of data.recurring) {
     if (!e.remind) continue;
     let charge = nextCharge(e, today);
-    let date = atTime(addDays(charge, -1), RECURRING_REMINDER_TIME);
-    if (date.getTime() <= now.getTime()) {
+    if (reminderFor(charge).getTime() <= now.getTime()) charge = chargeOnOrAfter(e, addDays(charge, 1));
+    const body = tr.notifications.recurringBody(formatAmount(e.amount, e.currency));
+    do {
+      out.push({
+        id: `recurring:${e.id}:${charge}`,
+        date: reminderFor(charge),
+        title: e.name,
+        body,
+        data: { kind: 'recurring', recurringId: e.id, day: charge },
+      });
       charge = chargeOnOrAfter(e, addDays(charge, 1));
-      date = atTime(addDays(charge, -1), RECURRING_REMINDER_TIME);
-    }
-    out.push({
-      id: `recurring:${e.id}:${charge}`,
-      date,
-      title: e.name,
-      body: tr.notifications.recurringBody(formatAmount(e.amount, e.currency)),
-      data: { kind: 'recurring', recurringId: e.id, day: charge },
-    });
+    } while (charge <= until);
   }
   return out.sort((a, b) => a.date.getTime() - b.date.getTime()).slice(0, MAX_RECURRING_REMINDERS);
 }

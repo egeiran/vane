@@ -26,8 +26,7 @@ export default function RecurringScreen() {
   const summary = recurringSummary(data);
   const upcoming = upcomingRecurring(data, today);
   const suggestions = suggestRecurring(data, today);
-  const other = Object.entries(summary.other).map(([cur, amount]) => formatAmount(amount, cur));
-  const perMonth = formatAmount(summary.perMonth, summary.currency);
+  const perMonth = summary.totals.map((x) => formatAmount(x.amount, x.currency)).join(' + ');
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
@@ -48,7 +47,6 @@ export default function RecurringScreen() {
       ) : (
         <Text style={[styles.lead, { color: t.sub }]}>{tr.recurring.empty}</Text>
       )}
-      {other.length ? <Text style={[styles.footnote, { color: t.sub, paddingTop: 0 }]}>{tr.recurring.otherCurrencies(other.join(', '))}</Text> : null}
 
       {upcoming.length ? (
         <Card style={styles.list}>

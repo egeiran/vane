@@ -469,7 +469,6 @@ export const nb = {
     next: (name: string, day: string) => `Neste trekk: ${name}, ${day}`,
     empty: 'Husleie, strøm og abonnementer. Legg dem inn én gang, så ser du hva som går ut hver måned.',
     suggestionCount: (n: number) => (n === 1 ? 'Ett forslag fra kjøpene dine' : `${n} forslag fra kjøpene dine`),
-    otherCurrencies: (list: string) => `I tillegg: ${list} i måneden.`,
     notCounted: 'Faste utgifter telles ikke med i månedens sum, så ingenting telles to ganger.',
     frequency: { week: 'Hver uke', month: 'Hver måned', year: 'Hvert år' },
     frequencyPick: { week: 'Uke', month: 'Måned', year: 'År' },

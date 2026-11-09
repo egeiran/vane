@@ -55,9 +55,9 @@ function initialForm(data: MoneyData, e: RecurringExpense | undefined, merchant:
       amount: amountInputText(s.amount),
       name: s.name,
       frequency: 'month',
-      // Er det siste kjøpet i dag, er neste trekk om en måned.
+      // Er det siste kjøpet i dag, er neste trekk om en måned, og det er den dagen som lagres.
       next: nextCharge({ anchor: s.anchor, frequency: 'month' }, s.anchor === today ? addDays(today, 1) : today),
-      keepAnchor: s.anchor,
+      keepAnchor: s.anchor === today ? null : s.anchor,
       categoryId: s.categoryId,
       note: '',
       remind: false,
@@ -133,9 +133,10 @@ export default function RecurringFormScreen() {
     close();
   };
 
-  const toggleRemind = async (remind: boolean) => {
+  // Varslene legges inn når utgiften lagres. Sier man nei til varsler, står valget likevel, som for vanene.
+  const toggleRemind = (remind: boolean) => {
     set({ remind });
-    if (remind) await requestPermission();
+    if (remind) requestPermission().catch(() => {});
   };
 
   const confirmDelete = () =>

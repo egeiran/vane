@@ -218,11 +218,13 @@ export function summarizeBackup(b: BackupFile): BackupSummary {
 
 /**
  * Dataene etter import: alt fra filen. Lista over kjøp som er tatt inn fra Snarveier slås sammen
- * med telefonens, så et kjøp som allerede er tatt inn her, ikke kommer inn på nytt.
+ * med telefonens, så et kjøp som allerede er tatt inn her, ikke kommer inn på nytt. Det samme gjelder
+ * steder man har sagt «Ikke foreslå» til, så en eldre fil ikke tar dem fram igjen.
  */
 export function restoreBackup(b: BackupFile, current: MoneyData): { data: Data; money: MoneyData } {
   const imported = [...new Set([...b.money.imported, ...current.imported])].slice(-MAX_IMPORTED);
-  return { data: b.data, money: { ...b.money, imported, setupSeen: b.money.setupSeen || current.setupSeen } };
+  const recurringDismissed = [...new Set([...b.money.recurringDismissed, ...current.recurringDismissed])].slice(-MAX_DISMISSED);
+  return { data: b.data, money: { ...b.money, imported, recurringDismissed, setupSeen: b.money.setupSeen || current.setupSeen } };
 }
 
 /**
