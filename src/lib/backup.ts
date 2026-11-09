@@ -148,9 +148,12 @@ function validCategory(c: unknown) {
   return isObject(c) && isId(c.id) && isText(c.name) && isText(c.icon) && COLORS.has(c.color as string) && optional(c.hidden, isBool);
 }
 
-/** En fast utgift. Beløpet er over 0, ellers kan den ikke endres senere (se `updateRecurring`). */
+/**
+ * En fast utgift. Beløpet er over 0, ellers kan den ikke endres senere (se `updateRecurring`), og et
+ * helt tall JavaScript kan regne sikkert med, så summen per måned ikke blir uendelig.
+ */
 function validRecurring(e: unknown): boolean {
-  if (!isObject(e) || !isId(e.id) || !isText(e.name) || !(e.name as string).trim() || !isCount(e.amount) || e.amount < 1) return false;
+  if (!isObject(e) || !isId(e.id) || !isText(e.name) || !(e.name as string).trim() || !isCount(e.amount) || e.amount < 1 || !Number.isSafeInteger(e.amount)) return false;
   if (!isCurrency(e.currency) || !FREQUENCIES.includes(e.frequency as RecurringFrequency) || !isDay(e.anchor)) return false;
   return (e.categoryId === null || isId(e.categoryId)) && isText(e.note) && isBool(e.remind) && (e.merchantKey === '' || isId(e.merchantKey));
 }

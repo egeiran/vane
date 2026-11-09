@@ -280,3 +280,13 @@ describe('varsel dagen før', () => {
     expect(plan.map((r) => r.data.recurringId)).toEqual(['r0', 'r1', 'r2', 'r3']);
   });
 });
+
+describe('mange kjøp fra samme sted', () => {
+  it('går raskt, også med en stor fil der alle kjøpene er fra samme sted samme måned', () => {
+    const p = { amount: 100, currency: 'NOK', merchant: 'X', merchantKey: 'X', day: TODAY, time: '12:00', parts: [], skipped: false, note: '', source: 'manual' as const };
+    const purchases = Array.from({ length: 100_000 }, (_, i) => ({ ...p, id: `p${i}` }));
+    const start = Date.now();
+    expect(suggestRecurring({ ...NOK, purchases }, TODAY)).toEqual([]);
+    expect(Date.now() - start).toBeLessThan(2000);
+  });
+});

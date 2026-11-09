@@ -80,6 +80,7 @@ describe('sikkerhetskopi', () => {
       { ...good, money: { ...money, purchases: [{ ...money.purchases[0], parts: [{ categoryId: 'x' }] }] } },
       { ...good, money: { ...money, categories: [{ id: 'x', name: 'X', icon: 'tag', color: 'lilla', hidden: false }] } },
       { ...good, money: { ...money, recurring: [{ ...money.recurring[0], amount: 0 }] } },
+      { ...good, money: { ...money, recurring: [{ ...money.recurring[0], amount: 1.7e308 }] } },
       { ...good, money: { ...money, recurring: [{ ...money.recurring[0], name: '  ' }] } },
       { ...good, money: { ...money, recurring: [{ ...money.recurring[0], frequency: 'kvartal' }] } },
       { ...good, money: { ...money, recurring: [{ ...money.recurring[0], anchor: '2026-02-30' }] } },

@@ -120,7 +120,7 @@ export type RecurringInput = Pick<RecurringExpense, 'name' | 'amount' | 'frequen
 export type RecurringPatch = Partial<Omit<RecurringInput, 'merchantKey'>>;
 
 const validInput = (e: Pick<RecurringExpense, 'name' | 'amount' | 'frequency'>) =>
-  !!e.name.trim() && Number.isInteger(e.amount) && e.amount > 0 && FREQUENCIES.includes(e.frequency);
+  !!e.name.trim() && Number.isSafeInteger(e.amount) && e.amount > 0 && FREQUENCIES.includes(e.frequency);
 
 /** En ny fast utgift i hovedvalutaen. Uten navn eller beløp blir det ingen. */
 export function addRecurring(data: MoneyData, input: RecurringInput, id = newId('r')): MoneyData {
@@ -217,14 +217,18 @@ export function suggestRecurring(data: MoneyData, today: DateKey): RecurringSugg
     taken.add(merchantKey(e.name));
   }
 
-  const byPlace = new Map<string, Map<MonthKey, Purchase[]>>();
+  // Per sted og måned: det første kjøpet og hvor mange det er. Mer trengs ikke, fordi en måned med
+  // flere kjøp stopper rekka, og det holder tiden lineær også med mange kjøp fra samme sted.
+  const byPlace = new Map<string, Map<MonthKey, { first: Purchase; count: number }>>();
   for (const p of data.purchases) {
     if (!p.merchantKey || taken.has(p.merchantKey) || p.skipped || p.amount <= 0 || p.currency !== currency) continue;
     const month = monthOf(p.day);
     if (month < first || p.day > today) continue;
-    const months = byPlace.get(p.merchantKey) ?? new Map<MonthKey, Purchase[]>();
-    months.set(month, [...(months.get(month) ?? []), p]);
-    byPlace.set(p.merchantKey, months);
+    let months = byPlace.get(p.merchantKey);
+    if (!months) byPlace.set(p.merchantKey, (months = new Map()));
+    const seen = months.get(month);
+    if (seen) seen.count++;
+    else months.set(month, { first: p, count: 1 });
   }
 
   const out: RecurringSuggestion[] = [];
@@ -232,9 +236,9 @@ export function suggestRecurring(data: MoneyData, today: DateKey): RecurringSugg
     // Månedene på rad, bakover fra denne måneden, eller fra forrige når det ikke er trukket ennå.
     const run: Purchase[] = [];
     for (let m = months.has(current) ? current : addMonths(current, -1); months.has(m); m = addMonths(m, -1)) {
-      const list = months.get(m)!;
-      if (list.length !== 1) break;
-      run.push(list[0]);
+      const { first, count } = months.get(m)!;
+      if (count !== 1) break;
+      run.push(first);
     }
     if (run.length < MIN_MONTHS) continue;
     const latest = run[0];
