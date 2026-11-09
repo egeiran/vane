@@ -78,6 +78,15 @@ describe('påminnelser', () => {
     expect(new Set(plan.map((p) => p.data.day))).toEqual(new Set(['2026-10-17', '2026-10-18']));
   });
 
+  it('gir plass til varslene for faste utgifter når grensen er mindre', () => {
+    let d: Data = EMPTY_DATA;
+    for (let i = 0; i < 20; i++) d = addHabit(d, { ...base, name: `V${i}` }, '2026-10-01');
+    // Med fire varsler for faste utgifter er det plass til 52: to hele dager, som før.
+    expect(planReminders(d, NOW, MAX_REMINDERS - 4)).toHaveLength(40);
+    // Med plass til 30 ville bare i dag blitt igjen, så det fylles opp til grensen.
+    expect(planReminders(d, NOW, 30)).toHaveLength(30);
+  });
+
   it('sier fra bare langt fram for en vane med én ukedag', () => {
     const d = addHabit(EMPTY_DATA, { ...base, schedule: { kind: 'days', days: [true, false, false, false, false, false, false] } }, '2026-10-01', 'mon');
     const plan = planReminders(d, NOW);

@@ -69,6 +69,8 @@ export function useAppEffects() {
         dismissResolvedNotifications(prev, state);
         scheduleSyncWidgets();
       }
+      // Varslene dagen før faste utgifter.
+      if (state.recurring !== prev.recurring) scheduleNotificationSync();
     });
 
     let appState = AppState.currentState;

@@ -16,7 +16,10 @@ export const ACTION_SNOOZE = 'snooze';
  * få påminnelser, rekker de lenger fram, så lenge de holder seg under `MAX_REMINDERS`.
  */
 export const DAYS_AHEAD = 28;
-/** iOS holder maks 64 planlagte varsler per app; morgen- og kveldsvarselet og «om 1 time» trenger også plass. */
+/**
+ * iOS holder maks 64 planlagte varsler per app; morgen- og kveldsvarselet og «om 1 time» trenger også
+ * plass. Varslene dagen før en fast utgift (`planRecurringReminders`) trekkes fra denne grensen.
+ */
 export const MAX_REMINDERS = 56;
 
 export type PlannedReminder = {
@@ -62,7 +65,7 @@ function bodyFor(data: Data, h: Habit, day: DateKey): string {
  * Påminnelser for de neste dagene. Vaner som allerede er gjort (eller ukemål som er nådd)
  * får ingen påminnelse – varsler skal være en hjelp, ikke mas.
  */
-export function planReminders(data: Data, now: Date = new Date()): PlannedReminder[] {
+export function planReminders(data: Data, now: Date = new Date(), max = MAX_REMINDERS): PlannedReminder[] {
   if (!data.settings.remindersEnabled) return [];
   const today = todayKey(now);
   const out: PlannedReminder[] = [];
@@ -88,10 +91,10 @@ export function planReminders(data: Data, now: Date = new Date()): PlannedRemind
   // Blir det for mange, kuttes de ved en hel dag, så alle vanene har påminnelser like langt fram.
   // Ville det bare blitt i dag igjen, fylles det heller opp til grensen.
   let planned = out;
-  if (out.length > MAX_REMINDERS) {
-    const cutDay = out[MAX_REMINDERS].data.day;
+  if (out.length > max) {
+    const cutDay = out[max].data.day;
     const whole = out.filter((r) => r.data.day < cutDay);
-    planned = whole.some((r) => r.data.day > today) ? whole : out.slice(0, MAX_REMINDERS);
+    planned = whole.some((r) => r.data.day > today) ? whole : out.slice(0, max);
   }
   // Påminnelsene legges inn på nytt hver gang appen åpnes. Åpnes den ikke, er dette den siste, og
   // da sier den rolig fra. Er den nærmere enn to dager, åpner man appen før den kommer, så da sier

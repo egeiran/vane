@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Icon } from '@/components/Icon';
 import { PurchaseRow } from '@/components/PurchaseRow';
+import { RecurringCard } from '@/components/RecurringCard';
 import { Card, IconButton, PrimaryButton, SectionLabel, TextButton, tick } from '@/components/ui';
 import { tr } from '@/i18n';
 import {
@@ -24,6 +25,8 @@ import {
   type MonthKey,
 } from '@/lib/money';
 import { useMoney, useMoneyData } from '@/lib/moneyStore';
+import { recurringOn } from '@/lib/recurring';
+import { useStore } from '@/lib/store';
 import { useToday } from '@/lib/useToday';
 import { useTheme } from '@/theme';
 
@@ -35,6 +38,7 @@ export default function MoneyScreen() {
   const data = useMoneyData();
   const approveAll = useMoney((s) => s.approveAllSuggestions);
   const markSetupSeen = useMoney((s) => s.markSetupSeen);
+  const showRecurring = useStore((s) => recurringOn(s.settings));
   const current = monthOf(today);
   const [picked, setPicked] = useState<MonthKey>(current);
   const month = picked > current ? current : picked;
@@ -181,6 +185,9 @@ export default function MoneyScreen() {
           </Text>
         ) : null}
       </Card>
+
+      {/* Faste utgifter er en egen linje, ikke en del av månedens sum. */}
+      {showRecurring ? <RecurringCard data={data} today={today} /> : null}
 
       <Card style={styles.card}>
         <Text style={[styles.cardTitle, { color: t.text }]}>{tr.money.lastSixMonths}</Text>

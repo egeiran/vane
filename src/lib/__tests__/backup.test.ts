@@ -6,6 +6,7 @@ import { backupJson, BACKUP_VERSION, createBackup, MAX_FILE_BYTES, purchasesCsv,
 import { valueOn } from '../habits';
 import { EMPTY_MONEY } from '../money';
 import { addPurchase, importPurchase } from '../moneyState';
+import { addRecurring, dismissSuggestion } from '../recurring';
 import { addGoal, addHabit, loadData, setValue } from '../state';
 import { EMPTY_DATA, type Data, type MoneyData } from '../types';
 
@@ -31,6 +32,8 @@ function sample(): { data: Data; money: MoneyData } {
   );
   money = importPurchase(money, { id: 'ap1', amountText: '€12,50', merchant: '=HYPERLINK("x")', at: new Date(2026, 10, 4, 11, 0) });
   money = addPurchase(money, { amount: 9900, merchant: '', day: '2026-11-02', time: '08:00', parts: [], skipped: true, note: 'Utlegg' }, 'p3');
+  money = addRecurring(money, { name: 'Husleie', amount: 950000, frequency: 'month', anchor: '2026-11-01', categoryId: 'hjem', note: '', remind: true }, 'r1');
+  money = dismissSuggestion(money, 'KIWI');
   return { data, money };
 }
 
@@ -48,7 +51,7 @@ describe('sikkerhetskopi', () => {
 
   it('oppsummerer hva filen inneholder', () => {
     const { data, money } = sample();
-    expect(summarizeBackup(createBackup(data, money, NOW))).toEqual({ habits: 2, days: 2, goals: 1, journal: 0, purchases: 4, exportedAt: NOW });
+    expect(summarizeBackup(createBackup(data, money, NOW))).toEqual({ habits: 2, days: 2, goals: 1, journal: 0, purchases: 4, recurring: 1, exportedAt: NOW });
   });
 
   it('avviser filer som ikke er JSON, ikke er fra Vane, eller er fra en nyere versjon', () => {
@@ -76,6 +79,15 @@ describe('sikkerhetskopi', () => {
       { ...good, money: { ...money, purchases: [{ ...money.purchases[0], currency: 'kroner' }] } },
       { ...good, money: { ...money, purchases: [{ ...money.purchases[0], parts: [{ categoryId: 'x' }] }] } },
       { ...good, money: { ...money, categories: [{ id: 'x', name: 'X', icon: 'tag', color: 'lilla', hidden: false }] } },
+      { ...good, money: { ...money, recurring: [{ ...money.recurring[0], amount: 0 }] } },
+      { ...good, money: { ...money, recurring: [{ ...money.recurring[0], amount: 1.7e308 }] } },
+      { ...good, money: { ...money, recurring: [{ ...money.recurring[0], name: '  ' }] } },
+      { ...good, money: { ...money, recurring: [{ ...money.recurring[0], frequency: 'kvartal' }] } },
+      { ...good, money: { ...money, recurring: [{ ...money.recurring[0], anchor: '2026-02-30' }] } },
+      { ...good, money: { ...money, recurring: [{ ...money.recurring[0], categoryId: undefined }] } },
+      { ...good, money: { ...money, recurring: [money.recurring[0], money.recurring[0]] } },
+      { ...good, money: { ...money, recurring: { r1: money.recurring[0] } } },
+      { ...good, money: { ...money, recurringDismissed: ['__proto__'] } },
     ];
     for (const file of broken) expect(readBackup(JSON.stringify(file))).toEqual({ ok: false, error: 'damaged' });
   });
@@ -147,6 +159,16 @@ describe('sikkerhetskopi', () => {
     expect(res.backup.money.categories.length).toBeGreaterThan(0);
     // Kjøp fra før hovedvalutaen fantes, var i kroner.
     expect(res.backup.money.currency).toBe('NOK');
+    // Faste utgifter kom senere.
+    expect(res.backup.money.recurring).toEqual([]);
+    expect(res.backup.money.recurringDismissed).toEqual([]);
+  });
+
+  it('beholder «Ikke foreslå» fra telefonen når en fil importeres', () => {
+    const { data, money } = sample();
+    const onPhone = dismissSuggestion(EMPTY_MONEY, 'NETFLIX');
+    expect(restoreBackup(createBackup(data, money, NOW), onPhone).money.recurringDismissed).toEqual(['KIWI', 'NETFLIX']);
+    expect(restoreBackup(createBackup(data, money, NOW), onPhone).money.recurring).toEqual(money.recurring);
   });
 
   it('tar ikke inn et kjøp fra Snarveier på nytt etter import', () => {

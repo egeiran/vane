@@ -7,7 +7,9 @@ import { Platform } from 'react-native';
 import { tr } from '@/i18n';
 
 import { parseTime } from './dates';
+import { getMoney } from './moneyStore';
 import { handlePurchaseResponse } from './purchases';
+import { planRecurringReminders, recurringOn } from './recurring';
 import {
   ACTION_DONE,
   ACTION_INC,
@@ -15,6 +17,7 @@ import {
   CATEGORY_CHECK,
   CATEGORY_COUNT,
   EVENING,
+  MAX_REMINDERS,
   MORNING,
   planReminders,
   wantsEvening,
@@ -88,15 +91,21 @@ export function scheduleNotificationSync(delay = 800) {
   }, delay);
 }
 
-/** Legger inn morgenvarselet og påminnelsene for de neste dagene på nytt. */
+/**
+ * Legger inn morgenvarselet, kveldsvarselet, påminnelsene for de neste dagene og varslene dagen før
+ * faste utgifter på nytt.
+ */
 export async function syncNotifications(): Promise<void> {
   if (!(await hasPermission())) return;
   const data = getData();
+  const recurring = planRecurringReminders(getMoney(), data.settings);
 
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   await Promise.all(
     scheduled
-      .filter((n) => n.identifier === MORNING.id || n.identifier === EVENING.id || n.identifier.startsWith('habit:'))
+      .filter(
+        (n) => n.identifier === MORNING.id || n.identifier === EVENING.id || n.identifier.startsWith('habit:') || n.identifier.startsWith('recurring:')
+      )
       .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier))
   );
 
@@ -118,16 +127,24 @@ export async function syncNotifications(): Promise<void> {
     });
   }
 
-  // Alle på én gang: appen kan ha kort tid når den bare er startet i bakgrunnen.
-  await Promise.all(
-    planReminders(data).map((r) =>
+  // Alle på én gang: appen kan ha kort tid når den bare er startet i bakgrunnen. Varslene for faste
+  // utgifter tar plass fra vanepåminnelsene, så det samlede tallet holder seg under iOS-grensen.
+  await Promise.all([
+    ...planReminders(data, new Date(), MAX_REMINDERS - recurring.length).map((r) =>
       Notifications.scheduleNotificationAsync({
         identifier: r.id,
         content: { title: r.title, body: r.body, data: r.data, categoryIdentifier: r.category },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.date },
       })
-    )
-  );
+    ),
+    ...recurring.map((r) =>
+      Notifications.scheduleNotificationAsync({
+        identifier: r.id,
+        content: { title: r.title, body: r.body, data: r.data },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.date },
+      })
+    ),
+  ]);
 }
 
 /** Et morgenvarsel om fem sekunder, så man kan se hvordan det ser ut. */
@@ -155,7 +172,7 @@ function markHandled(r: Notifications.NotificationResponse): boolean {
   return true;
 }
 
-function navigate(href: '/goals' | '/') {
+function navigate(href: '/goals' | '/' | '/recurring') {
   // Under oppstarten er resten av appen låst. Da blir man der man er.
   if (!getData().settings.onboarded) return;
   // Ved kald oppstart er ikke navigasjonen alltid klar på første tikk.
@@ -184,6 +201,11 @@ export function handleNotificationResponse(r: Notifications.NotificationResponse
   // Kveldsvarselet åpner I dag, der dagboken er.
   if (data.kind === 'evening') {
     if (opened) navigate('/');
+    return;
+  }
+  // Varselet dagen før en fast utgift åpner lista, hvis modulen fortsatt er på.
+  if (data.kind === 'recurring') {
+    if (opened) navigate(recurringOn(getData().settings) ? '/recurring' : '/');
     return;
   }
   if (data.kind !== 'habit' || !data.habitId || !data.day) return;
