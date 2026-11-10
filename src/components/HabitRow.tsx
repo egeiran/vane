@@ -75,11 +75,11 @@ export function HabitRow({ habit, day, showReminder }: Props) {
           {meta}
         </Text>
       </Pressable>
-      {isCount ? (
+      {isCount && !done ? (
         <IconButton
           icon="plus"
           label={tr.habits.addOne(habit.unit || '')}
-          background={done ? t.card : c.soft}
+          background={c.soft}
           color={c.ink}
           onPress={() => {
             tick();

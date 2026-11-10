@@ -109,7 +109,19 @@ export default function HabitScreen() {
             {habit.name}
           </Text>
         </View>
-        {isCount ? (
+        {isCount && done ? (
+          // Målet er nådd: samme hake som de andre vanene. Trykk trekker fra én, som ringen i «I dag».
+          <CheckButton
+            size={52}
+            done
+            color={c.solid}
+            label={tr.habits.minusOne(habit.name, amountText(habit, value))}
+            onPress={() => {
+              tick();
+              increment(habit.id, today, -1);
+            }}
+          />
+        ) : isCount ? (
           <Pressable
             onPress={() => {
               tick();

@@ -21,19 +21,26 @@ export function CheckButton({ done, color, onPress, label, size = 44, checkColor
       accessibilityState={{ checked: done }}
       accessibilityLabel={label}
       style={({ pressed }) => ({ width: hit, height: hit, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
-      <View
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          borderWidth: 2,
-          borderColor: color,
-          backgroundColor: done ? color : 'transparent',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-        {done ? <Icon name="checkmark" size={size * 0.45} color={checkColor} weight="bold" /> : null}
-      </View>
+      <CheckCircle done={done} color={color} size={size} checkColor={checkColor} />
     </Pressable>
+  );
+}
+
+/** Sirkelen i avhukingsknappen: tom ring, eller fylt med hake. Brukes også av tellevaner som har nådd målet. */
+export function CheckCircle({ done, color, size = 44, checkColor = '#FFFFFF' }: { done: boolean; color: string; size?: number; checkColor?: string }) {
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        borderWidth: 2,
+        borderColor: color,
+        backgroundColor: done ? color : 'transparent',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+      {done ? <Icon name="checkmark" size={size * 0.45} color={checkColor} weight="bold" /> : null}
+    </View>
   );
 }
