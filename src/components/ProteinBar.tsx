@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { tr } from '@/i18n';
-import { kcalText, PROTEIN_SCALE, proteinNumber, proteinText } from '@/lib/food';
+import { kcalText, PROTEIN_SCALE, proteinText, towardGoal } from '@/lib/food';
 import { useTheme } from '@/theme';
 
 import { Icon } from './Icon';
@@ -26,14 +26,14 @@ export function ProteinBar({ protein, goal, kcal, compact }: Props) {
   const c = t.colors.fersken;
   const fraction = goal ? Math.min(protein / (goal * PROTEIN_SCALE), 1) : 0;
   const reached = !!goal && fraction >= 1;
-  const value = goal ? tr.food.ofGoal(proteinNumber(protein), String(goal)) : proteinText(protein);
+  const value = goal ? tr.food.ofGoal(towardGoal(protein, goal), String(goal)) : proteinText(protein);
 
   return (
     <View
       style={{ gap: compact ? 6 : 8 }}
       accessible
       accessibilityRole="progressbar"
-      accessibilityLabel={[tr.food.progressLabel(proteinNumber(protein), goal ? String(goal) : null), reached ? tr.food.goalReached : '', kcal !== null ? kcalText(kcal) : '']
+      accessibilityLabel={[tr.food.progressLabel(towardGoal(protein, goal), goal ? String(goal) : null), reached ? tr.food.goalReached : '', kcal !== null ? kcalText(kcal) : '']
         .filter(Boolean)
         .join('. ')}
       accessibilityValue={goal ? { min: 0, max: goal, now: Math.min(Math.round(protein / PROTEIN_SCALE), goal) } : undefined}>

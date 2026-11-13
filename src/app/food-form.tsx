@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Field } from '@/components/Field';
 import { Card, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
-import { decimalInput, nutrientsFor, parseDecimal, parseKcal, parseProtein, PROTEIN_SCALE } from '@/lib/food';
+import { decimalInput, nutrientsFor, parseGrams, parseKcal, parseProtein, PROTEIN_SCALE } from '@/lib/food';
 import { MAX_FOOD_NAME } from '@/lib/foodState';
 import { foodHome, useFood, useFoodData } from '@/lib/foodStore';
 import { tableFood } from '@/lib/matvaretabellen';
@@ -47,8 +47,8 @@ function initialForm(food: Food | undefined, mvtId: string | undefined): Form {
   }
   const table = mvtId ? tableFood(mvtId) : undefined;
   if (table) {
-    // Første porsjon i tabellen, ellers 100 g.
-    const p = table.portions[0] ?? { label: '100 g', grams: 100 };
+    // Første porsjon i tabellen, ellers 100 g uten navn (vises som «1 porsjon»).
+    const p = table.portions[0] ?? { label: '', grams: 100 };
     const portion = nutrientsFor({ per100: table.per100, portion: null }, { kind: 'grams', grams: p.grams });
     return {
       name: table.name,
@@ -78,7 +78,7 @@ export default function FoodFormScreen() {
   const set = (patch: Partial<Form>) => setF((prev) => ({ ...prev, ...patch }));
 
   const protein = parseProtein(f.protein);
-  const grams = parseDecimal(f.grams);
+  const grams = parseGrams(f.grams);
   const protein100 = parseProtein(f.protein100);
   const canSave = !!f.name.trim() && protein !== null && (protein > 0 || f.protein.trim() === '0');
 
@@ -89,7 +89,7 @@ export default function FoodFormScreen() {
       portion: {
         // Tom porsjon vises som «1 porsjon» på telefonens språk (se `amountText`).
         label: f.label.trim(),
-        grams: grams && grams > 0 ? Math.round(grams) : null,
+        grams,
         protein: protein!,
         kcal: data.showKcal ? parseKcal(f.kcal) : (existing?.portion.kcal ?? parseKcal(f.kcal)),
       },

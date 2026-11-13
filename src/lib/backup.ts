@@ -26,8 +26,11 @@ export type BackupFile = {
   exportedAt: string;
   data: Data;
   money: MoneyData;
-  /** Mat kom etter de første eksportene, så eldre filer har den ikke. */
-  food: FoodData;
+  /**
+   * Mat kom etter de første eksportene. En eldre fil har den ikke (`null` når den er lest), og da
+   * beholdes maten som er på telefonen (se `restoreBackup`).
+   */
+  food: FoodData | null;
 };
 
 export function createBackup(data: Data, money: MoneyData, food: FoodData, now: Date): BackupFile {
@@ -61,8 +64,8 @@ const MAX = {
   dishItems: 100,
   meals: 50,
   goals: 5000,
-  /** Protein i tideler gram (100 kg) og kcal for én ting. */
-  nutrient: 1_000_000,
+  /** Protein i tideler gram og kcal for én føring: romslig, så en stor rett aldri gjør filen ugyldig. */
+  nutrient: 100_000_000,
 };
 
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -285,7 +288,7 @@ export function readBackup(text: string): ReadResult {
       exportedAt: isText(file.exportedAt) ? file.exportedAt : '',
       data: loadData(file.data),
       money: loadMoney(file.money),
-      food: loadFood(file.food),
+      food: file.food === undefined ? null : loadFood(file.food),
     },
   };
 }
@@ -297,8 +300,8 @@ export type BackupSummary = {
   journal: number;
   purchases: number;
   recurring: number;
-  /** Dager med mat. */
-  food: number;
+  /** Dager med mat, eller `null` når filen er fra før maten fantes. */
+  food: number | null;
   exportedAt: Date | null;
 };
 
@@ -311,20 +314,20 @@ export function summarizeBackup(b: BackupFile): BackupSummary {
     journal: Object.keys(b.data.journal).length,
     purchases: b.money.purchases.length,
     recurring: b.money.recurring.length,
-    food: Object.keys(b.food.entries).length,
+    food: b.food ? Object.keys(b.food.entries).length : null,
     exportedAt: Number.isNaN(at.getTime()) ? null : at,
   };
 }
 
 /**
- * Dataene etter import: alt fra filen. Lista over kjøp som er tatt inn fra Snarveier slås sammen
+ * Dataene etter import: alt fra filen. En fil fra før maten fantes, lar maten på telefonen være. Lista over kjøp som er tatt inn fra Snarveier slås sammen
  * med telefonens, så et kjøp som allerede er tatt inn her, ikke kommer inn på nytt. Det samme gjelder
  * steder man har sagt «Ikke foreslå» til, så en eldre fil ikke tar dem fram igjen.
  */
-export function restoreBackup(b: BackupFile, current: MoneyData): { data: Data; money: MoneyData; food: FoodData } {
+export function restoreBackup(b: BackupFile, current: MoneyData, currentFood: FoodData): { data: Data; money: MoneyData; food: FoodData } {
   const imported = [...new Set([...b.money.imported, ...current.imported])].slice(-MAX_IMPORTED);
   const recurringDismissed = [...new Set([...b.money.recurringDismissed, ...current.recurringDismissed])].slice(-MAX_DISMISSED);
-  return { data: b.data, money: { ...b.money, imported, recurringDismissed, setupSeen: b.money.setupSeen || current.setupSeen }, food: b.food };
+  return { data: b.data, money: { ...b.money, imported, recurringDismissed, setupSeen: b.money.setupSeen || current.setupSeen }, food: b.food ?? currentFood };
 }
 
 /**

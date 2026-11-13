@@ -141,6 +141,12 @@ export function parseTime(value: string): Time {
   return { hour: Number.isFinite(h) ? h : 8, minute: Number.isFinite(m) ? m : 0 };
 }
 
+/** Minutter etter midnatt: «07:30» er 450. */
+export function minutesOf(value: string): number {
+  const t = parseTime(value);
+  return t.hour * 60 + t.minute;
+}
+
 /** Klokkeslettet slik det lagres: «18:05». Bruk `displayTime` for å vise det. */
 export function formatTime({ hour, minute }: Time): string {
   return `${pad(hour)}:${pad(minute)}`;

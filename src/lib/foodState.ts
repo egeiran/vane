@@ -1,6 +1,6 @@
 import { addDays, compareKeys, type DateKey } from './dates';
-import { DEFAULT_MEALS, EMPTY_FOOD, MAX_GOAL, refKey } from './food';
-import type { Amount, Dish, Food, FoodData, FoodEntry, Meal, ProteinGoal } from './types';
+import { DEFAULT_MEALS, EMPTY_FOOD, entriesOn, MAX_GOAL, refKey } from './food';
+import type { Dish, Food, FoodData, FoodEntry, Meal, ProteinGoal } from './types';
 
 /** Rene funksjoner for maten. Lagringen ligger i foodStore.ts. */
 
@@ -35,7 +35,7 @@ function putDay(data: FoodData, day: DateKey, list: FoodEntry[]): FoodData {
   return { ...data, entries };
 }
 
-const dayList = (data: FoodData, day: DateKey) => (Object.prototype.hasOwnProperty.call(data.entries, day) ? data.entries[day] : []);
+const dayList = entriesOn;
 
 /**
  * Målet fra og med `today`. Eldre dager beholder målet de hadde. Endres målet flere ganger samme dag,
@@ -155,9 +155,4 @@ export function deleteMeal(data: FoodData, id: string): FoodData {
   const used = Object.values(data.entries).some((list) => list.some((e) => e.mealId === id));
   if (used || DEFAULT_MEALS.some((m) => m.id === id)) return updateMeal(data, id, { hidden: true, remind: false });
   return { ...data, meals: data.meals.filter((m) => m.id !== id) };
-}
-
-/** Husker en mengde uten å logge noe (for eksempel fra mengdepanelet). */
-export function rememberAmount(data: FoodData, key: string, amount: Amount): FoodData {
-  return { ...data, lastAmount: { ...data.lastAmount, [key]: amount } };
 }

@@ -56,7 +56,8 @@ export default function RootLayout() {
           <Stack.Screen name="recurring" />
           <Stack.Screen name="recurring-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id ?? params?.merchant} />
           <Stack.Screen name="data" />
-          <Stack.Screen name="food-log" options={{ presentation: 'modal' }} />
+          {/* Et varsel for et annet måltid (eller en annen dag) åpner et nytt ark, med riktig måltid valgt. */}
+          <Stack.Screen name="food-log" options={{ presentation: 'modal' }} getId={({ params }) => `${params?.day ?? ''}:${params?.meal ?? ''}`} />
           <Stack.Screen name="food-entry" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
           <Stack.Screen name="food-goal" options={{ presentation: 'modal' }} />
           <Stack.Screen name="foods" />

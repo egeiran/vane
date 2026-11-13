@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { tr } from '@/i18n';
-import { amountText, formatNumber, kcalText, nutrientsFor, parseDecimal, proteinText, takesGrams, type Source } from '@/lib/food';
+import { amountText, formatNumber, kcalText, MAX_GRAMS, nutrientsFor, parseDecimal, proteinText, takesGrams, type Source } from '@/lib/food';
 import type { Amount } from '@/lib/types';
 import { useTheme } from '@/theme';
 
@@ -17,7 +17,6 @@ type Props = {
   showKcal: boolean;
 };
 
-const MAX_GRAMS = 5000;
 const MAX_COUNT = 20;
 
 const same = (a: Amount, b: Amount) =>

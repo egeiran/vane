@@ -53,7 +53,8 @@ export default function FoodLogScreen() {
   const insets = useSafeAreaInsets();
   const today = useToday();
   const params = useLocalSearchParams<{ day?: string; meal?: string }>();
-  const day: DateKey = params.day && canEditFood(params.day, today) ? params.day : today;
+  // Dagen ligger fast mens arket er åpent, også over midnatt, så «Angre» alltid treffer riktig dag.
+  const [day] = useState<DateKey>(() => (params.day && canEditFood(params.day, today) ? params.day : today));
   const data = useFoodData();
   const addEntry = useFood((s) => s.addEntry);
   const removeEntry = useFood((s) => s.removeEntry);
@@ -70,12 +71,12 @@ export default function FoodLogScreen() {
   const meal = mealById(data, mealId);
   const meals = visibleMeals(data).some((m) => m.id === mealId) ? visibleMeals(data) : [...visibleMeals(data), ...(meal ? [meal] : [])];
   const totals = sumEntries(entriesOn(data, day));
-  const time = entryTime(day, meal);
   const when = dayWhen(day, today);
 
   const log = (name: string, n: Nutrients, ref: FoodRef | null, amount: Amount | null) => {
     tick();
-    const id = addEntry(day, { time, mealId, name, protein: n.protein, kcal: n.kcal, ref, amount });
+    // Klokka når man trykker, ikke da arket ble åpnet: arket kan ligge åpent lenge.
+    const id = addEntry(day, { time: entryTime(day, meal), mealId, name, protein: n.protein, kcal: n.kcal, ref, amount });
     setAdded({ ids: [id], text: tr.food.added(name || tr.food.quickName, proteinText(n.protein, true)) });
     setMode({ kind: 'list' });
     setQuery('');
@@ -101,7 +102,7 @@ export default function FoodLogScreen() {
   const sameAsBefore = previousMeal(data, day, mealId);
   const copyPrevious = () => {
     tick();
-    const ids = copyMeal(day, mealId, time);
+    const ids = copyMeal(day, mealId, entryTime(day, meal));
     const protein = sumEntries(sameAsBefore).protein;
     setAdded({ ids, text: sameAsBefore.length === 1 ? tr.food.added(sameAsBefore[0].name || tr.food.quickName, proteinText(protein, true)) : tr.food.addedMany(ids.length, proteinText(protein, true)) });
   };

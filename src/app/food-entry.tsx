@@ -51,7 +51,8 @@ export default function FoodEntryScreen() {
   const amountChanged = !!item && !!amount && JSON.stringify(amount) !== JSON.stringify(entry.amount);
   const fromItem = item && amount ? itemNutrients(item, amount) : null;
   const p = parseProtein(protein);
-  const canSave = item ? !!fromItem : p !== null && p > 0;
+  // Bare en ny mengde må kunne regnes ut. Måltid og klokkeslett kan alltid endres.
+  const canSave = item ? !amountChanged || !!fromItem : p !== null && p > 0;
   const meal = mealById(data, mealId);
   const meals = visibleMeals(data).some((m) => m.id === mealId) || !meal ? visibleMeals(data) : [...visibleMeals(data), meal];
 
@@ -62,7 +63,8 @@ export default function FoodEntryScreen() {
         ? { protein: fromItem.protein, kcal: fromItem.kcal }
         : {}
       : { protein: p!, kcal: data.showKcal ? parseKcal(kcal) : entry.kcal };
-    updateEntry(day, entry.id, { ...nutrients, ...(item ? { amount: amount! } : { name: name.trim() }), mealId, time });
+    // Mengden sendes bare med når den er endret, så mengden Vane husker for matvaren, ikke byttes ut.
+    updateEntry(day, entry.id, { ...nutrients, ...(item ? (amountChanged ? { amount: amount! } : {}) : { name: name.trim() }), mealId, time });
     close();
   };
 

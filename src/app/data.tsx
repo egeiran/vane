@@ -80,7 +80,7 @@ export default function DataScreen() {
 
   const replace = () => {
     if (!pending) return;
-    const restored = restoreBackup(pending, getMoney());
+    const restored = restoreBackup(pending, getMoney(), getFood());
     replaceData(restored.data);
     replaceMoney(restored.money);
     replaceFood(restored.food);
@@ -130,8 +130,9 @@ export default function DataScreen() {
               tr.backup.previewPurchases(summary.purchases),
               // Faste utgifter vises når filen har noen, eller når de som er her nå, ville blitt borte.
               ...(summary.recurring || getMoney().recurring.length ? [tr.backup.previewRecurring(summary.recurring)] : []),
-              // Maten vises når filen har noe, eller når det som er her nå, ville blitt borte.
-              ...(summary.food || Object.keys(getFood().entries).length ? [tr.backup.previewFood(summary.food)] : []),
+              // Maten vises når filen har noe, eller når det som er her nå, ville blitt borte. En fil fra
+              // før maten fantes, lar maten være, så da står det ingenting.
+              ...(summary.food !== null && (summary.food || Object.keys(getFood().entries).length) ? [tr.backup.previewFood(summary.food)] : []),
             ].map((line) => (
               <Text key={line} style={[styles.fact, { color: t.text }]}>
                 {`· ${line}`}

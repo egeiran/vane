@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Card, Row, Stepper, SwitchRow, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
-import { parseTime, shiftTime } from '@/lib/dates';
+import { minutesOf as minutes, shiftTime } from '@/lib/dates';
 import { DEFAULT_MEALS, mealName } from '@/lib/food';
 import { MAX_FOOD_NAME } from '@/lib/foodState';
 import { foodHome, useFood } from '@/lib/foodStore';
@@ -17,11 +17,6 @@ function close() {
   if (router.canGoBack()) router.back();
   else router.replace(foodHome());
 }
-
-const minutes = (time: string) => {
-  const t = parseTime(time);
-  return t.hour * 60 + t.minute;
-};
 
 /** Nytt måltid, eller endre et (?id=…): navn, tidsrom og «Har du logget …?». */
 export default function MealFormScreen() {

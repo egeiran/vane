@@ -169,14 +169,14 @@ describe('sikkerhetskopi', () => {
   it('beholder «Ikke foreslå» fra telefonen når en fil importeres', () => {
     const { data, money } = sample();
     const onPhone = dismissSuggestion(EMPTY_MONEY, 'NETFLIX');
-    expect(restoreBackup(createBackup(data, money, EMPTY_FOOD, NOW), onPhone).money.recurringDismissed).toEqual(['KIWI', 'NETFLIX']);
-    expect(restoreBackup(createBackup(data, money, EMPTY_FOOD, NOW), onPhone).money.recurring).toEqual(money.recurring);
+    expect(restoreBackup(createBackup(data, money, EMPTY_FOOD, NOW), onPhone, EMPTY_FOOD).money.recurringDismissed).toEqual(['KIWI', 'NETFLIX']);
+    expect(restoreBackup(createBackup(data, money, EMPTY_FOOD, NOW), onPhone, EMPTY_FOOD).money.recurring).toEqual(money.recurring);
   });
 
   it('tar ikke inn et kjøp fra Snarveier på nytt etter import', () => {
     const { data, money } = sample();
     const onPhone = importPurchase(EMPTY_MONEY, { id: 'ap-ny', amountText: '10', merchant: 'Kiosk', at: NOW });
-    const restored = restoreBackup(createBackup(data, money, EMPTY_FOOD, NOW), onPhone);
+    const restored = restoreBackup(createBackup(data, money, EMPTY_FOOD, NOW), onPhone, EMPTY_FOOD);
     expect(restored.money.imported).toEqual(['ap1', 'ap-ny']);
     expect(restored.money.purchases).toEqual(money.purchases);
     expect(restored.data).toEqual(data);
@@ -254,28 +254,39 @@ describe('verdien for en vane en dag', () => {
       if (!res.ok) return;
       expect(res.backup.food).toEqual(food);
       expect(summarizeBackup(res.backup).food).toBe(2);
-      expect(restoreBackup(res.backup, money).food).toEqual(food);
+      expect(restoreBackup(res.backup, money, EMPTY_FOOD).food).toEqual(food);
     });
 
-    it('en fil fra før maten fantes, gir tom mat', () => {
+    it('en fil fra før maten fantes, lar maten på telefonen være', () => {
       const { data, money } = sample();
       const old = { app: 'vane', version: 1, exportedAt: NOW.toISOString(), data, money };
       const res = readBackup(JSON.stringify(old));
       expect(res.ok).toBe(true);
-      if (res.ok) expect(res.backup.food).toEqual(EMPTY_FOOD);
+      if (!res.ok) return;
+      expect(res.backup.food).toBeNull();
+      expect(summarizeBackup(res.backup).food).toBeNull();
+      const onPhone = withFood();
+      expect(restoreBackup(res.backup, money, onPhone).food).toBe(onPhone);
+    });
+
+    it('en tom mat i filen erstatter maten på telefonen', () => {
+      const { data, money } = sample();
+      const res = readBackup(backupJson(createBackup(data, money, EMPTY_FOOD, NOW)));
+      expect(res.ok && restoreBackup(res.backup, money, withFood()).food).toEqual(EMPTY_FOOD);
     });
 
     it('avviser skadet mat', () => {
       const { data, money } = sample();
-      const good = createBackup(data, money, withFood(), NOW);
+      const f0 = withFood();
+      const good = createBackup(data, money, f0, NOW);
       const broken = [
-        { ...good.food, goals: [{ from: '2026-11-01', grams: 0 }] },
-        { ...good.food, entries: { 'ikke-en-dag': [] } },
-        { ...good.food, entries: { '2026-11-04': [{ ...good.food.entries['2026-11-04'][0], protein: -1 }] } },
-        { ...good.food, entries: { '2026-11-04': [{ ...good.food.entries['2026-11-04'][0], amount: { kind: 'grams', grams: Infinity } }] } },
-        { ...good.food, foods: [{ ...good.food.foods[0], id: '__proto__' }] },
-        { ...good.food, meals: [{ ...good.food.meals[0], start: '25:00' }] },
-        { ...good.food, lastAmount: { 'food:f1': { kind: 'portion', count: 0, label: '', grams: null } } },
+        { ...f0, goals: [{ from: '2026-11-01', grams: 0 }] },
+        { ...f0, entries: { 'ikke-en-dag': [] } },
+        { ...f0, entries: { '2026-11-04': [{ ...f0.entries['2026-11-04'][0], protein: -1 }] } },
+        { ...f0, entries: { '2026-11-04': [{ ...f0.entries['2026-11-04'][0], amount: { kind: 'grams', grams: Infinity } }] } },
+        { ...f0, foods: [{ ...f0.foods[0], id: '__proto__' }] },
+        { ...f0, meals: [{ ...f0.meals[0], start: '25:00' }] },
+        { ...f0, lastAmount: { 'food:f1': { kind: 'portion', count: 0, label: '', grams: null } } },
         'mat',
       ];
       for (const food of broken) expect(readBackup(JSON.stringify({ ...good, food }))).toEqual({ ok: false, error: 'damaged' });

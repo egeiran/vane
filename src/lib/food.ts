@@ -1,7 +1,8 @@
 import { getLang, stringsFor, tr, type Lang } from '@/i18n';
 
-import { addDays, atTime, compareKeys, formatTime, parseTime, todayKey, type DateKey } from './dates';
+import { addDays, atTime, compareKeys, formatTime, minutesOf, todayKey, type DateKey } from './dates';
 import { isEditable } from './habits';
+import { tableFood } from './matvaretabellen';
 import type { Amount, Dish, Food, FoodData, FoodEntry, FoodRef, Meal, Nutrients, Portion, Settings } from './types';
 
 /**
@@ -18,6 +19,13 @@ export const PROTEIN_SCALE = 10;
 
 /** Proteinmålet kan være fra 1 til 500 g. */
 export const MAX_GOAL = 500;
+
+/** Det største tallet et skjema tar imot for protein (gram) og kcal for én ting. */
+export const MAX_PROTEIN_INPUT = 2000;
+export const MAX_KCAL_INPUT = 20000;
+
+/** Den største vekten (gram) for en porsjon eller en mengde. */
+export const MAX_GRAMS = 5000;
 
 /** Gram protein (kan ha desimaler) som tideler gram. */
 export const toProtein = (grams: number) => Math.round(grams * PROTEIN_SCALE);
@@ -67,10 +75,7 @@ export function mealById(data: Pick<FoodData, 'meals'>, id: string): Meal | unde
   return data.meals.find((m) => m.id === id);
 }
 
-const minutes = (time: string) => {
-  const t = parseTime(time);
-  return t.hour * 60 + t.minute;
-};
+const minutes = minutesOf;
 
 const inWindow = (m: Meal, time: string) =>
   m.start !== null && m.end !== null && minutes(m.start) <= minutes(time) && minutes(time) < minutes(m.end);
@@ -246,6 +251,15 @@ export function proteinText(protein: number, precise = false): string {
 /** Bare tallet: «92». */
 export const proteinNumber = (protein: number) => formatNumber(proteinGrams(protein));
 
+/**
+ * Dagens sum mot målet: rundet ned så lenge man er under målet, så 139,5 g ikke står som «140 av
+ * 140 g» uten at målet er nådd.
+ */
+export function towardGoal(protein: number, goal: number | null): string {
+  const grams = protein / PROTEIN_SCALE;
+  return formatNumber(goal && grams < goal ? Math.floor(grams) : Math.round(grams));
+}
+
 export const kcalText = (kcal: number) => `${formatNumber(kcal)}${NBSP}kcal`;
 
 /** Et tall fra et tekstfelt: «17,5» og «17.5» er det samme. Tomt eller ugyldig gir `null`. */
@@ -263,16 +277,22 @@ export function decimalInput(n: number | null, lang: Lang = getLang()): string {
   return String(rounded).replace('.', lang === 'en' ? '.' : ',');
 }
 
-/** Protein (tideler gram) fra et tekstfelt i gram. */
+/** Protein (tideler gram) fra et tekstfelt i gram, høyst `MAX_PROTEIN_INPUT`. */
 export function parseProtein(text: string): number | null {
   const n = parseDecimal(text);
-  return n === null ? null : toProtein(n);
+  return n === null ? null : toProtein(Math.min(n, MAX_PROTEIN_INPUT));
 }
 
-/** kcal fra et tekstfelt. */
+/** kcal fra et tekstfelt, høyst `MAX_KCAL_INPUT`. */
 export function parseKcal(text: string): number | null {
   const n = parseDecimal(text);
-  return n === null ? null : Math.round(n);
+  return n === null ? null : Math.round(Math.min(n, MAX_KCAL_INPUT));
+}
+
+/** En vekt i gram fra et tekstfelt: et helt tall fra 1 til `MAX_GRAMS`, eller `null` når den mangler. */
+export function parseGrams(text: string): number | null {
+  const n = parseDecimal(text);
+  return n === null || n < 0.5 ? null : Math.min(MAX_GRAMS, Math.max(1, Math.round(n)));
 }
 
 /** «½», «1», «1½», «2,25». */
@@ -341,18 +361,27 @@ export function suggestions(data: FoodData, mealId: string, today: DateKey, limi
     .sort((a, b) => b.inMeal - a.inMeal || b.other - a.other || (a.last < b.last ? 1 : a.last > b.last ? -1 : 0))
     .slice(0, limit)
     .map((x) => {
-      // Navnet og mengden fra matvaren eller retten slik de er nå, når de finnes.
+      // Navnet, mengden og tallene fra matvaren eller retten slik de er nå, så raden viser det
+      // + faktisk legger til.
       const s = x.s;
-      if (s.ref?.kind === 'food') {
+      if (!s.ref) return s;
+      const amount = data.lastAmount[s.key] ?? s.amount;
+      let name = s.name;
+      let source: Source | null = null;
+      if (s.ref.kind === 'food') {
         const f = data.foods.find((f) => f.id === s.ref!.id)!;
-        return { ...s, name: f.name, amount: data.lastAmount[s.key] ?? s.amount };
-      }
-      if (s.ref?.kind === 'dish') {
+        name = f.name;
+        source = foodSource(f);
+      } else if (s.ref.kind === 'dish') {
         const d = data.dishes.find((d) => d.id === s.ref!.id)!;
-        return { ...s, name: d.name, amount: data.lastAmount[s.key] ?? s.amount };
+        name = d.name;
+        source = dishSource(d);
+      } else {
+        const t = tableFood(s.ref.id);
+        if (t) source = { per100: t.per100, portion: null };
       }
-      if (s.ref) return { ...s, amount: data.lastAmount[s.key] ?? s.amount };
-      return s;
+      const nutrients = (source && amount && nutrientsFor(source, amount)) || s.nutrients;
+      return { ...s, name, amount, nutrients };
     });
 }
 
@@ -419,7 +448,7 @@ export function planFoodReminders(data: FoodData, settings: Pick<Settings, 'modu
           id: `food:evening:${day}`,
           date,
           title: tr.notifications.foodEveningTitle,
-          body: protein ? tr.notifications.foodEveningBody(proteinNumber(protein), String(goal)) : tr.notifications.foodEveningEmpty(String(goal)),
+          body: protein ? tr.notifications.foodEveningBody(towardGoal(protein, goal), String(goal)) : tr.notifications.foodEveningEmpty(String(goal)),
           data: { kind: 'food', day },
         });
       }

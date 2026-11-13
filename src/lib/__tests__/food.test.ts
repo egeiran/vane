@@ -16,12 +16,14 @@ import {
   mealName,
   nutrientsFor,
   parseDecimal,
+  parseGrams,
   parseProtein,
   planFoodReminders,
   previousMeal,
   proteinText,
   suggestions,
   suggestMeal,
+  towardGoal,
   type Source,
 } from '../food';
 import * as F from '../foodState';
@@ -179,6 +181,19 @@ describe('mat: mengder', () => {
     expect(parseDecimal('abc')).toBeNull();
     expect(parseDecimal('1,2,3')).toBeNull();
     expect(parseProtein('31,2')).toBe(312);
+    // Skjemaene tar ikke imot tall som ville gjort en sikkerhetskopi ugyldig.
+    expect(parseProtein('99999999')).toBe(20000);
+    expect(parseGrams('0,4')).toBeNull();
+    expect(parseGrams('0,6')).toBe(1);
+    expect(parseGrams('160')).toBe(160);
+    expect(parseGrams('999999')).toBe(5000);
+  });
+
+  it('dagens sum rundes ned så lenge målet ikke er nådd', () => {
+    expect(towardGoal(1395, 140)).toBe('139');
+    expect(towardGoal(1400, 140)).toBe('140');
+    expect(towardGoal(1526, 140)).toBe('153');
+    expect(towardGoal(1395, null)).toBe('140');
   });
 
   it('viser mengder og protein', () => {
@@ -243,6 +258,13 @@ describe('mat: forslag', () => {
     expect(suggestions(d, 'mellom', '2026-11-13').map((s) => s.name)).toEqual(['Proteinshake', 'Skyr', 'Kantina']);
   });
 
+  it('viser tallene matvaren har nå, det samme som + legger til', () => {
+    let d = F.addFood(EMPTY_FOOD, SHAKE, 'shake');
+    d = withEntries('2026-11-12', [entry('1', 'mellom', 400, { ref: { kind: 'food', id: 'shake' }, amount: { kind: 'portion', count: 1, label: 'shaker', grams: null } })], d);
+    d = F.updateFood(d, 'shake', { ...SHAKE, name: 'Shake', portion: { ...SHAKE.portion, protein: 380 } });
+    expect(suggestions(d, 'mellom', '2026-11-13')[0]).toMatchObject({ name: 'Shake', nutrients: { protein: 380, kcal: 210 } });
+  });
+
   it('slettede matvarer og raske tall uten navn er ikke med, og eldre enn 30 dager teller ikke', () => {
     let d = F.addFood(EMPTY_FOOD, SKYR, 'skyr');
     d = withEntries('2026-11-12', [entry('1', 'frokost', 170, { ref: { kind: 'food', id: 'borte' } }), entry('2', 'frokost', 50, { name: '' })], d);
@@ -261,6 +283,9 @@ describe('mat: varsler', () => {
     expect(plan.map((p) => p.id)).toEqual(['food:evening:2026-11-13', 'food:evening:2026-11-14', 'food:evening:2026-11-15']);
     expect(plan[0].body).toBe('92 av 140 g så langt.');
     expect(plan[1].body).toBe('Ingenting logget ennå. Målet er 140 g.');
+    // 139,5 g står ikke som «140 av 140 g».
+    const almost = withEntries('2026-11-13', [entry('a', 'frokost', 1395)], base);
+    expect(planFoodReminders(almost, ON, now)[0].body).toBe('139 av 140 g så langt.');
     const full = withEntries('2026-11-13', [entry('a', 'frokost', 1400)], base);
     expect(planFoodReminders(full, ON, now)[0].id).toBe('food:evening:2026-11-14');
   });
