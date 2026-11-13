@@ -1,19 +1,21 @@
 import { tr } from '@/i18n';
 
+import { foodRows, MAX_GOAL } from './food';
+import { loadFood } from './foodState';
 import { isMood, MAX_JOURNAL_TEXT } from './journal';
 import { categoryById, categoryName, merchantName } from './money';
 import { loadMoney, MAX_IMPORTED, partsAreValid } from './moneyState';
 import { FREQUENCIES, MAX_DISMISSED } from './recurring';
 import { loadData } from './state';
-import type { Data, MoneyData, PurchasePart, RecurringFrequency } from './types';
+import type { Data, FoodData, MoneyData, PurchasePart, RecurringFrequency } from './types';
 
 /**
  * Sikkerhetskopi som fil: alt i én JSON-fil, og kjøpene som CSV. Ren logikk. Filene skrives og
  * deles i `backupFiles.ts`.
  *
  * Formatet har et versjonsnummer. En fil fra en eldre versjon oppgraderes i `upgrade`, og dataene
- * inne i den går gjennom `loadData` og `loadMoney`, som fyller inn felt som kom senere, akkurat som
- * når appen leser sine egne data. En fil fra en nyere versjon av Vane avvises.
+ * inne i den går gjennom `loadData`, `loadMoney` og `loadFood`, som fyller inn felt som kom senere,
+ * akkurat som når appen leser sine egne data. En fil fra en nyere versjon av Vane avvises.
  */
 export const BACKUP_VERSION = 1;
 
@@ -24,10 +26,12 @@ export type BackupFile = {
   exportedAt: string;
   data: Data;
   money: MoneyData;
+  /** Mat kom etter de første eksportene, så eldre filer har den ikke. */
+  food: FoodData;
 };
 
-export function createBackup(data: Data, money: MoneyData, now: Date): BackupFile {
-  return { app: 'vane', version: BACKUP_VERSION, exportedAt: now.toISOString(), data, money };
+export function createBackup(data: Data, money: MoneyData, food: FoodData, now: Date): BackupFile {
+  return { app: 'vane', version: BACKUP_VERSION, exportedAt: now.toISOString(), data, money, food };
 }
 
 export function backupJson(backup: BackupFile): string {
@@ -43,7 +47,23 @@ export type ReadResult = { ok: true; backup: BackupFile } | { ok: false; error: 
  * skadet fil ikke kan gjøre appen treg eller ubrukelig.
  */
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;
-const MAX = { habits: 500, categories: 200, purchases: 200_000, goalsPerDay: 100, recurring: 500, text: 2000 };
+const MAX = {
+  habits: 500,
+  categories: 200,
+  purchases: 200_000,
+  goalsPerDay: 100,
+  recurring: 500,
+  text: 2000,
+  foodDays: 40_000,
+  entriesPerDay: 300,
+  foods: 5000,
+  dishes: 2000,
+  dishItems: 100,
+  meals: 50,
+  goals: 5000,
+  /** Protein i tideler gram (100 kg) og kcal for én ting. */
+  nutrient: 1_000_000,
+};
 
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const isText = (v: unknown): v is string => typeof v === 'string' && v.length <= MAX.text;
@@ -171,6 +191,74 @@ function validMoney(m: unknown): boolean {
   );
 }
 
+const isNutrient = (v: unknown) => isCount(v) && (v as number) <= MAX.nutrient;
+const isKcal = (v: unknown) => v === null || isNutrient(v);
+const isPositive = (v: unknown, max: number) => typeof v === 'number' && Number.isFinite(v) && v > 0 && v <= max;
+
+function validAmount(a: unknown): boolean {
+  if (!isObject(a)) return false;
+  if (a.kind === 'grams') return isPositive(a.grams, 100_000);
+  if (a.kind === 'portion') return isPositive(a.count, 1000) && isText(a.label) && (a.grams === null || isPositive(a.grams, 100_000));
+  return false;
+}
+
+const validRef = (r: unknown) => isObject(r) && (r.kind === 'food' || r.kind === 'mvt' || r.kind === 'dish') && isId(r.id);
+const validNutrients = (n: unknown) => isObject(n) && isNutrient(n.protein) && isKcal(n.kcal);
+
+function validFoodItem(f: unknown): boolean {
+  if (!isObject(f) || !isId(f.id) || !isText(f.name) || !validNutrients(f.portion)) return false;
+  const p = f.portion as Record<string, unknown>;
+  if (!isText(p.label) || !(p.grams === null || isPositive(p.grams, 100_000))) return false;
+  return (f.per100 === null || validNutrients(f.per100)) && (f.mvtId === null || isId(f.mvtId));
+}
+
+const validDishItem = (i: unknown) =>
+  isObject(i) && isText(i.name) && isNutrient(i.protein) && isKcal(i.kcal) && (i.ref === null || validRef(i.ref)) && (i.amount === null || validAmount(i.amount));
+
+const validDish = (d: unknown) =>
+  isObject(d) && isId(d.id) && isText(d.name) && Array.isArray(d.items) && d.items.length <= MAX.dishItems && d.items.every(validDishItem);
+
+const validMeal = (m: unknown) =>
+  isObject(m) &&
+  isId(m.id) &&
+  isText(m.name) &&
+  (m.start === null || isTime(m.start)) &&
+  (m.end === null || isTime(m.end)) &&
+  isBool(m.remind) &&
+  isBool(m.hidden);
+
+const validEntry = (e: unknown) =>
+  isObject(e) &&
+  isId(e.id) &&
+  isTime(e.time) &&
+  isId(e.mealId) &&
+  isText(e.name) &&
+  isNutrient(e.protein) &&
+  isKcal(e.kcal) &&
+  (e.ref === null || validRef(e.ref)) &&
+  (e.amount === null || validAmount(e.amount));
+
+const validGoalLine = (g: unknown) => isObject(g) && isDay(g.from) && isCount(g.grams) && (g.grams as number) >= 1 && (g.grams as number) <= MAX_GOAL;
+
+/** Maten. Alt kan mangle, og fylles inn av `loadFood`. */
+function validFood(f: unknown): boolean {
+  if (!isObject(f)) return false;
+  return (
+    optional(f.goals, (v) => Array.isArray(v) && v.length <= MAX.goals && v.every(validGoalLine)) &&
+    optional(f.showKcal, isBool) &&
+    optional(f.meals, (v) => validList(v, MAX.meals, validMeal)) &&
+    optional(f.foods, (v) => validList(v, MAX.foods, validFoodItem)) &&
+    optional(f.dishes, (v) => validList(v, MAX.dishes, validDish)) &&
+    optional(
+      f.entries,
+      (v) => isObject(v) && Object.keys(v).length <= MAX.foodDays && Object.entries(v).every(([day, list]) => isDay(day) && validList(list, MAX.entriesPerDay, validEntry))
+    ) &&
+    optional(f.lastAmount, (v) => isObject(v) && Object.keys(v).length <= MAX.foods * 2 && Object.entries(v).every(([k, a]) => isId(k) && validAmount(a))) &&
+    optional(f.eveningEnabled, isBool) &&
+    optional(f.eveningTime, isTime)
+  );
+}
+
 /** Eldre versjoner av filen gjøres om til dagens. Versjon 1 er den første. */
 function upgrade(file: Record<string, unknown>): Record<string, unknown> {
   return file;
@@ -188,7 +276,7 @@ export function readBackup(text: string): ReadResult {
   if (!isObject(parsed) || parsed.app !== 'vane' || !isCount(parsed.version) || parsed.version < 1) return { ok: false, error: 'notVane' };
   if (parsed.version > BACKUP_VERSION) return { ok: false, error: 'newer' };
   const file = upgrade(parsed);
-  if (!validData(file.data) || !validMoney(file.money)) return { ok: false, error: 'damaged' };
+  if (!validData(file.data) || !validMoney(file.money) || !optional(file.food, validFood)) return { ok: false, error: 'damaged' };
   return {
     ok: true,
     backup: {
@@ -197,11 +285,22 @@ export function readBackup(text: string): ReadResult {
       exportedAt: isText(file.exportedAt) ? file.exportedAt : '',
       data: loadData(file.data),
       money: loadMoney(file.money),
+      food: loadFood(file.food),
     },
   };
 }
 
-export type BackupSummary = { habits: number; days: number; goals: number; journal: number; purchases: number; recurring: number; exportedAt: Date | null };
+export type BackupSummary = {
+  habits: number;
+  days: number;
+  goals: number;
+  journal: number;
+  purchases: number;
+  recurring: number;
+  /** Dager med mat. */
+  food: number;
+  exportedAt: Date | null;
+};
 
 export function summarizeBackup(b: BackupFile): BackupSummary {
   const at = new Date(b.exportedAt);
@@ -212,6 +311,7 @@ export function summarizeBackup(b: BackupFile): BackupSummary {
     journal: Object.keys(b.data.journal).length,
     purchases: b.money.purchases.length,
     recurring: b.money.recurring.length,
+    food: Object.keys(b.food.entries).length,
     exportedAt: Number.isNaN(at.getTime()) ? null : at,
   };
 }
@@ -221,10 +321,10 @@ export function summarizeBackup(b: BackupFile): BackupSummary {
  * med telefonens, så et kjøp som allerede er tatt inn her, ikke kommer inn på nytt. Det samme gjelder
  * steder man har sagt «Ikke foreslå» til, så en eldre fil ikke tar dem fram igjen.
  */
-export function restoreBackup(b: BackupFile, current: MoneyData): { data: Data; money: MoneyData } {
+export function restoreBackup(b: BackupFile, current: MoneyData): { data: Data; money: MoneyData; food: FoodData } {
   const imported = [...new Set([...b.money.imported, ...current.imported])].slice(-MAX_IMPORTED);
   const recurringDismissed = [...new Set([...b.money.recurringDismissed, ...current.recurringDismissed])].slice(-MAX_DISMISSED);
-  return { data: b.data, money: { ...b.money, imported, recurringDismissed, setupSeen: b.money.setupSeen || current.setupSeen } };
+  return { data: b.data, money: { ...b.money, imported, recurringDismissed, setupSeen: b.money.setupSeen || current.setupSeen }, food: b.food };
 }
 
 /**
@@ -260,6 +360,14 @@ export function purchasesCsv(money: MoneyData): string {
   return BOM + rows.map((r) => r.map(csvField).join(',')).join('\r\n') + '\r\n';
 }
 
+/** Maten som CSV, eldste først: én rad per ting man har spist. Måltidene er på telefonens språk. */
+export function foodCsv(food: FoodData): string {
+  const h = tr.backup.foodCsv;
+  const rows = [[h.date, h.time, h.meal, h.name, h.amount, h.protein, h.kcal], ...foodRows(food)];
+  return BOM + rows.map((r) => r.map(csvField).join(',')).join('\r\n') + '\r\n';
+}
+
 /** «vane-2026-11-04.json» */
 export const backupFileName = (day: string) => `vane-${day}.json`;
 export const csvFileName = (day: string) => `${tr.backup.csvPrefix}-${day}.csv`;
+export const foodCsvFileName = (day: string) => `${tr.backup.foodCsvPrefix}-${day}.csv`;

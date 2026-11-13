@@ -6,6 +6,8 @@ import { Icon } from '@/components/Icon';
 import { Card, Row, SectionLabel, Segmented, Stepper, SwitchRow } from '@/components/ui';
 import { tr } from '@/i18n';
 import { shiftTime } from '@/lib/dates';
+import { currentGoal, wantsFoodReminders } from '@/lib/food';
+import { useFood } from '@/lib/foodStore';
 import { mainCurrency } from '@/lib/money';
 import { useMoney } from '@/lib/moneyStore';
 import { permissionStatus, requestPermission, scheduleNotificationSync, sendTestNotification, type PermissionStatus } from '@/lib/notifications';
@@ -32,13 +34,29 @@ export default function SettingsScreen() {
   const settings = useStore((s) => s.settings);
   const update = useStore((s) => s.updateSettings);
   const currency = useMoney((s) => mainCurrency(s));
+  const goal = useFood((s) => currentGoal(s));
+  const showKcal = useFood((s) => s.showKcal);
+  const setShowKcal = useFood((s) => s.setShowKcal);
+  const foodEvening = useFood((s) => s.eveningEnabled);
+  const foodEveningTime = useFood((s) => s.eveningTime);
+  const setFoodEvening = useFood((s) => s.setEvening);
+  const foodReminders = useFood((s) => wantsFoodReminders(s, settings));
   const [permission, recheck] = usePermission();
   // Banneret vises bare når et varsel er slått på, men ikke kan komme.
-  const wantsNotifications = settings.morningEnabled || settings.remindersEnabled || settings.modules.money || wantsEvening(settings);
+  const wantsNotifications =
+    settings.morningEnabled || settings.remindersEnabled || settings.modules.money || wantsEvening(settings) || foodReminders;
 
   const enable = async (patch: Parameters<typeof update>[0]) => {
     update(patch);
     if (Object.values(patch).includes(true)) {
+      await requestPermission();
+      recheck();
+    }
+  };
+
+  const enableFoodEvening = async (on: boolean) => {
+    setFoodEvening({ eveningEnabled: on });
+    if (on) {
       await requestPermission();
       recheck();
     }
@@ -131,6 +149,7 @@ export default function SettingsScreen() {
             />
           ) : null}
           <SwitchRow label={tr.settings.journalModule} value={settings.modules.journal} onChange={(journal) => update({ modules: { ...settings.modules, journal } })} />
+          <SwitchRow label={tr.settings.foodModule} value={!!settings.modules.food} onChange={(food) => update({ modules: { ...settings.modules, food } })} />
         </Card>
         <Text style={[styles.footnote, { color: t.sub }]}>{tr.settings.modulesHelp}</Text>
       </View>
@@ -157,6 +176,52 @@ export default function SettingsScreen() {
               </>
             ) : null}
           </Card>
+        </View>
+      ) : null}
+
+      {settings.modules.food ? (
+        <View style={styles.section}>
+          <SectionLabel>{tr.settings.food}</SectionLabel>
+          <Card style={{ overflow: 'hidden' }}>
+            <Pressable onPress={() => router.push('/food-goal')} accessibilityRole="button">
+              <Row first>
+                <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.proteinGoal}</Text>
+                <Text style={{ fontSize: 16, color: t.sub }}>{goal ? tr.settings.goalValue(goal) : tr.settings.notSet}</Text>
+                <Icon name="chevron.right" size={14} color={t.sub} />
+              </Row>
+            </Pressable>
+            <SwitchRow label={tr.settings.showKcal} value={showKcal} onChange={setShowKcal} />
+            <Pressable onPress={() => router.push('/meals')} accessibilityRole="button">
+              <Row>
+                <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.meals}</Text>
+                <Icon name="chevron.right" size={14} color={t.sub} />
+              </Row>
+            </Pressable>
+            <Pressable onPress={() => router.push('/foods')} accessibilityRole="button">
+              <Row>
+                <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.food.foodsAndDishes}</Text>
+                <Icon name="chevron.right" size={14} color={t.sub} />
+              </Row>
+            </Pressable>
+          </Card>
+          <Card style={{ overflow: 'hidden' }}>
+            <SwitchRow first label={tr.settings.foodEvening} value={foodEvening} onChange={enableFoodEvening} />
+            {foodEvening ? (
+              <Row>
+                <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.time}</Text>
+                <Stepper
+                  value={showTime(foodEveningTime)}
+                  minWidth={60}
+                  onDecrease={() => setFoodEvening({ eveningTime: shiftTime(foodEveningTime, -15, 12 * 60, 23 * 60 + 45) })}
+                  onIncrease={() => setFoodEvening({ eveningTime: shiftTime(foodEveningTime, 15, 12 * 60, 23 * 60 + 45) })}
+                  decreaseLabel={tr.common.earlier15}
+                  increaseLabel={tr.common.later15}
+                />
+              </Row>
+            ) : null}
+            <Text style={[styles.help, { color: t.sub, borderTopColor: t.border }]}>{tr.settings.foodEveningHelp}</Text>
+          </Card>
+          <Text style={[styles.footnote, { color: t.sub }]}>{tr.food.source}</Text>
         </View>
       ) : null}
 

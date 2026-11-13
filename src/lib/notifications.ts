@@ -1,12 +1,14 @@
 import * as Notifications from 'expo-notifications';
 import { IosAuthorizationStatus } from 'expo-notifications';
 import Storage from 'expo-sqlite/kv-store';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { Platform } from 'react-native';
 
 import { tr } from '@/i18n';
 
-import { parseTime } from './dates';
+import { parseTime, todayKey } from './dates';
+import { canEditFood, foodOn, MAX_FOOD_REMINDERS, planFoodReminders } from './food';
+import { getFood } from './foodStore';
 import { getMoney } from './moneyStore';
 import { handlePurchaseResponse } from './purchases';
 import { planRecurringReminders, recurringOn } from './recurring';
@@ -99,12 +101,18 @@ export async function syncNotifications(): Promise<void> {
   if (!(await hasPermission())) return;
   const data = getData();
   const recurring = planRecurringReminders(getMoney(), data.settings);
+  const food = planFoodReminders(getFood(), data.settings).slice(0, MAX_FOOD_REMINDERS);
 
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   await Promise.all(
     scheduled
       .filter(
-        (n) => n.identifier === MORNING.id || n.identifier === EVENING.id || n.identifier.startsWith('habit:') || n.identifier.startsWith('recurring:')
+        (n) =>
+          n.identifier === MORNING.id ||
+          n.identifier === EVENING.id ||
+          n.identifier.startsWith('habit:') ||
+          n.identifier.startsWith('recurring:') ||
+          n.identifier.startsWith('food:')
       )
       .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier))
   );
@@ -128,16 +136,16 @@ export async function syncNotifications(): Promise<void> {
   }
 
   // Alle på én gang: appen kan ha kort tid når den bare er startet i bakgrunnen. Varslene for faste
-  // utgifter tar plass fra vanepåminnelsene, så det samlede tallet holder seg under iOS-grensen.
+  // utgifter og mat tar plass fra vanepåminnelsene, så det samlede tallet holder seg under iOS-grensen.
   await Promise.all([
-    ...planReminders(data, new Date(), MAX_REMINDERS - recurring.length).map((r) =>
+    ...planReminders(data, new Date(), MAX_REMINDERS - recurring.length - food.length).map((r) =>
       Notifications.scheduleNotificationAsync({
         identifier: r.id,
         content: { title: r.title, body: r.body, data: r.data, categoryIdentifier: r.category },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.date },
       })
     ),
-    ...recurring.map((r) =>
+    ...[...recurring, ...food].map((r) =>
       Notifications.scheduleNotificationAsync({
         identifier: r.id,
         content: { title: r.title, body: r.body, data: r.data },
@@ -172,7 +180,7 @@ function markHandled(r: Notifications.NotificationResponse): boolean {
   return true;
 }
 
-function navigate(href: '/goals' | '/' | '/recurring') {
+function navigate(href: Href) {
   // Under oppstarten er resten av appen låst. Da blir man der man er.
   if (!getData().settings.onboarded) return;
   // Ved kald oppstart er ikke navigasjonen alltid klar på første tikk.
@@ -185,7 +193,7 @@ function navigate(href: '/goals' | '/' | '/recurring') {
   }, 50);
 }
 
-type ResponseData = { kind?: string; habitId?: string; day?: string };
+type ResponseData = { kind?: string; habitId?: string; day?: string; mealId?: string };
 
 export function handleNotificationResponse(r: Notifications.NotificationResponse) {
   if (!markHandled(r)) return;
@@ -206,6 +214,14 @@ export function handleNotificationResponse(r: Notifications.NotificationResponse
   // Varselet dagen før en fast utgift åpner lista, hvis modulen fortsatt er på.
   if (data.kind === 'recurring') {
     if (opened) navigate(recurringOn(getData().settings) ? '/recurring' : '/');
+    return;
+  }
+  // Matvarslene åpner loggearket for dagen og måltidet, så lenge dagen fortsatt kan endres.
+  if (data.kind === 'food') {
+    if (!opened) return;
+    if (!foodOn(getData().settings)) return navigate('/');
+    if (!data.day || !canEditFood(data.day, todayKey())) return navigate('/food');
+    navigate({ pathname: '/food-log', params: data.mealId ? { day: data.day, meal: data.mealId } : { day: data.day } });
     return;
   }
   if (data.kind !== 'habit' || !data.habitId || !data.day) return;

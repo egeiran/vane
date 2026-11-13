@@ -51,6 +51,7 @@ export default function OnboardingScreen() {
   const [money, setMoney] = useState(settings.modules.money);
   const [journal, setJournal] = useState(settings.modules.journal);
   const [recurring, setRecurring] = useState(settings.modules.recurring);
+  const [food, setFood] = useState(!!settings.modules.food);
   const [chosen, setChosenState] = useState<FirstHabit[]>(() => onboardingProgress()?.chosen ?? []);
   const [own, setOwn] = useState('');
   const [setupOpened, setSetupOpenedState] = useState(() => onboardingProgress()?.setupOpened ?? false);
@@ -83,7 +84,7 @@ export default function OnboardingScreen() {
 
   const saveModules = () => {
     const m = settings.modules;
-    if (money !== m.money || journal !== m.journal || recurring !== m.recurring) update({ modules: { ...m, money, journal, recurring } });
+    if (money !== m.money || journal !== m.journal || recurring !== m.recurring || food !== !!m.food) update({ modules: { ...m, money, journal, recurring, food } });
     next();
   };
   const saveHabits = () => {
@@ -168,6 +169,13 @@ export default function OnboardingScreen() {
                 <Text style={[styles.rowSub, { color: t.sub }]}>{tr.onboarding.journalModuleSub}</Text>
               </View>
               <Switch value={journal} onValueChange={setJournal} trackColor={{ true: t.switchOn }} accessibilityLabel={tr.settings.journalModule} />
+            </Row>
+            <Row>
+              <View style={styles.rowText}>
+                <Text style={[styles.rowTitle, { color: t.text }]}>{tr.settings.foodModule}</Text>
+                <Text style={[styles.rowSub, { color: t.sub }]}>{tr.onboarding.foodModuleSub}</Text>
+              </View>
+              <Switch value={food} onValueChange={setFood} trackColor={{ true: t.switchOn }} accessibilityLabel={tr.settings.foodModule} />
             </Row>
           </Card>
         </>

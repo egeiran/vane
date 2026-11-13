@@ -9,6 +9,8 @@ import { tr } from '@/i18n';
 import { addDays, formatShort, isoWeek, relativeDayName, relativeWeekday, type DateKey } from '@/lib/dates';
 import { daysInRange, isFuture, weekColumns, weekRows } from '@/lib/grid';
 import { dayStats, fractionOn, goalsOn, periodSummary, summaryText } from '@/lib/habits';
+import { dayTotals, fractionOn as proteinFraction, kcalText, proteinText } from '@/lib/food';
+import { useFoodData } from '@/lib/foodStore';
 import { journalOn, moodFraction } from '@/lib/journal';
 import { showsWeekNumber, weekStartOf } from '@/lib/region';
 import { useData } from '@/lib/store';
@@ -27,6 +29,8 @@ export default function OverviewScreen() {
   const [range, setRange] = useState<Range>('month');
   const [picked, setPicked] = useState<DateKey>(today);
   const [journalPicked, setJournalPicked] = useState<DateKey>(today);
+  const [foodPicked, setFoodPicked] = useState<DateKey>(today);
+  const food = useFoodData();
   const weeks = RANGE_WEEKS[range];
   const weekStart = weekStartOf(data.settings);
 
@@ -87,6 +91,30 @@ export default function OverviewScreen() {
     }),
   }));
 
+  // Mat: fargestyrken er hvor nær proteinmålet dagen var. Gram (og kcal) for dagen man trykker på.
+  const foodOnModule = !!data.settings.modules.food;
+  const foodColor = (day: DateKey) => (isFuture(day, today) ? 'transparent' : shade(t, t.colors.fersken.solid, proteinFraction(food, day) ?? 0));
+  const foodLine = (day: DateKey) => {
+    const totals = dayTotals(food, day);
+    const name = relativeDayName(day, today);
+    if (!totals.count) return tr.food.dayEmpty(name);
+    return tr.food.dayLine(name, [proteinText(totals.protein), food.showKcal ? kcalText(totals.kcal) : ''].filter(Boolean).join(' · '));
+  };
+  const foodWeeks: HeatWeek[] = weekRows(today, weeks, weekStart).map((row) => ({
+    label: range === 'week' && showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(today)) : formatShort(row[0]),
+    cells: row.map((day) => {
+      const future = isFuture(day, today);
+      return {
+        key: day,
+        color: foodColor(day),
+        today: day === today,
+        selected: day === foodPicked,
+        label: future ? tr.overview.futureDay : foodLine(day),
+        onPress: future ? undefined : () => setFoodPicked(day),
+      };
+    }),
+  }));
+
   const recentGoals = Array.from({ length: 7 }, (_, i) => addDays(today, -i)).flatMap((day) =>
     goalsOn(data, day).map((g) => ({ day, goal: g }))
   );
@@ -108,6 +136,7 @@ export default function OverviewScreen() {
             setRange(r);
             setPicked(today);
             setJournalPicked(today);
+            setFoodPicked(today);
           }}
           options={[
             { value: 'week', label: tr.overview.segWeek },
@@ -148,6 +177,25 @@ export default function OverviewScreen() {
               <WeekRows weeks={journalWeeks} weekStart={weekStart} />
               <Text accessibilityLiveRegion="polite" style={[styles.dayLine, { backgroundColor: t.bg, color: t.text }]}>
                 {journalLine(journalPicked)}
+              </Text>
+            </>
+          )}
+        </Card>
+      ) : null}
+
+      {foodOnModule ? (
+        <Card style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={[styles.cardTitle, { color: t.text }]}>{tr.food.overviewTitle}</Text>
+            <Text style={{ fontSize: 13, color: t.sub }}>{tr.food.overviewSub}</Text>
+          </View>
+          {range === 'year' ? (
+            <ColumnGrid columns={yearCols.map((col) => col.map(foodColor))} size={5} gap={1} />
+          ) : (
+            <>
+              <WeekRows weeks={foodWeeks} weekStart={weekStart} />
+              <Text accessibilityLiveRegion="polite" style={[styles.dayLine, { backgroundColor: t.bg, color: t.text }]}>
+                {foodLine(foodPicked)}
               </Text>
             </>
           )}

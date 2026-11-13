@@ -367,6 +367,13 @@ export function previousMeal(data: Pick<FoodData, 'entries'>, day: DateKey, meal
 /** Matvarslene legges inn for i dag og så mange dager fram. Appen fyller på når den åpnes. */
 export const FOOD_DAYS_AHEAD = 3;
 
+/** Høyst så mange matvarsler om gangen, så vanepåminnelsene får plass under iOS-grensen på 64. */
+export const MAX_FOOD_REMINDERS = 18;
+
+/** Et matvarsel er slått på (for banneret om tillatelse i Innstillinger). */
+export const wantsFoodReminders = (data: Pick<FoodData, 'eveningEnabled' | 'meals'>, settings: Pick<Settings, 'modules'>) =>
+  foodOn(settings) && (data.eveningEnabled || data.meals.some((m) => m.remind && !m.hidden));
+
 export type PlannedFoodReminder = {
   id: string;
   date: Date;
