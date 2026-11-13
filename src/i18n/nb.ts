@@ -56,7 +56,12 @@ export const nb = {
     monthYear: (month: string, year: string) => `${month} ${year}`,
     week: (n: number) => `uke ${n}`,
     at: (time: string) => `kl. ${time}`,
-    locked: (day: string) => `${day}, låst`,
+    /** Ukestripa: en eldre dag kan åpnes, men ikke endres. */
+    readOnly: (day: string) => `${day}, kan bare leses`,
+    /** Inne i en setning: «Ikke i dag», «Ikke fredag». */
+    todayInline: 'i dag',
+    yesterdayInline: 'i går',
+    weekdayInline: (weekday: string) => weekday,
     /** 12-timersklokke, når telefonen bruker det. */
     time12: (hour: number, minute: string, pm: boolean) => `${hour}:${minute} ${pm ? 'p.m.' : 'a.m.'}`,
   },
@@ -86,14 +91,16 @@ export const nb = {
     yesterdayTitle: 'I går',
     newHabit: 'Ny vane',
     backToToday: 'Til i dag',
-    yesterdayNote: 'Du kan rette i går. Eldre dager er låst.',
+    yesterdayNote: 'Du kan rette i går. Eldre dager kan bare leses.',
+    olderNote: 'Denne dagen kan bare leses. I dag og i går kan endres.',
     emptyTitle: 'Ingen vaner ennå',
     emptyText: 'Start med én liten ting du vil gjøre hver dag. Du kan alltid legge til flere senere.',
     addFirst: 'Legg til en vane',
     doneOf: (done: number, total: number) => `${done} av ${total}`,
     daily: 'Daglig',
     thisWeek: 'Denne uka',
-    resting: (isToday: boolean, list: string) => `${isToday ? 'Ikke i dag' : 'Ikke i går'}: ${list}`,
+    /** `day` er «i dag», «i går» eller ukedagen (`inlineDayName`). */
+    resting: (day: string, list: string) => `Ikke ${day}: ${list}`,
     restingItem: (name: string, frequency: string) => `${name} (${frequency.toLowerCase()})`,
   },
 
@@ -110,17 +117,21 @@ export const nb = {
     skip: 'Ikke i dag',
     // Kortet på «I dag»
     noneYesterday: 'Ingen mål satt i går.',
+    noneOlder: 'Ingen mål satt den dagen.',
     noneToday: 'Ingen mål i dag.',
     addAnyway: 'Legg til likevel',
     setGoals: 'Sett mål for dagen',
     setGoalsSub: 'Små ting du vil få gjort i dag',
     cardLabelToday: 'DAGENS MÅL',
     cardLabelYesterday: 'MÅL I GÅR',
+    cardLabelOlder: 'MÅL',
   },
 
   journal: {
     question: 'Hvordan er dagen?',
     questionYesterday: 'Hvordan var dagen i går?',
+    /** `weekday` er `dates.weekdayLong`: «Hvordan var fredagen?» */
+    questionOlder: (weekday: string) => `Hvordan var ${weekday}en?`,
     /** Fra 1 til 5. */
     moods: ['Tung', 'Litt tung', 'Grei', 'God', 'Veldig god'],
     moodLabel: 'Humør',

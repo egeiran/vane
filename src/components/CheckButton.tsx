@@ -10,15 +10,18 @@ type Props = {
   /** Synlig størrelse; trykkflaten er alltid minst 44. */
   size?: number;
   checkColor?: string;
+  /** En dag som bare kan leses. */
+  disabled?: boolean;
 };
 
-export function CheckButton({ done, color, onPress, label, size = 44, checkColor = '#FFFFFF' }: Props) {
+export function CheckButton({ done, color, onPress, label, size = 44, checkColor = '#FFFFFF', disabled }: Props) {
   const hit = Math.max(44, size);
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       accessibilityRole="checkbox"
-      accessibilityState={{ checked: done }}
+      accessibilityState={{ checked: done, disabled: !!disabled }}
       accessibilityLabel={label}
       style={({ pressed }) => ({ width: hit, height: hit, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
       <CheckCircle done={done} color={color} size={size} checkColor={checkColor} />

@@ -8,7 +8,7 @@ import { JournalCard } from '@/components/JournalCard';
 import { Card, IconButton, PrimaryButton, SectionLabel, TextButton } from '@/components/ui';
 import { WeekStrip } from '@/components/WeekStrip';
 import { tr } from '@/i18n';
-import { addDays, formatLong, isoWeek, type DateKey } from '@/lib/dates';
+import { dayWhen, formatLong, inlineDayName, isoWeek, pickedDay, relativeWeekday, type DateKey } from '@/lib/dates';
 import { dailyHabitsOn, frequencyText, isDone, restingHabitsOn, weeklyHabitsOn } from '@/lib/habits';
 import { showsWeekNumber, weekStartOf } from '@/lib/region';
 import { useStore } from '@/lib/store';
@@ -18,13 +18,14 @@ import { useTheme } from '@/theme';
 export default function TodayScreen() {
   const t = useTheme();
   const today = useToday();
-  const yesterday = addDays(today, -1);
   // `null` er alltid i dag, også når appen har ligget i bakgrunnen over midnatt (for eksempel når
-  // kveldsvarselet åpner den). Bare i går kan velges i tillegg.
+  // kveldsvarselet åpner den). Dagene i ukestripa kan velges i tillegg; bare i går kan endres.
   const [picked, setPicked] = useState<DateKey | null>(null);
-  const day = picked === yesterday ? picked : today;
+  const day = pickedDay(picked, today);
   const pick = (d: DateKey) => setPicked(d === today ? null : d);
-  const isToday = day === today;
+  const when = dayWhen(day, today);
+  const isToday = when === 'today';
+  const editable = when !== 'older';
 
   const habits = useStore((s) => s.habits);
   const journalOn = useStore((s) => s.settings.modules.journal);
@@ -48,7 +49,7 @@ export default function TodayScreen() {
         <View style={{ gap: 2 }}>
           <Text style={[styles.date, { color: t.sub }]}>{formatLong(day)}</Text>
           <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-            {isToday ? tr.today.title : tr.today.yesterdayTitle}
+            {isToday ? tr.today.title : when === 'yesterday' ? tr.today.yesterdayTitle : relativeWeekday(day, today)}
           </Text>
         </View>
         {isToday ? (
@@ -60,18 +61,18 @@ export default function TodayScreen() {
 
       <WeekStrip today={today} selected={day} onSelect={pick} />
       {!isToday ? (
-        <Text style={[styles.note, { color: t.sub }]}>{tr.today.yesterdayNote}</Text>
+        <Text style={[styles.note, { color: t.sub }]}>{editable ? tr.today.yesterdayNote : tr.today.olderNote}</Text>
       ) : null}
 
       <View style={styles.section}>
-        <GoalsCard day={day} isToday={isToday} />
+        <GoalsCard day={day} when={when} />
       </View>
 
       {/* Dagboken er en modul. Er den av, er kortet borte, men det som er skrevet, ligger der. */}
       {journalOn ? (
         <View style={styles.section}>
           {/* Ny dag gir nytt kort, så det som er skrevet, lagres før det byttes. */}
-          <JournalCard key={day} day={day} isToday={isToday} />
+          <JournalCard key={day} day={day} when={when} />
         </View>
       ) : null}
 
@@ -87,11 +88,11 @@ export default function TodayScreen() {
         <View style={styles.section}>
           <SectionLabel right={daily.length ? tr.today.doneOf(doneCount, daily.length) : undefined}>{tr.today.daily}</SectionLabel>
           {daily.map((h) => (
-            <HabitRow key={h.id} habit={h} day={day} showReminder={isToday} />
+            <HabitRow key={h.id} habit={h} day={day} showReminder={isToday} editable={editable} />
           ))}
           {resting.length ? (
             <Text style={[styles.note, styles.resting, { color: t.sub }]}>
-              {tr.today.resting(isToday, resting.map((h) => tr.today.restingItem(h.name, frequencyText(h, weekStart))).join(', '))}
+              {tr.today.resting(inlineDayName(day, today), resting.map((h) => tr.today.restingItem(h.name, frequencyText(h, weekStart))).join(', '))}
             </Text>
           ) : null}
         </View>
@@ -101,7 +102,7 @@ export default function TodayScreen() {
         <View style={styles.section}>
           <SectionLabel right={showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(day)) : undefined}>{tr.today.thisWeek}</SectionLabel>
           {weekly.map((h) => (
-            <WeeklyRow key={h.id} habit={h} day={day} />
+            <WeeklyRow key={h.id} habit={h} day={day} editable={editable} />
           ))}
         </View>
       ) : null}

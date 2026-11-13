@@ -18,9 +18,11 @@ type Props = {
   day: DateKey;
   /** Vis påminnelsestid i stedet for hvor ofte (bare for i dag). */
   showReminder?: boolean;
+  /** Bare i dag og i går kan endres. Eldre dager vises, men kan ikke hukes av. */
+  editable?: boolean;
 };
 
-export function HabitRow({ habit, day, showReminder }: Props) {
+export function HabitRow({ habit, day, showReminder, editable = true }: Props) {
   const t = useTheme();
   const c = t.colors[habit.color];
   const value = useStore((s) => valueOn(s, habit.id, day));
@@ -46,17 +48,22 @@ export function HabitRow({ habit, day, showReminder }: Props) {
           color={c.solid}
           track={done ? t.card : c.soft}
           textColor={c.ink}
-          label={tr.habits.minusOne(habit.name, amountText(habit, value))}
-          onPress={() => {
-            tick();
-            increment(habit.id, day, -1);
-          }}
+          label={editable ? tr.habits.minusOne(habit.name, amountText(habit, value)) : `${habit.name}: ${amountText(habit, value)}`}
+          onPress={
+            editable
+              ? () => {
+                  tick();
+                  increment(habit.id, day, -1);
+                }
+              : undefined
+          }
         />
       ) : (
         <CheckButton
           done={done}
           color={c.solid}
           label={habit.name}
+          disabled={!editable}
           onPress={() => {
             tick();
             toggle(habit.id, day);
@@ -75,7 +82,7 @@ export function HabitRow({ habit, day, showReminder }: Props) {
           {meta}
         </Text>
       </Pressable>
-      {isCount && !done ? (
+      {isCount && !done && editable ? (
         <IconButton
           icon="plus"
           label={tr.habits.addOne(habit.unit || '')}
@@ -91,7 +98,7 @@ export function HabitRow({ habit, day, showReminder }: Props) {
   );
 }
 
-export function WeeklyRow({ habit, day }: { habit: Habit; day: DateKey }) {
+export function WeeklyRow({ habit, day, editable = true }: { habit: Habit; day: DateKey; editable?: boolean }) {
   const t = useTheme();
   const c = t.colors[habit.color];
   const doneToday = useStore((s) => valueOn(s, habit.id, day) >= 1);
@@ -106,6 +113,7 @@ export function WeeklyRow({ habit, day }: { habit: Habit; day: DateKey }) {
         done={doneToday}
         color={c.solid}
         label={habit.name}
+        disabled={!editable}
         onPress={() => {
           tick();
           toggle(habit.id, day);
