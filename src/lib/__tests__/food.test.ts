@@ -15,6 +15,8 @@ import {
   mealGroups,
   mealName,
   nutrientsFor,
+  parseDecimal,
+  parseProtein,
   planFoodReminders,
   previousMeal,
   proteinText,
@@ -167,6 +169,16 @@ describe('mat: mengder', () => {
     };
     expect(dishTotals(dish)).toEqual({ protein: 320, kcal: 220 });
     expect(nutrientsFor(dishSource(dish), { kind: 'portion', count: 2, label: '', grams: null })).toEqual({ protein: 640, kcal: 440 });
+  });
+
+  it('leser tall fra tekstfelt med komma eller punktum', () => {
+    expect(parseDecimal('17,5')).toBe(17.5);
+    expect(parseDecimal('17.5')).toBe(17.5);
+    expect(parseDecimal(' 140 ')).toBe(140);
+    expect(parseDecimal('')).toBeNull();
+    expect(parseDecimal('abc')).toBeNull();
+    expect(parseDecimal('1,2,3')).toBeNull();
+    expect(parseProtein('31,2')).toBe(312);
   });
 
   it('viser mengder og protein', () => {

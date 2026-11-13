@@ -56,6 +56,14 @@ export default function RootLayout() {
           <Stack.Screen name="recurring" />
           <Stack.Screen name="recurring-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id ?? params?.merchant} />
           <Stack.Screen name="data" />
+          <Stack.Screen name="food-log" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="food-entry" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
+          <Stack.Screen name="food-goal" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="foods" />
+          <Stack.Screen name="food-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id ?? params?.mvt} />
+          <Stack.Screen name="dish-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
+          <Stack.Screen name="meals" />
+          <Stack.Screen name="meal-form" options={{ presentation: 'modal' }} />
         </Stack.Protected>
         <Stack.Protected guard={onboarding}>
           <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />

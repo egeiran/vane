@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { FoodCard } from '@/components/FoodCard';
 import { GoalsCard } from '@/components/GoalsCard';
 import { HabitRow, WeeklyRow } from '@/components/HabitRow';
 import { JournalCard } from '@/components/JournalCard';
@@ -29,6 +30,7 @@ export default function TodayScreen() {
 
   const habits = useStore((s) => s.habits);
   const journalOn = useStore((s) => s.settings.modules.journal);
+  const foodOn = useStore((s) => !!s.settings.modules.food);
   const weekStart = useStore((s) => weekStartOf(s.settings));
   const logs = useStore((s) => s.logs[day]);
   const daily = dailyHabitsOn(habits, day);
@@ -104,6 +106,13 @@ export default function TodayScreen() {
           {weekly.map((h) => (
             <WeeklyRow key={h.id} habit={h} day={day} editable={editable} />
           ))}
+        </View>
+      ) : null}
+
+      {/* Mat er en modul. Er den av, er kortet borte, men det som er logget, ligger der. */}
+      {foodOn ? (
+        <View style={styles.section}>
+          <FoodCard day={day} today={today} />
         </View>
       ) : null}
     </ScrollView>

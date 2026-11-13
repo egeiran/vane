@@ -592,6 +592,8 @@ export const nb = {
     dish: 'Rett',
     // Mengden
     amount: 'Mengde',
+    less: 'Mindre',
+    more: 'Mer',
     grams: 'gram',
     portionsUnit: 'porsjoner',
     cannotCount: 'Velg en mengde.',
@@ -616,8 +618,6 @@ export const nb = {
     perPortion: 'Per porsjon',
     portionLabel: 'Porsjon',
     portionPlaceholder: 'F.eks. beger',
-    /** Porsjonen når man ikke skriver noe. Lagres slik på språket man skrev på. */
-    portionDefault: 'porsjon',
     portionWeight: 'Vekt (g)',
     optional: 'Valgfritt',
     per100Section: 'Per 100 g',

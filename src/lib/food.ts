@@ -248,6 +248,33 @@ export const proteinNumber = (protein: number) => formatNumber(proteinGrams(prot
 
 export const kcalText = (kcal: number) => `${formatNumber(kcal)}${NBSP}kcal`;
 
+/** Et tall fra et tekstfelt: «17,5» og «17.5» er det samme. Tomt eller ugyldig gir `null`. */
+export function parseDecimal(text: string): number | null {
+  const s = text.trim().replace(/\s/g, '').replace(',', '.');
+  if (!s || !/^\d*\.?\d*$/.test(s) || s === '.') return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Et tall slik det står i et tekstfelt: «17,5» (på engelsk «17.5»), uten mellomrom. */
+export function decimalInput(n: number | null, lang: Lang = getLang()): string {
+  if (n === null) return '';
+  const rounded = Math.round(n * 10) / 10;
+  return String(rounded).replace('.', lang === 'en' ? '.' : ',');
+}
+
+/** Protein (tideler gram) fra et tekstfelt i gram. */
+export function parseProtein(text: string): number | null {
+  const n = parseDecimal(text);
+  return n === null ? null : toProtein(n);
+}
+
+/** kcal fra et tekstfelt. */
+export function parseKcal(text: string): number | null {
+  const n = parseDecimal(text);
+  return n === null ? null : Math.round(n);
+}
+
 /** «½», «1», «1½», «2,25». */
 export function countText(count: number): string {
   const whole = Math.floor(count);
