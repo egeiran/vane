@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { tr } from '@/i18n';
@@ -36,6 +37,9 @@ export function AmountPicker({ source, options, value, onChange, showKcal }: Pro
   const t = useTheme();
   const n = nutrientsFor(source, value);
   const grams = takesGrams(source);
+  // Det som står i gramfeltet mens man skriver, så feltet kan tømmes før man skriver et nytt tall.
+  const [draft, setDraft] = useState<string | null>(null);
+  const gramsText = value.kind === 'grams' ? String(value.grams) : value.grams !== null ? formatNumber(value.grams * value.count) : '';
 
   const step = (dir: 1 | -1) => {
     if (value.kind === 'portion') {
@@ -56,7 +60,10 @@ export function AmountPicker({ source, options, value, onChange, showKcal }: Pro
             return (
               <Pressable
                 key={optionLabel(o)}
-                onPress={() => onChange(o)}
+                onPress={() => {
+                  setDraft(null);
+                  onChange(o);
+                }}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: on }}
                 style={({ pressed }) => [styles.chip, { backgroundColor: on ? t.inverse : t.button, opacity: pressed ? 0.7 : 1 }]}>
@@ -72,8 +79,14 @@ export function AmountPicker({ source, options, value, onChange, showKcal }: Pro
         <Stepper
           value={amountText(value)}
           minWidth={92}
-          onDecrease={() => step(-1)}
-          onIncrease={() => step(1)}
+          onDecrease={() => {
+            setDraft(null);
+            step(-1);
+          }}
+          onIncrease={() => {
+            setDraft(null);
+            step(1);
+          }}
           decreaseLabel={tr.food.less}
           increaseLabel={tr.food.more}
         />
@@ -85,11 +98,13 @@ export function AmountPicker({ source, options, value, onChange, showKcal }: Pro
             {tr.food.portionWeight}
           </Text>
           <TextInput
-            value={value.kind === 'grams' ? String(value.grams) : value.grams !== null ? formatNumber(value.grams * value.count) : ''}
+            value={draft ?? gramsText}
             onChangeText={(text) => {
+              setDraft(text);
               const g = parseDecimal(text);
               if (g !== null && g > 0) onChange({ kind: 'grams', grams: Math.min(MAX_GRAMS, Math.round(g)) });
             }}
+            onBlur={() => setDraft(null)}
             keyboardType="number-pad"
             placeholder="100"
             placeholderTextColor={t.faint}
