@@ -38,6 +38,6 @@ export function Field({ label, value, onChange, placeholder, autoFocus, keyboard
 const styles = StyleSheet.create({
   field: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 },
   label: { fontSize: 16, flex: 1 },
-  input: { flex: 1.4, height: 44, borderRadius: 10, paddingHorizontal: 12, fontSize: 17 },
-  number: { flex: 0, width: 120, textAlign: 'right', fontVariant: ['tabular-nums'] },
+  input: { flex: 1.4, minWidth: 0, height: 44, borderRadius: 10, paddingHorizontal: 12, fontSize: 17 },
+  number: { flex: 0, width: 120, minWidth: 120, textAlign: 'right', fontVariant: ['tabular-nums'] },
 });
