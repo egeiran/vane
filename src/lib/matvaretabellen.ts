@@ -25,7 +25,6 @@ let byId: Map<string, TableFood> | null = null;
 /** Hele tabellen. Leses fra fila første gang. */
 export function tableFoods(): TableFood[] {
   if (!table) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const raw = require('@/data/matvaretabellen.json') as Raw;
     table = raw.foods.map(([id, name, protein, kcal, portions, keywords]) => ({
       id,
