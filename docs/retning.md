@@ -24,6 +24,7 @@ Målet er ekstra inntekt: noen tusen kroner i måneden, med en app vi er stolte 
 | Dagbok og humør | En setning og et humør per dag, vist i Oversikt | Gratis |
 | Apple Helse | Skritt, søvn, trening og lignende huker av vaner automatisk | Vane+ |
 | Faste utgifter | Abonnementer og faste trekk, hva som går ut hver måned | Vane+ |
+| Mat | Protein (med mål) og kalorier per dag: raskt tall, egne matvarer, retter og Matvaretabellen | Avgjøres når Vane+ kommer |
 | KI på telefonen | Kategori for nye steder, rolig ukesoppsummering | Vane+ |
 | iCloud og eksport | Synk, sikkerhetskopi, eksport og import | Gratis (det handler om tillit) |
 
@@ -63,7 +64,9 @@ Bare Apples språkmodell på telefonen. Ingenting sendes ut. Krever en iPhone me
 
 ## Åpne spørsmål
 
-- **Retting av eldre dager.** I dag kan bare i dag og i går rettes. Det er ikke et ufravikelig prinsipp, men vi venter med å endre det. Alternativer: siste 7 dager for alle, eller eldre dager med Vane+.
+- **Retting av eldre dager.** I dag kan bare i dag og i går rettes. De fem dagene i ukestripa kan åpnes og leses (13. november 2026), men ikke endres. Det er ikke et ufravikelig prinsipp, men vi venter med å endre det. Alternativer: siste 7 dager for alle, eller eldre dager med Vane+.
+- **Mat og Vane+.** Om Mat er gratis, eller om for eksempel søk i Matvaretabellen og «Som i går» krever Vane+, avgjøres sammen med #13.
+- **Matvaretabellen i en betalt app.** Mattilsynet ber om at tabellen oppgis som kilde, og sier at dataene kan lagres lokalt. Det står ingen egen lisens for API-et. Før lansering bør vi spørre matvaretabellen@mattilsynet.no om bruk i en app man betaler for.
 - **Kategori i App Store:** Produktivitet eller Helse og trening.
 
 ## Rekkefølge
@@ -77,4 +80,11 @@ Veikartet er [issue #4](https://github.com/egeiran/vane/issues/4), med en sjekkl
 Dagbok og humør (#19) ble gjort tidligere, i samme runde som oppstarten. Kveldsvarselet er av som standard, og kommer hver kveld når det er på, som morgenvarselet.
 
 Faste utgifter (#21) ble også gjort tidligere, 9. november 2026. De er en egen linje i Penger og telles ikke med i månedens sum. Modulen ligger under Penger og er av til man slår den på. Varselet dagen før kommer kl. 09 og er av som standard. Den er gratis til Vane+ finnes, og #13 legger den bak Vane+ som i tabellen over.
+Mat (#28) ble lagt til 13. november 2026, som en egen modul med fane. Den er laget for å få i seg nok protein, og følger de samme prinsippene som resten av appen:
+- Protein har et fast mål i gram. Kalorier har ingen mål, bare en sum som kan skjules.
+- Ingen snitt, ingen streaks og ingen rødfarge.
+- Som for vanene kan bare i dag og i går endres.
+- Varslene er av som standard.
+- Widgets, Snarveier og Apple Helse kommer senere.
+
 4. **Senere:** Apple Watch.

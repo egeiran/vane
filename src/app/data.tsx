@@ -10,6 +10,8 @@ import {
   backupJson,
   createBackup,
   csvFileName,
+  foodCsv,
+  foodCsvFileName,
   purchasesCsv,
   readBackup,
   restoreBackup,
@@ -19,6 +21,7 @@ import {
 } from '@/lib/backup';
 import { pickJsonFile, shareFile, type PickedFile } from '@/lib/backupFiles';
 import { formatFull, todayKey, toKey } from '@/lib/dates';
+import { getFood, replaceFood } from '@/lib/foodStore';
 import { getMoney, replaceMoney } from '@/lib/moneyStore';
 import { getData, replaceData, useStore } from '@/lib/store';
 import { useTheme } from '@/theme';
@@ -37,18 +40,25 @@ type Message = { kind: 'error'; error: BackupError | 'read' | 'share' } | { kind
 export default function DataScreen() {
   const t = useTheme();
   const moneyOn = useStore((s) => s.settings.modules.money);
+  const foodOn = useStore((s) => !!s.settings.modules.food);
   const [pending, setPending] = useState<BackupFile | null>(null);
   const [message, setMessage] = useState<Message | null>(null);
 
   const exportAll = async () => {
     setMessage(null);
-    const ok = await shareFile(backupFileName(todayKey()), backupJson(createBackup(getData(), getMoney(), new Date())), 'json');
+    const ok = await shareFile(backupFileName(todayKey()), backupJson(createBackup(getData(), getMoney(), getFood(), new Date())), 'json');
     if (!ok) setMessage({ kind: 'error', error: 'share' });
   };
 
   const exportCsv = async () => {
     setMessage(null);
     const ok = await shareFile(csvFileName(todayKey()), purchasesCsv(getMoney()), 'csv');
+    if (!ok) setMessage({ kind: 'error', error: 'share' });
+  };
+
+  const exportFoodCsv = async () => {
+    setMessage(null);
+    const ok = await shareFile(foodCsvFileName(todayKey()), foodCsv(getFood()), 'csv');
     if (!ok) setMessage({ kind: 'error', error: 'share' });
   };
 
@@ -70,9 +80,10 @@ export default function DataScreen() {
 
   const replace = () => {
     if (!pending) return;
-    const restored = restoreBackup(pending, getMoney());
+    const restored = restoreBackup(pending, getMoney(), getFood());
     replaceData(restored.data);
     replaceMoney(restored.money);
+    replaceFood(restored.food);
     setPending(null);
     setMessage({ kind: 'done' });
   };
@@ -119,6 +130,9 @@ export default function DataScreen() {
               tr.backup.previewPurchases(summary.purchases),
               // Faste utgifter vises når filen har noen, eller når de som er her nå, ville blitt borte.
               ...(summary.recurring || getMoney().recurring.length ? [tr.backup.previewRecurring(summary.recurring)] : []),
+              // Maten vises når filen har noe, eller når det som er her nå, ville blitt borte. En fil fra
+              // før maten fantes, lar maten være, så da står det ingenting.
+              ...(summary.food !== null && (summary.food || Object.keys(getFood().entries).length) ? [tr.backup.previewFood(summary.food)] : []),
             ].map((line) => (
               <Text key={line} style={[styles.fact, { color: t.text }]}>
                 {`· ${line}`}
@@ -139,6 +153,7 @@ export default function DataScreen() {
           <ActionRow first label={tr.backup.exportAll} help={tr.backup.exportAllHelp} icon="square.and.arrow.up" onPress={exportAll} />
           {/* Med Penger av er kjøpene skjult, men de er fortsatt med i «Eksporter alt». */}
           {moneyOn ? <ActionRow label={tr.backup.exportCsv} help={tr.backup.exportCsvHelp} icon="tablecells" onPress={exportCsv} /> : null}
+          {foodOn ? <ActionRow label={tr.backup.exportFoodCsv} help={tr.backup.exportFoodCsvHelp} icon="tablecells" onPress={exportFoodCsv} /> : null}
         </Card>
       </View>
 

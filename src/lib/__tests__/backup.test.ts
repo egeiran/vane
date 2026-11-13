@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it } from '@jest/globals';
 
 import { setLang } from '@/i18n';
 
-import { backupJson, BACKUP_VERSION, createBackup, MAX_FILE_BYTES, purchasesCsv, readBackup, restoreBackup, summarizeBackup } from '../backup';
+import { backupJson, BACKUP_VERSION, createBackup, foodCsv, MAX_FILE_BYTES, purchasesCsv, readBackup, restoreBackup, summarizeBackup } from '../backup';
+import { EMPTY_FOOD } from '../food';
+import * as F from '../foodState';
 import { valueOn } from '../habits';
 import { EMPTY_MONEY } from '../money';
 import { addPurchase, importPurchase } from '../moneyState';
@@ -40,7 +42,7 @@ function sample(): { data: Data; money: MoneyData } {
 describe('sikkerhetskopi', () => {
   it('gir de samme dataene tilbake etter eksport og import', () => {
     const { data, money } = sample();
-    const res = readBackup(backupJson(createBackup(data, money, NOW)));
+    const res = readBackup(backupJson(createBackup(data, money, EMPTY_FOOD, NOW)));
     expect(res.ok).toBe(true);
     if (!res.ok) return;
     expect(res.backup.data).toEqual(data);
@@ -51,7 +53,7 @@ describe('sikkerhetskopi', () => {
 
   it('oppsummerer hva filen inneholder', () => {
     const { data, money } = sample();
-    expect(summarizeBackup(createBackup(data, money, NOW))).toEqual({ habits: 2, days: 2, goals: 1, journal: 0, purchases: 4, recurring: 1, exportedAt: NOW });
+    expect(summarizeBackup(createBackup(data, money, EMPTY_FOOD, NOW))).toEqual({ habits: 2, days: 2, goals: 1, journal: 0, purchases: 4, recurring: 1, food: 0, exportedAt: NOW });
   });
 
   it('avviser filer som ikke er JSON, ikke er fra Vane, eller er fra en nyere versjon', () => {
@@ -65,7 +67,7 @@ describe('sikkerhetskopi', () => {
 
   it('avviser en skadet fil i stedet for å ta inn deler av den', () => {
     const { data, money } = sample();
-    const good = createBackup(data, money, NOW);
+    const good = createBackup(data, money, EMPTY_FOOD, NOW);
     const broken = [
       { ...good, data: null },
       { ...good, money: 'x' },
@@ -95,7 +97,7 @@ describe('sikkerhetskopi', () => {
   it('avviser en fil som mangler vanene, loggene, målene, innstillingene, kjøpene eller kategoriene', () => {
     expect(readBackup(JSON.stringify({ app: 'vane', version: 1, data: {}, money: {} }))).toEqual({ ok: false, error: 'damaged' });
     const { data, money } = sample();
-    const good = createBackup(data, money, NOW);
+    const good = createBackup(data, money, EMPTY_FOOD, NOW);
     for (const key of ['habits', 'logs', 'goals', 'settings'] as const) {
       const { [key]: _gone, ...rest } = data;
       expect(readBackup(JSON.stringify({ ...good, data: rest }))).toEqual({ ok: false, error: 'damaged' });
@@ -108,7 +110,7 @@ describe('sikkerhetskopi', () => {
 
   it('avviser ID-er og nøkler som ville gitt noe annet enn en verdi når appen slår dem opp', () => {
     const { data, money } = sample();
-    const good = createBackup(data, money, NOW);
+    const good = createBackup(data, money, EMPTY_FOOD, NOW);
     const h = data.habits[0];
     // JSON.parse lager «__proto__» som et vanlig felt, slik en laget fil ville gjort.
     const files = [
@@ -125,7 +127,7 @@ describe('sikkerhetskopi', () => {
 
   it('avviser klokkeslett og dager som ikke finnes, og deler som ikke er hele beløpet', () => {
     const { data, money } = sample();
-    const good = createBackup(data, money, NOW);
+    const good = createBackup(data, money, EMPTY_FOOD, NOW);
     const p = money.purchases[0];
     const broken = [
       { ...good, data: { ...data, settings: { ...data.settings, morningTime: '25:00' } } },
@@ -167,14 +169,14 @@ describe('sikkerhetskopi', () => {
   it('beholder «Ikke foreslå» fra telefonen når en fil importeres', () => {
     const { data, money } = sample();
     const onPhone = dismissSuggestion(EMPTY_MONEY, 'NETFLIX');
-    expect(restoreBackup(createBackup(data, money, NOW), onPhone).money.recurringDismissed).toEqual(['KIWI', 'NETFLIX']);
-    expect(restoreBackup(createBackup(data, money, NOW), onPhone).money.recurring).toEqual(money.recurring);
+    expect(restoreBackup(createBackup(data, money, EMPTY_FOOD, NOW), onPhone, EMPTY_FOOD).money.recurringDismissed).toEqual(['KIWI', 'NETFLIX']);
+    expect(restoreBackup(createBackup(data, money, EMPTY_FOOD, NOW), onPhone, EMPTY_FOOD).money.recurring).toEqual(money.recurring);
   });
 
   it('tar ikke inn et kjøp fra Snarveier på nytt etter import', () => {
     const { data, money } = sample();
     const onPhone = importPurchase(EMPTY_MONEY, { id: 'ap-ny', amountText: '10', merchant: 'Kiosk', at: NOW });
-    const restored = restoreBackup(createBackup(data, money, NOW), onPhone);
+    const restored = restoreBackup(createBackup(data, money, EMPTY_FOOD, NOW), onPhone, EMPTY_FOOD);
     expect(restored.money.imported).toEqual(['ap1', 'ap-ny']);
     expect(restored.money.purchases).toEqual(money.purchases);
     expect(restored.data).toEqual(data);
@@ -231,5 +233,73 @@ describe('verdien for en vane en dag', () => {
   it('er et tall også for nøkler som finnes på alle objekter', () => {
     expect(valueOn({ logs: { '2026-11-04': {} } }, '__proto__', '2026-11-04')).toBe(0);
     expect(valueOn({ logs: { '2026-11-04': {} } }, 'constructor', '2026-11-04')).toBe(0);
+  });
+
+  describe('mat', () => {
+    function withFood() {
+      let food = F.setGoal(EMPTY_FOOD, 140, '2026-11-01');
+      food = F.addFood(food, { name: 'Skyr', portion: { label: 'beger', grams: 160, protein: 176, kcal: 99 }, per100: { protein: 110, kcal: 62 }, mvtId: null }, 'f1');
+      food = F.addDish(food, { name: 'Frokostbolle', items: [{ name: 'Havregryn', protein: 81, kcal: 222, ref: { kind: 'mvt', id: '05.103' }, amount: { kind: 'grams', grams: 60 } }] }, 'd1');
+      food = F.addMeal(food, { name: 'Før trening', start: '17:00', end: '18:00', remind: true }, 'm1');
+      food = F.addEntry(food, '2026-11-04', { time: '07:40', mealId: 'frokost', name: 'Skyr', protein: 176, kcal: 99, ref: { kind: 'food', id: 'f1' }, amount: { kind: 'portion', count: 1, label: 'beger', grams: 160 } }, 'e1');
+      food = F.addEntry(food, '2026-11-03', { time: '12:00', mealId: 'lunsj', name: '=SUM(A1)', protein: 300, kcal: null, ref: null, amount: null }, 'e2');
+      return food;
+    }
+
+    it('er med i filen og kommer tilbake likt', () => {
+      const { data, money } = sample();
+      const food = withFood();
+      const res = readBackup(backupJson(createBackup(data, money, food, NOW)));
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+      expect(res.backup.food).toEqual(food);
+      expect(summarizeBackup(res.backup).food).toBe(2);
+      expect(restoreBackup(res.backup, money, EMPTY_FOOD).food).toEqual(food);
+    });
+
+    it('en fil fra før maten fantes, lar maten på telefonen være', () => {
+      const { data, money } = sample();
+      const old = { app: 'vane', version: 1, exportedAt: NOW.toISOString(), data, money };
+      const res = readBackup(JSON.stringify(old));
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+      expect(res.backup.food).toBeNull();
+      expect(summarizeBackup(res.backup).food).toBeNull();
+      const onPhone = withFood();
+      expect(restoreBackup(res.backup, money, onPhone).food).toBe(onPhone);
+    });
+
+    it('en tom mat i filen erstatter maten på telefonen', () => {
+      const { data, money } = sample();
+      const res = readBackup(backupJson(createBackup(data, money, EMPTY_FOOD, NOW)));
+      expect(res.ok && restoreBackup(res.backup, money, withFood()).food).toEqual(EMPTY_FOOD);
+    });
+
+    it('avviser skadet mat', () => {
+      const { data, money } = sample();
+      const f0 = withFood();
+      const good = createBackup(data, money, f0, NOW);
+      const broken = [
+        { ...f0, goals: [{ from: '2026-11-01', grams: 0 }] },
+        { ...f0, entries: { 'ikke-en-dag': [] } },
+        { ...f0, entries: { '2026-11-04': [{ ...f0.entries['2026-11-04'][0], protein: -1 }] } },
+        { ...f0, entries: { '2026-11-04': [{ ...f0.entries['2026-11-04'][0], amount: { kind: 'grams', grams: Infinity } }] } },
+        { ...f0, foods: [{ ...f0.foods[0], id: '__proto__' }] },
+        { ...f0, meals: [{ ...f0.meals[0], start: '25:00' }] },
+        { ...f0, lastAmount: { 'food:f1': { kind: 'portion', count: 0, label: '', grams: null } } },
+        'mat',
+      ];
+      for (const food of broken) expect(readBackup(JSON.stringify({ ...good, food }))).toEqual({ ok: false, error: 'damaged' });
+    });
+
+    it('gir maten som CSV, med apostrof foran formler', () => {
+      const csv = foodCsv(withFood());
+      expect(csv.split('\r\n')).toEqual([
+        '\uFEFFDato,Tid,Måltid,Navn,Mengde,Protein (g),Kalorier (kcal)',
+        "2026-11-03,12:00,Lunsj,'=SUM(A1),,30.0,",
+        '2026-11-04,07:40,Frokost,Skyr,1 beger,17.6,99',
+        '',
+      ]);
+    });
   });
 });

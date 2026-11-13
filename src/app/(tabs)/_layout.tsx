@@ -10,6 +10,7 @@ export default function TabLayout() {
   const t = useTheme();
   const waiting = useMoney((s) => s.purchases.filter(isPending).length);
   const moneyOn = useStore((s) => s.settings.modules.money);
+  const foodOn = useStore((s) => !!s.settings.modules.food);
   return (
     <NativeTabs tintColor={t.text}>
       <NativeTabs.Trigger name="index">
@@ -19,6 +20,11 @@ export default function TabLayout() {
       <NativeTabs.Trigger name="overview">
         <NativeTabs.Trigger.Label>{tr.tabs.overview}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'square.grid.2x2', selected: 'square.grid.2x2.fill' }} />
+      </NativeTabs.Trigger>
+      {/* Med Mat av er fanen borte. Dataene ligger der fortsatt. */}
+      <NativeTabs.Trigger name="food" hidden={!foodOn}>
+        <NativeTabs.Trigger.Label>{tr.tabs.food}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'fork.knife.circle', selected: 'fork.knife.circle.fill' }} />
       </NativeTabs.Trigger>
       {/* Med Penger av er fanen borte. Dataene ligger der fortsatt. */}
       <NativeTabs.Trigger name="money" hidden={!moneyOn}>
