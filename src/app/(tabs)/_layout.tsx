@@ -30,7 +30,8 @@ export default function TabLayout() {
       <NativeTabs.Trigger name="money" hidden={!moneyOn}>
         <NativeTabs.Trigger.Label>{tr.tabs.money}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'creditcard', selected: 'creditcard.fill' }} />
-        <NativeTabs.Trigger.Badge hidden={waiting === 0}>{String(waiting)}</NativeTabs.Trigger.Badge>
+        {/* expo-router ser bort fra `hidden` når badgen har tekst, så «0» ble vist. Uten ventende kjøp: ingen badge. */}
+        {waiting > 0 && <NativeTabs.Trigger.Badge>{String(waiting)}</NativeTabs.Trigger.Badge>}
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings">
         <NativeTabs.Trigger.Label>{tr.tabs.settings}</NativeTabs.Trigger.Label>
