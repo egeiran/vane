@@ -3,9 +3,12 @@ import { describe, expect, it } from '@jest/globals';
 import {
   addDays,
   daysBetween,
+  dayWhen,
   formatLong,
   formatShort,
+  inlineDayName,
   isoWeek,
+  pickedDay,
   relativeDayName,
   shiftTime,
   startOfWeek,
@@ -57,5 +60,24 @@ describe('dates', () => {
     expect(shiftTime('07:00', -15)).toBe('06:45');
     expect(shiftTime('00:00', -15)).toBe('00:00');
     expect(shiftTime('23:45', 15)).toBe('23:45');
+  });
+
+  it('ukestripa: dagene bakover kan velges, resten blir i dag', () => {
+    const today = '2026-11-13';
+    expect(pickedDay(null, today)).toBe(today);
+    expect(pickedDay('2026-11-12', today)).toBe('2026-11-12');
+    expect(pickedDay('2026-11-08', today)).toBe('2026-11-08'); // fem dager bakover
+    expect(pickedDay('2026-11-07', today)).toBe(today); // gått ut av stripa ved midnatt
+    expect(pickedDay('2026-11-14', today)).toBe(today); // i morgen
+  });
+
+  it('i dag og i går kan endres, eldre dager bare leses', () => {
+    const today = '2026-11-13';
+    expect(dayWhen(today, today)).toBe('today');
+    expect(dayWhen('2026-11-12', today)).toBe('yesterday');
+    expect(dayWhen('2026-11-10', today)).toBe('older');
+    expect(inlineDayName(today, today)).toBe('i dag');
+    expect(inlineDayName('2026-11-12', today)).toBe('i går');
+    expect(inlineDayName('2026-11-10', today)).toBe('tirsdag');
   });
 });

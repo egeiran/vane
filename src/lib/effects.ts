@@ -8,6 +8,7 @@ import {
   scheduleNotificationSync,
   syncNotifications,
 } from './notifications';
+import { useFood } from './foodStore';
 import { useMoney } from './moneyStore';
 import { dismissResolvedNotifications, syncPurchaseNative, usePurchaseIntents } from './purchases';
 import { cancelReviewCheck, noteActivity, scheduleReviewCheck } from './reviewPrompt';
@@ -73,6 +74,20 @@ export function useAppEffects() {
       if (state.recurring !== prev.recurring) scheduleNotificationSync();
     });
 
+    const unsubscribeFood = useFood.subscribe((state, prev) => {
+      if (state.entries !== prev.entries) noteActivity();
+      // Kveldssjekken og måltidsvarslene regnes ut fra det som er logget.
+      if (
+        state.entries !== prev.entries ||
+        state.goals !== prev.goals ||
+        state.meals !== prev.meals ||
+        state.eveningEnabled !== prev.eveningEnabled ||
+        state.eveningTime !== prev.eveningTime
+      ) {
+        scheduleNotificationSync();
+      }
+    });
+
     let appState = AppState.currentState;
     const appStateSub = AppState.addEventListener('change', (status) => {
       const fromBackground = appState === 'background';
@@ -94,6 +109,7 @@ export function useAppEffects() {
       responseSub.remove();
       unsubscribe();
       unsubscribeMoney();
+      unsubscribeFood();
       appStateSub.remove();
       stopWidgetTaps();
     };

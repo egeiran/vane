@@ -97,6 +97,35 @@ export function relativeDayName(key: DateKey, today: DateKey): string {
   return formatLong(key);
 }
 
+/** Ukestripa viser så mange dager bakover. Alle kan åpnes, men bare i dag og i går kan endres. */
+export const STRIP_PAST_DAYS = 5;
+
+/** I dag, i går eller en eldre dag (som bare kan leses). */
+export type DayWhen = 'today' | 'yesterday' | 'older';
+
+export function dayWhen(key: DateKey, today: DateKey): DayWhen {
+  const diff = daysBetween(key, today);
+  return diff <= 0 ? 'today' : diff === 1 ? 'yesterday' : 'older';
+}
+
+/**
+ * Dagen som vises når `picked` er valgt i ukestripa. `null` er alltid i dag. En dag som har gått ut av
+ * stripa (appen har ligget over midnatt), eller som ligger fram i tid, blir også i dag.
+ */
+export function pickedDay(picked: DateKey | null, today: DateKey): DateKey {
+  if (picked === null) return today;
+  const diff = daysBetween(picked, today);
+  return diff >= 0 && diff <= STRIP_PAST_DAYS ? picked : today;
+}
+
+/** «i dag», «i går» eller ukedagen inne i en setning: «Ikke fredag». */
+export function inlineDayName(key: DateKey, today: DateKey): string {
+  const when = dayWhen(key, today);
+  if (when === 'today') return tr.dates.todayInline;
+  if (when === 'yesterday') return tr.dates.yesterdayInline;
+  return tr.dates.weekdayInline(tr.dates.weekdayLong[weekdayIndex(key)]);
+}
+
 /** «I dag», «I går» eller bare ukedagen: «Fredag». */
 export function relativeWeekday(key: DateKey, today: DateKey): string {
   const diff = daysBetween(key, today);
@@ -110,6 +139,12 @@ export type Time = { hour: number; minute: number };
 export function parseTime(value: string): Time {
   const [h, m] = value.split(':').map(Number);
   return { hour: Number.isFinite(h) ? h : 8, minute: Number.isFinite(m) ? m : 0 };
+}
+
+/** Minutter etter midnatt: «07:30» er 450. */
+export function minutesOf(value: string): number {
+  const t = parseTime(value);
+  return t.hour * 60 + t.minute;
 }
 
 /** Klokkeslettet slik det lagres: «18:05». Bruk `displayTime` for å vise det. */

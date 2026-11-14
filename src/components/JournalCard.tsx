@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { tr } from '@/i18n';
-import type { DateKey } from '@/lib/dates';
+import { weekdayIndex, type DateKey, type DayWhen } from '@/lib/dates';
 import { canEditJournal, journalOn, MAX_JOURNAL_TEXT, MOODS } from '@/lib/journal';
 import { useStore } from '@/lib/store';
 import { useToday } from '@/lib/useToday';
@@ -15,7 +15,7 @@ import { tick } from './ui';
  * ingen trend og ingen ros. Teksten lagres litt etter at man har sluttet å skrive, når feltet
  * mister fokus, og når kortet forsvinner, så ikke hvert tastetrykk lagrer alle dataene.
  */
-export function JournalCard({ day, isToday }: { day: DateKey; isToday: boolean }) {
+export function JournalCard({ day, when }: { day: DateKey; when: DayWhen }) {
   const t = useTheme();
   const today = useToday();
   const editable = canEditJournal(day, today);
@@ -53,7 +53,11 @@ export function JournalCard({ day, isToday }: { day: DateKey; isToday: boolean }
     <View style={[styles.card, { backgroundColor: t.card }]}>
       <View style={styles.header}>
         <Text style={[styles.question, { color: t.text }]} accessibilityRole="header">
-          {isToday ? tr.journal.question : tr.journal.questionYesterday}
+          {when === 'today'
+            ? tr.journal.question
+            : when === 'yesterday'
+              ? tr.journal.questionYesterday
+              : tr.journal.questionOlder(tr.dates.weekdayLong[weekdayIndex(day)])}
         </Text>
         <Text style={[styles.moodName, { color: t.sub }]} accessibilityElementsHidden importantForAccessibility="no">
           {mood ? tr.journal.moods[mood - 1] : ''}

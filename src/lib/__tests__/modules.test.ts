@@ -10,14 +10,14 @@ describe('moduler', () => {
   it('har Penger på for alle som brukte appen før moduler fantes', () => {
     const old = { habits: [], logs: {}, goals: {}, goalsSkipped: {}, settings: { morningEnabled: false, morningTime: '06:30', remindersEnabled: true } };
     const data = loadData(old);
-    expect(data.settings.modules).toEqual({ money: true, journal: false, health: false, recurring: false });
+    expect(data.settings.modules).toEqual({ money: true, journal: false, health: false, recurring: false, food: false });
     expect(data.settings.morningTime).toBe('06:30');
     expect(data.settings.weekStart).toBeNull();
   });
 
   it('fyller inn moduler som mangler, og beholder valget', () => {
     const data = loadData({ ...EMPTY_DATA, settings: { ...DEFAULT_SETTINGS, modules: { money: false } } });
-    expect(data.settings.modules).toEqual({ money: false, journal: false, health: false, recurring: false });
+    expect(data.settings.modules).toEqual({ money: false, journal: false, health: false, recurring: false, food: false });
   });
 
   it('gir en ny installasjon Penger på', () => {

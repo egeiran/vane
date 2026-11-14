@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { tr } from '@/i18n';
-import type { DateKey } from '@/lib/dates';
+import type { DateKey, DayWhen } from '@/lib/dates';
 import { useStore } from '@/lib/store';
 import type { Goal } from '@/lib/types';
 import { useTheme } from '@/theme';
@@ -13,15 +13,21 @@ import { TextButton, tick } from './ui';
 
 const NO_GOALS: Goal[] = [];
 
-/** Dagens mål på I dag-skjermen. For i går kan målene bare hukes av, ikke endres. */
-export function GoalsCard({ day, isToday }: { day: DateKey; isToday: boolean }) {
+/**
+ * Dagens mål på I dag-skjermen. For i går kan målene bare hukes av, ikke endres. Eldre dager kan
+ * bare leses.
+ */
+export function GoalsCard({ day, when }: { day: DateKey; when: DayWhen }) {
+  const isToday = when === 'today';
   const t = useTheme();
   const goals = useStore((s) => s.goals[day] ?? NO_GOALS);
   const skipped = useStore((s) => !!s.goalsSkipped[day]);
   const toggleGoal = useStore((s) => s.toggleGoal);
 
   if (!goals.length) {
-    if (!isToday) return <Text style={[styles.note, { color: t.sub }]}>{tr.goals.noneYesterday}</Text>;
+    if (!isToday) {
+      return <Text style={[styles.note, { color: t.sub }]}>{when === 'yesterday' ? tr.goals.noneYesterday : tr.goals.noneOlder}</Text>;
+    }
     if (skipped) {
       // Man har sagt «Ikke i dag» – bare en stille linje, ingen invitasjon.
       return (
@@ -51,7 +57,7 @@ export function GoalsCard({ day, isToday }: { day: DateKey; isToday: boolean }) 
   return (
     <View style={[styles.card, { backgroundColor: t.card }]}>
       <View style={styles.header}>
-        <Text style={[styles.label, { color: t.sub }]}>{isToday ? tr.goals.cardLabelToday : tr.goals.cardLabelYesterday}</Text>
+        <Text style={[styles.label, { color: t.sub }]}>{isToday ? tr.goals.cardLabelToday : when === 'yesterday' ? tr.goals.cardLabelYesterday : tr.goals.cardLabelOlder}</Text>
         <View style={styles.headerRight}>
           <Text style={{ fontSize: 13, color: t.sub }}>
             {tr.today.doneOf(done, goals.length)}
@@ -68,6 +74,7 @@ export function GoalsCard({ day, isToday }: { day: DateKey; isToday: boolean }) 
             color={t.inverse}
             checkColor={t.onInverse}
             label={g.text}
+            disabled={when === 'older'}
             onPress={() => {
               tick();
               toggleGoal(day, g.id);

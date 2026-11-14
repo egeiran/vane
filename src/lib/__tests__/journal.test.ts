@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { backupJson, createBackup, readBackup, summarizeBackup } from '../backup';
+import { EMPTY_FOOD } from '../food';
 import { canEditJournal, journalOn, MAX_JOURNAL_TEXT, moodFraction, setJournalText, setMood } from '../journal';
 import { EMPTY_MONEY } from '../money';
 import { wantsEvening } from '../reminders';
@@ -75,7 +76,7 @@ describe('dagbok og humør', () => {
 
   it('er med i eksporten, og en skadet dagbok avvises', () => {
     const data = setJournalText(setMood(loadData(undefined), TODAY, 4), TODAY, 'Fin dag');
-    const good = createBackup(data, EMPTY_MONEY, new Date('2026-11-04T12:00:00Z'));
+    const good = createBackup(data, EMPTY_MONEY, EMPTY_FOOD, new Date('2026-11-04T12:00:00Z'));
     const res = readBackup(backupJson(good));
     expect(res.ok && res.backup.data.journal).toEqual({ [TODAY]: { mood: 4, text: 'Fin dag' } });
     expect(res.ok && summarizeBackup(res.backup).journal).toBe(1);

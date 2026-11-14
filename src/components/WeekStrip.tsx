@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { tr } from '@/i18n';
-import { addDays, fromKey, relativeDayName, weekdayIndex, type DateKey } from '@/lib/dates';
+import { addDays, fromKey, relativeDayName, STRIP_PAST_DAYS, weekdayIndex, type DateKey } from '@/lib/dates';
 import { dayStats } from '@/lib/habits';
 import { useData } from '@/lib/store';
 import { hexToRgba, useTheme } from '@/theme';
@@ -10,35 +10,37 @@ type Props = {
   today: DateKey;
   selected: DateKey;
   onSelect: (day: DateKey) => void;
+  /** Hvor sterk prikken under dagen er, 0–1. Uten den: hvor mye av vanene og målene som ble gjort. */
+  dot?: (day: DateKey) => number | null;
 };
 
 /**
- * Fem dager bakover, i dag og i morgen. Bare i dag og i går kan trykkes (i går kan rettes).
- * Prikken under er sterkere jo mer som ble gjort den dagen.
+ * Fem dager bakover, i dag og i morgen. Alle dagene bakover kan åpnes, men bare i dag og i går kan
+ * endres (det sjekker skjermene selv). Prikken under er sterkere jo mer som ble gjort den dagen.
  */
-export function WeekStrip({ today, selected, onSelect }: Props) {
+export function WeekStrip({ today, selected, onSelect, dot }: Props) {
   const t = useTheme();
   const data = useData();
-  const days = Array.from({ length: 7 }, (_, i) => addDays(today, i - 5));
+  const days = Array.from({ length: STRIP_PAST_DAYS + 2 }, (_, i) => addDays(today, i - STRIP_PAST_DAYS));
 
   return (
     <View style={styles.strip}>
       {days.map((day, i) => {
-        const offset = i - 5; // -5 … +1
+        const offset = i - STRIP_PAST_DAYS; // -5 … +1
         const isSel = day === selected;
         const isToday = offset === 0;
         const editable = offset === 0 || offset === -1;
-        const avg = offset <= 0 ? dayStats(data, day).average : null;
+        const avg = offset > 0 ? null : dot ? dot(day) : dayStats(data, day).average;
         return (
           <View key={day} style={styles.day}>
             <Text style={[styles.letter, { color: t.sub }]}>{tr.dates.weekdayLetters[weekdayIndex(day)]}</Text>
             <Pressable
-              disabled={!editable}
+              disabled={offset > 0}
               onPress={() => onSelect(day)}
               accessibilityRole="button"
-              accessibilityState={{ selected: isSel, disabled: !editable }}
+              accessibilityState={{ selected: isSel, disabled: offset > 0 }}
               accessibilityLabel={
-                offset > 0 ? tr.dates.tomorrow : editable ? relativeDayName(day, today) : tr.dates.locked(relativeDayName(day, today))
+                offset > 0 ? tr.dates.tomorrow : editable ? relativeDayName(day, today) : tr.dates.readOnly(relativeDayName(day, today))
               }
               style={[
                 styles.num,
