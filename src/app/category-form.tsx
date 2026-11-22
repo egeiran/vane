@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -51,14 +51,14 @@ export default function CategoryFormScreen() {
   const preview: Category = { id: 'preview', name, icon, color, hidden: false };
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
       <ScreenHeader
         title={existing ? tr.categories.editTitle : tr.categories.new}
         left={[{ label: tr.common.cancel, onPress: close }]}
         right={[{ label: existing ? tr.common.save : tr.common.add, variant: 'done', onPress: save, disabled: !canSave }]}
       />
 
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <View style={{ alignItems: 'center', paddingVertical: 8 }}>
           <CategoryIcon category={preview} size={72} />
         </View>
@@ -122,7 +122,7 @@ export default function CategoryFormScreen() {
           </View>
         </Card>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

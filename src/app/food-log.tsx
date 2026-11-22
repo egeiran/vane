@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AmountPicker } from '@/components/AmountPicker';
@@ -124,7 +124,7 @@ export default function FoodLogScreen() {
   const title = when === 'today' ? tr.food.logTitle : `${tr.food.logTitle} · ${relativeWeekday(day, today)}`;
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
       <ScreenHeader
         title={title}
         left={mode.kind === 'list' ? [] : [{ label: tr.common.back, onPress: () => setMode({ kind: 'list' }) }]}
@@ -145,7 +145,7 @@ export default function FoodLogScreen() {
         ))}
       </ScrollView>
 
-      <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.progress}>
           <ProteinBar protein={totals.protein} goal={goalOn(data, day)} kcal={data.showKcal ? totals.kcal : null} compact />
         </Card>
@@ -268,7 +268,7 @@ export default function FoodLogScreen() {
           </>
         )}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

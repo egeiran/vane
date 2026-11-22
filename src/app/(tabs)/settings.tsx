@@ -31,6 +31,7 @@ function usePermission() {
 export default function SettingsScreen() {
   const t = useTheme();
   const settings = useStore((s) => s.settings);
+  const habitCount = useStore((s) => s.habits.length);
   const update = useStore((s) => s.updateSettings);
   const currency = useMoney((s) => mainCurrency(s));
   const goal = useFood((s) => currentGoal(s));
@@ -110,7 +111,15 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <SectionLabel>{tr.settings.habits}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
-          <SwitchRow first label={tr.settings.reminders} value={settings.remindersEnabled} onChange={(v) => enable({ remindersEnabled: v })} />
+          {/* Alle vanene, og rekkefølgen på I dag. */}
+          <Pressable onPress={() => router.push('/habits')} accessibilityRole="button" accessibilityLabel={`${tr.habits.pageTitle}: ${habitCount}`}>
+            <Row first>
+              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.habits.pageTitle}</Text>
+              <Text style={{ fontSize: 16, color: t.sub }}>{habitCount}</Text>
+              <Icon name="chevron.right" size={14} color={t.sub} />
+            </Row>
+          </Pressable>
+          <SwitchRow label={tr.settings.reminders} value={settings.remindersEnabled} onChange={(v) => enable({ remindersEnabled: v })} />
           <View style={[styles.block, { borderTopColor: t.separator }]}>
             <Text style={{ fontSize: 16, color: t.text }}>{tr.settings.weekStart}</Text>
             <Segmented

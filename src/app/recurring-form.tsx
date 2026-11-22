@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DateField } from '@/components/DateField';
@@ -163,14 +163,14 @@ export default function RecurringFormScreen() {
     ]);
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
       <ScreenHeader
         title={existing ? tr.recurring.editTitle : tr.recurring.new}
         left={[{ label: tr.common.cancel, onPress: close }]}
         right={[{ label: existing ? tr.common.save : tr.common.add, variant: 'done', onPress: save, disabled: !canSave }]}
       />
 
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
           <View style={styles.amountRow}>
             {/* «$149» på engelsk, «149 kr» på norsk: tegnet og tallet møtes på midten. */}
@@ -253,7 +253,7 @@ export default function RecurringFormScreen() {
           </View>
         ) : null}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

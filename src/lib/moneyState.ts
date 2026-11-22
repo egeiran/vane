@@ -1,6 +1,6 @@
 import { formatTime, toKey, type DateKey } from './dates';
 import { cleanMerchant, EMPTY_MONEY, isPending, mainCurrency, merchantKey, parseAmount, suggestionFor, UNKNOWN_PLACE } from './money';
-import { newId } from './state';
+import { moveItem, newId } from './state';
 import type { Category, ColorKey, MoneyData, Purchase, PurchasePart } from './types';
 
 /** Rene funksjoner for pengene. Lagringen ligger i moneyStore.ts. */
@@ -192,13 +192,10 @@ export function updateCategory(data: MoneyData, id: string, patch: Partial<Omit<
 }
 
 /** Flytter en kategori opp (-1) eller ned (+1) i lista. */
-export function moveCategory(data: MoneyData, id: string, delta: number): MoneyData {
-  const i = data.categories.findIndex((c) => c.id === id);
-  const j = i + delta;
-  if (i < 0 || j < 0 || j >= data.categories.length) return data;
-  const categories = [...data.categories];
-  [categories[i], categories[j]] = [categories[j], categories[i]];
-  return { ...data, categories };
+/** Flytter kategorien `id` til plass `to` (dra for å flytte). Utenfor lista: uendret. */
+export function moveCategory(data: MoneyData, id: string, to: number): MoneyData {
+  const categories = moveItem(data.categories, data.categories.findIndex((c) => c.id === id), to);
+  return categories === data.categories ? data : { ...data, categories };
 }
 
 export function markSetupSeen(data: MoneyData): MoneyData {

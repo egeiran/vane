@@ -29,6 +29,7 @@ function habitItems(habit: Habit, deleteHabit: (id: string) => void): MenuItem[]
   return [
     { label: tr.common.edit, icon: 'pencil', onPress: () => router.push({ pathname: '/habit-form', params: { id: habit.id } }) },
     { label: tr.habits.menuOverview, icon: 'square.grid.3x3', onPress: () => router.push({ pathname: '/habit/[id]', params: { id: habit.id } }) },
+    { label: tr.habits.menuReorder, icon: 'arrow.up.arrow.down', onPress: () => router.push('/habits') },
     {
       label: tr.common.delete,
       icon: 'trash',

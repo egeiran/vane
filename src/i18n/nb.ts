@@ -28,6 +28,7 @@ export const nb = {
     category: 'Kategori',
     earlier15: '15 minutter tidligere',
     later15: '15 minutter senere',
+    dragToMove: 'Dra for å flytte',
     dayBefore: 'Dagen før',
     dayAfter: 'Dagen etter',
     cannotUndo: 'Dette kan ikke angres.',
@@ -96,6 +97,8 @@ export const nb = {
     menuReset: 'Nullstill',
     menuOverview: 'Se rutenettet',
     menuReorder: 'Endre rekkefølge',
+    pageTitle: 'Vaner',
+    pageHelp: 'Hold inne og dra, eller trykk Endre, for å flytte en vane. Rekkefølgen gjelder I dag og widgetene.',
     plusOne: (name: string, amount: string) => `${name}: ${amount}. Trykk for å legge til én.`,
     count: vaner,
   },
@@ -555,8 +558,9 @@ export const nb = {
   food: {
     title: 'Mat',
     protein: 'Protein',
-    /** «92 / 140 g» */
-    ofGoal: (value: string, goal: string) => `${value} / ${goal} g`,
+    /** «/ 140 g» etter dagens sum. */
+    ofGoalSuffix: (goal: string) => `/ ${goal} g`,
+    kcalUnit: 'kcal',
     /** Skjermleser: «Protein: 92 av 140 gram». */
     progressLabel: (value: string, goal: string | null) => (goal ? `Protein: ${value} av ${goal} gram` : `Protein: ${value} gram`),
     goalReached: 'Målet er nådd',

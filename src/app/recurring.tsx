@@ -84,6 +84,7 @@ export default function RecurringScreen() {
                 <View style={styles.buttons}>
                   <Chip
                     role="button"
+                    selectable={false}
                     label={tr.recurring.add}
                     accessibilityLabel={tr.recurring.addLabel(s.name)}
                     on
@@ -91,6 +92,7 @@ export default function RecurringScreen() {
                   />
                   <Chip
                     role="button"
+                    selectable={false}
                     label={tr.recurring.dismiss}
                     accessibilityLabel={tr.recurring.dismissLabel(s.name)}
                     on={false}

@@ -1,5 +1,6 @@
 import { addDays, compareKeys, type DateKey } from './dates';
 import { DEFAULT_MEALS, EMPTY_FOOD, entriesOn, MAX_GOAL, refKey } from './food';
+import { moveItem } from './state';
 import type { Dish, Food, FoodData, FoodEntry, Meal, ProteinGoal } from './types';
 
 /** Rene funksjoner for maten. Lagringen ligger i foodStore.ts. */
@@ -138,13 +139,10 @@ export function updateMeal(data: FoodData, id: string, patch: Partial<Omit<Meal,
   };
 }
 
-export function moveMeal(data: FoodData, id: string, delta: number): FoodData {
-  const i = data.meals.findIndex((m) => m.id === id);
-  const j = i + delta;
-  if (i < 0 || j < 0 || j >= data.meals.length) return data;
-  const meals = [...data.meals];
-  [meals[i], meals[j]] = [meals[j], meals[i]];
-  return { ...data, meals };
+/** Flytter måltidet `id` til plass `to` (dra for å flytte). Utenfor lista: uendret. */
+export function moveMeal(data: FoodData, id: string, to: number): FoodData {
+  const meals = moveItem(data.meals, data.meals.findIndex((m) => m.id === id), to);
+  return meals === data.meals ? data : { ...data, meals };
 }
 
 /**

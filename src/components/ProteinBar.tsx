@@ -44,7 +44,7 @@ export function ProteinBar({ protein, goal, kcal, compact }: Props) {
           <Text style={[compact ? styles.numberSmall : styles.number, { color: c.ink }]}>
             {goal ? towardGoal(protein, goal) : proteinText(protein)}
           </Text>
-          {goal ? <Text style={[compact ? styles.unitSmall : styles.unit, { color: t.sub }]}>/ {goal} g</Text> : null}
+          {goal ? <Text style={[compact ? styles.unitSmall : styles.unit, { color: t.sub }]}>{tr.food.ofGoalSuffix(String(goal))}</Text> : null}
         </View>
         <View style={[styles.track, compact && styles.trackSmall, { backgroundColor: c.soft }]}>
           {fraction > 0 ? <View style={[styles.fill, compact && styles.trackSmall, { width: `${fraction * 100}%`, backgroundColor: c.solid }]} /> : null}
@@ -55,7 +55,7 @@ export function ProteinBar({ protein, goal, kcal, compact }: Props) {
           <Text style={[styles.label, { color: t.sub }]}>{tr.food.kcalLabel}</Text>
           <View style={styles.value}>
             <Text style={[compact ? styles.numberSmall : styles.number, { color: t.text }]}>{formatNumber(kcal)}</Text>
-            <Text style={[compact ? styles.unitSmall : styles.unit, { color: t.sub }]}>kcal</Text>
+            <Text style={[compact ? styles.unitSmall : styles.unit, { color: t.sub }]}>{tr.food.kcalUnit}</Text>
           </View>
         </View>
       ) : null}

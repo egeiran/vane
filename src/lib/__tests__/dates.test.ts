@@ -89,7 +89,7 @@ describe('dates', () => {
     // Fredag 13. november, første dag onsdag 28. oktober: ukene fra mandag 26. oktober.
     expect(weekStarts('2026-10-28', '2026-11-13', 'mon')).toEqual(['2026-10-26', '2026-11-02', '2026-11-09']);
     expect(weekStarts('2026-10-28', '2026-11-13', 'sun')).toEqual(['2026-10-25', '2026-11-01', '2026-11-08']);
-    // Over sommertid (25. oktober) blir det fortsatt hele uker.
+    // Over 25. oktober (slutt på sommertid i Norge) blir det fortsatt hele uker.
     expect(weekStarts('2026-10-20', '2026-10-27', 'mon')).toEqual(['2026-10-19', '2026-10-26']);
   });
 

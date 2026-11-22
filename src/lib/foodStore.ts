@@ -27,7 +27,7 @@ type Actions = {
   removeDish: (id: string) => void;
   addMeal: (input: F.MealInput) => string;
   updateMeal: (id: string, patch: Partial<Omit<Meal, 'id'>>) => void;
-  moveMeal: (id: string, delta: number) => void;
+  moveMeal: (id: string, to: number) => void;
   deleteMeal: (id: string) => void;
 };
 
@@ -87,7 +87,7 @@ export const useFood = create<FoodStore>()(
           return id;
         },
         updateMeal: (id, patch) => apply((d) => F.updateMeal(d, id, patch)),
-        moveMeal: (id, delta) => apply((d) => F.moveMeal(d, id, delta)),
+        moveMeal: (id, to) => apply((d) => F.moveMeal(d, id, to)),
         deleteMeal: (id) => apply((d) => F.deleteMeal(d, id)),
       };
     },

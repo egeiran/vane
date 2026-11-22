@@ -137,8 +137,10 @@ describe('mat: måltider', () => {
   });
 
   it('flytter måltider', () => {
-    const d = F.moveMeal(EMPTY_FOOD, 'lunsj', -1);
+    const d = F.moveMeal(EMPTY_FOOD, 'lunsj', 0);
     expect(d.meals.slice(0, 2).map((m) => m.id)).toEqual(['lunsj', 'frokost']);
+    expect(F.moveMeal(EMPTY_FOOD, 'mellom', 1).meals.map((m) => m.id)).toEqual(['frokost', 'mellom', 'lunsj', 'middag', 'kveldsmat']);
+    expect(F.moveMeal(EMPTY_FOOD, 'frokost', 0)).toBe(EMPTY_FOOD);
     expect(F.moveMeal(EMPTY_FOOD, 'frokost', -1)).toBe(EMPTY_FOOD);
   });
 });

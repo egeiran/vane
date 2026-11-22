@@ -24,6 +24,7 @@ export const en: Strings = {
     category: 'Category',
     earlier15: '15 minutes earlier',
     later15: '15 minutes later',
+    dragToMove: 'Drag to move',
     dayBefore: 'Day before',
     dayAfter: 'Day after',
     cannotUndo: 'This can’t be undone.',
@@ -81,6 +82,8 @@ export const en: Strings = {
     menuReset: 'Reset',
     menuOverview: 'Show grid',
     menuReorder: 'Change order',
+    pageTitle: 'Habits',
+    pageHelp: 'Touch and hold and drag, or tap Edit, to move a habit. The order is used on Today and in the widgets.',
     plusOne: (name: string, amount: string) => `${name}: ${amount}. Tap to add one.`,
     count: habits,
   },
@@ -523,7 +526,9 @@ export const en: Strings = {
   food: {
     title: 'Food',
     protein: 'Protein',
-    ofGoal: (value: string, goal: string) => `${value} / ${goal} g`,
+    /** «/ 140 g» etter dagens sum. */
+    ofGoalSuffix: (goal: string) => `/ ${goal} g`,
+    kcalUnit: 'kcal',
     progressLabel: (value: string, goal: string | null) => (goal ? `Protein: ${value} of ${goal} grams` : `Protein: ${value} grams`),
     goalReached: 'Goal reached',
     add: 'Add food',

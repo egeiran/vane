@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -40,6 +40,8 @@ export default function FoodEntryScreen() {
   const [name, setName] = useState(entry?.name ?? '');
   const [mealId, setMealId] = useState(entry?.mealId ?? '');
   const [time, setTime] = useState(entry?.time ?? '12:00');
+  // Slettet her: arket lukkes, og skal ikke vise «finnes ikke lenger» mens det glir bort.
+  const [deleted, setDeleted] = useState(false);
   // Endringer som ikke er lagret: spør før arket lukkes (Avbryt, sveip ned eller tilbake).
   const [initial] = useState(() => JSON.stringify({ amount, protein, kcal, name, mealId, time }));
   const allowClose = useDiscardGuard(JSON.stringify({ amount, protein, kcal, name, mealId, time }) !== initial);
@@ -49,6 +51,7 @@ export default function FoodEntryScreen() {
   };
 
   // Slettet, eller en dag som ikke kan endres lenger (for eksempel åpnet fra et gammelt varsel).
+  if (deleted) return <View style={{ flex: 1, backgroundColor: t.bg }} />;
   if (!entry || !canEditFood(day, today)) {
     return (
       <View style={[styles.missing, { backgroundColor: t.bg }]}>
@@ -86,6 +89,7 @@ export default function FoodEntryScreen() {
         text: tr.common.delete,
         style: 'destructive',
         onPress: () => {
+          setDeleted(true);
           done();
           removeEntry(day, entry.id);
         },
@@ -93,14 +97,14 @@ export default function FoodEntryScreen() {
     ]);
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
       <ScreenHeader
         title={entry.name || tr.food.quickName}
         left={[{ label: tr.common.cancel, onPress: close }]}
         right={[{ label: tr.common.save, variant: 'done', onPress: save, disabled: !canSave }]}
       />
 
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
           {item && amount ? (
             <AmountPicker source={item.source} options={item.options} value={amount} onChange={setAmount} showKcal={data.showKcal} />
@@ -136,7 +140,7 @@ export default function FoodEntryScreen() {
           <TextButton label={tr.food.deleteEntry} color={t.danger} onPress={confirmDelete} />
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

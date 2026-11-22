@@ -3,8 +3,8 @@ import { Stack } from 'expo-router';
 import { useTheme } from '@/theme';
 
 /**
- * Søkefeltet i den native headeren (iOS), som i Mail og Notater. Skjules når man ruller, og kommer
- * fram når man drar ned. På web vises et vanlig felt der komponenten står (`HeaderSearch.web.tsx`).
+ * Søkefeltet i den native headeren (iOS), som i Mail og Notater. Det står fast under tittelen. På web
+ * vises et vanlig felt der komponenten står (`HeaderSearch.web.tsx`).
  */
 export function HeaderSearch({ value, onChange, placeholder }: { value: string; onChange: (text: string) => void; placeholder: string }) {
   const t = useTheme();

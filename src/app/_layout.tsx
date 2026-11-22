@@ -36,6 +36,7 @@ export default function RootLayout() {
   // og knappene (+, Endre) til høyre. Tittel og knapper settes av skjermen selv med `ScreenHeader`.
   const pushed = {
     headerShown: true,
+    title: '',
     headerBackButtonDisplayMode: 'minimal',
     headerTintColor: t.text,
     headerShadowVisible: false,
@@ -45,7 +46,7 @@ export default function RootLayout() {
   // Skjemaene har også native header, med Avbryt og Lagre (settes av skjermen med `ScreenHeader`).
   // Små skjemaer og loggearket er ark med høyder som kan dras (formSheet); store skjemaer åpner fullt.
   // Ugjennomsiktig header, så innholdet (som måltidsknappene i loggearket) starter under den.
-  const form = { presentation: 'modal', headerShown: true, headerTransparent: false, headerTintColor: t.text, headerShadowVisible: false } as const;
+  const form = { presentation: 'modal', headerShown: true, title: '', headerTransparent: false, headerTintColor: t.text, headerShadowVisible: false } as const;
   const sheet = (detents: number[]) =>
     ({ ...form, presentation: 'formSheet', sheetAllowedDetents: detents, sheetGrabberVisible: true, sheetInitialDetentIndex: 0 }) as const;
 
@@ -65,6 +66,7 @@ export default function RootLayout() {
           <Stack.Protected guard={!onboarding} redirectTo="/onboarding">
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="habit/[id]" options={pushed} />
+          <Stack.Screen name="habits" options={pushed} />
             <Stack.Screen name="goals" options={sheet([0.6, 1])} />
             <Stack.Screen name="habit-form" options={form} />
             <Stack.Screen name="purchases" options={pushed} />

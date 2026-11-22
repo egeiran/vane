@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -87,14 +87,14 @@ export default function MealFormScreen() {
   };
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
       <ScreenHeader
         title={existing ? tr.food.editMeal : tr.food.newMeal}
         left={[{ label: tr.common.cancel, onPress: close }]}
         right={[{ label: existing ? tr.common.save : tr.common.add, variant: 'done', onPress: save, disabled: !canSave }]}
       />
 
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
           <Text style={[styles.label, { color: t.sub }]} nativeID="meal-name-label">
             {tr.common.name}
@@ -147,7 +147,7 @@ export default function MealFormScreen() {
           </View>
         ) : null}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

@@ -19,7 +19,7 @@ type Actions = {
   renameMerchant: (key: string, name: string) => void;
   addCategory: (input: M.CategoryInput) => string;
   updateCategory: (id: string, patch: Partial<Omit<Category, 'id'>>) => void;
-  moveCategory: (id: string, delta: number) => void;
+  moveCategory: (id: string, to: number) => void;
   markSetupSeen: () => void;
   /** Hovedvalutaen, eller `null` for som telefonen. */
   setCurrency: (currency: string | null) => void;
@@ -71,7 +71,7 @@ export const useMoney = create<MoneyStore>()(
           return id;
         },
         updateCategory: (id, patch) => apply((d) => M.updateCategory(d, id, patch)),
-        moveCategory: (id, delta) => apply((d) => M.moveCategory(d, id, delta)),
+        moveCategory: (id, to) => apply((d) => M.moveCategory(d, id, to)),
         markSetupSeen: () => apply(M.markSetupSeen),
         setCurrency: (currency) => apply((d) => ({ ...d, currency })),
         addRecurring: (input) => {

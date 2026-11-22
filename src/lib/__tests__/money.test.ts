@@ -240,9 +240,10 @@ describe('kategorier', () => {
     d = updateCategory(d, 'hjem', { name: 'Bolig' });
     expect(d.categories.find((c) => c.id === 'hjem')!.name).toBe('Bolig');
     expect(updateCategory(d, 'hjem', { name: '  ' })).toBe(d);
-    d = moveCategory(d, 'transport', -1);
+    d = moveCategory(d, 'transport', 1);
     expect(d.categories.slice(0, 3).map((c) => c.id)).toEqual(['dagligvarer', 'transport', 'spise-ute']);
-    expect(moveCategory(d, 'dagligvarer', -1)).toBe(d);
+    expect(moveCategory(d, 'dagligvarer', 0)).toBe(d);
+    expect(moveCategory(d, 'dagligvarer', 99)).toBe(d);
   });
 });
 

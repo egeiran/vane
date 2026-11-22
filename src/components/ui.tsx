@@ -60,6 +60,7 @@ export function Chip({
   icon,
   color,
   role = 'radio',
+  selectable = true,
   accessibilityLabel,
 }: {
   label: string;
@@ -68,6 +69,8 @@ export function Chip({
   icon?: ReactNode;
   color?: HabitColor;
   role?: 'radio' | 'button';
+  /** `false` for en vanlig knapp der `on` bare er utseendet (ikke «valgt» for skjermleser). */
+  selectable?: boolean;
   accessibilityLabel?: string;
 }) {
   const t = useTheme();
@@ -78,7 +81,7 @@ export function Chip({
       onPress={onPress}
       accessibilityRole={role}
       accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ selected: on }}
+      accessibilityState={selectable ? { selected: on } : undefined}
       hitSlop={4}
       style={[styles.chip, { backgroundColor: bg }]}>
       {icon}

@@ -93,7 +93,6 @@ export default function HabitScreen() {
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
       <ScreenHeader
         title={habit.name}
-        large
         right={[{ label: tr.common.edit, onPress: () => router.push({ pathname: '/habit-form', params: { id: habit.id } }) }]}
       />
 
@@ -101,8 +100,11 @@ export default function HabitScreen() {
         <View style={{ flex: 1, gap: 4 }}>
           <View style={styles.metaRow}>
             <View style={[styles.dot, { backgroundColor: c.solid }]} />
-            <Text style={{ fontSize: 15, color: t.sub, flexShrink: 1 }}>{meta}</Text>
+            <Text style={{ fontSize: 14, color: t.sub, flexShrink: 1 }}>{meta}</Text>
           </View>
+          <Text style={[styles.name, { color: t.text }]} accessibilityRole="header">
+            {habit.name}
+          </Text>
         </View>
         {isCount && done ? (
           // Målet er nådd: samme hake som de andre vanene. Trykk legger til én, som ringen på I dag.
@@ -171,7 +173,8 @@ export default function HabitScreen() {
 const styles = StyleSheet.create({
   content: { paddingBottom: 40 },
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingTop: 4, paddingBottom: 6 },
+  header: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: 20, paddingTop: 4, paddingBottom: 6 },
+  name: { fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.5 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   dot: { width: 10, height: 10, borderRadius: 5 },
   plusOne: { height: 52, borderRadius: 26, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center' },

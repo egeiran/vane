@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -49,14 +49,14 @@ export default function FoodGoalScreen() {
   };
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
       <ScreenHeader
         title={tr.food.goalTitle}
         left={[{ label: tr.common.cancel, onPress: close }]}
         right={[{ label: tr.common.save, variant: 'done', onPress: save, disabled: !canSave }]}
       />
 
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
           <View style={styles.goalRow}>
             <TextInput
@@ -89,7 +89,7 @@ export default function FoodGoalScreen() {
           <Text style={[styles.help, { color: t.sub, paddingHorizontal: 0 }]}>{tr.food.helperNote}</Text>
         </Card>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
