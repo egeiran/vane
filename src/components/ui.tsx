@@ -126,24 +126,22 @@ export function IconButton({
 }) {
   const t = useTheme();
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
       hitSlop={6}
-      style={({ pressed }) => [
-        {
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          backgroundColor: background ?? t.button,
-          alignItems: 'center',
-          justifyContent: 'center',
-          opacity: pressed ? 0.6 : 1,
-        },
-      ]}>
+      scale={0.92}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: background ?? t.button,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
       <Icon name={icon} size={size * 0.42} color={color ?? t.text} />
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -174,20 +172,18 @@ export function TextButton({
   );
 }
 
-export function PrimaryButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
+export function PrimaryButton({ label, onPress, disabled, destructive }: { label: string; onPress: () => void; disabled?: boolean; destructive?: boolean }) {
   const t = useTheme();
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       disabled={disabled}
+      scale={0.97}
       accessibilityRole="button"
       accessibilityState={{ disabled }}
-      style={({ pressed }) => [
-        styles.primary,
-        { backgroundColor: disabled ? t.button : t.inverse, opacity: pressed ? 0.8 : 1 },
-      ]}>
-      <Text style={{ fontSize: 17, fontWeight: '700', color: disabled ? t.sub : t.onInverse }}>{label}</Text>
-    </Pressable>
+      style={[styles.primary, { backgroundColor: disabled ? t.button : destructive ? t.danger : t.inverse }]}>
+      <Text style={{ fontSize: 17, fontWeight: '700', color: disabled ? t.sub : destructive ? (t.dark ? t.bg : '#FFFFFF') : t.onInverse }}>{label}</Text>
+    </PressableScale>
   );
 }
 

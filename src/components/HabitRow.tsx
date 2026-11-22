@@ -91,7 +91,7 @@ export function HabitRow({ habit, day, showReminder, editable = true }: Props) {
 
   return (
     <RowMenu href={{ pathname: '/habit/[id]', params: { id: habit.id } }} items={[...countItems, ...habitItems(habit, deleteHabit)]}>
-      <View style={[styles.row, { backgroundColor: done ? c.soft : t.card }]}>
+      <View style={[styles.row, { backgroundColor: done ? c.soft : t.card, opacity: editable ? 1 : 0.6 }]}>
         {isCount ? (
           // Ringen legger til én, som +. Én mindre ligger i hold-inne-menyen.
           <CountRing
@@ -163,7 +163,7 @@ export function WeeklyRow({ habit, day, editable = true }: { habit: Habit; day: 
 
   return (
     <RowMenu href={{ pathname: '/habit/[id]', params: { id: habit.id } }} items={habitItems(habit, deleteHabit)}>
-      <View style={[styles.row, { backgroundColor: full ? c.soft : t.card }]}>
+      <View style={[styles.row, { backgroundColor: full ? c.soft : t.card, opacity: editable ? 1 : 0.6 }]}>
         <CheckButton
           done={doneToday}
           color={c.solid}

@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, LayoutAnimationConfig } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DayPager } from '@/components/DayPager';
 import { FoodEntryRow } from '@/components/FoodEntryRow';
 import { Icon } from '@/components/Icon';
+import { appear, disappear, reflow } from '@/components/motion';
 import { ProteinBar } from '@/components/ProteinBar';
 import { Card, IconButton, PrimaryButton, TextButton } from '@/components/ui';
 import { WeekStrip } from '@/components/WeekStrip';
@@ -89,50 +90,58 @@ function FoodDay({ day, today }: { day: DateKey; today: DateKey }) {
 
       {!editable && !totals.count ? <Text style={[styles.empty, { color: t.sub }]}>{tr.food.emptyOlder}</Text> : null}
 
-      {groups.map(({ meal, entries, totals: mt }) => {
-        const name = mealName(meal);
-        // Et tomt måltid er en stiplet plassholder, så det ikke ser ut som det hører til kortet over.
-        if (!entries.length) {
+      {/* Nye føringer og måltider tones inn og det rundt glir på plass, men ikke når dagen åpnes. */}
+      <LayoutAnimationConfig skipEntering>
+        {groups.map(({ meal, entries, totals: mt }) => {
+          const name = mealName(meal);
+          // Et tomt måltid er en stiplet plassholder, så det ikke ser ut som det hører til kortet over.
+          if (!entries.length) {
+            return (
+              <Animated.View key={meal.id} entering={appear} exiting={disappear} layout={reflow}>
+                <Pressable
+                  onPress={() => open(meal.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={tr.food.addToMeal(name)}
+                  style={({ pressed }) => [styles.emptyMeal, { borderColor: t.border, opacity: pressed ? 0.6 : 1 }]}>
+                  <Text style={[styles.emptyMealName, { color: t.sub }]}>{name}</Text>
+                  <View style={styles.emptyMealAdd}>
+                    <Icon name="plus" size={13} color={t.sub} />
+                    <Text style={{ fontSize: 15, fontWeight: '600', color: t.sub }}>{tr.common.add}</Text>
+                  </View>
+                </Pressable>
+              </Animated.View>
+            );
+          }
+          // Navnet og summen står inne i kortet, sammen med det som hører til måltidet.
           return (
-            <Pressable
-              key={meal.id}
-              onPress={() => open(meal.id)}
-              accessibilityRole="button"
-              accessibilityLabel={tr.food.addToMeal(name)}
-              style={({ pressed }) => [styles.emptyMeal, { borderColor: t.border, opacity: pressed ? 0.6 : 1 }]}>
-              <Text style={[styles.emptyMealName, { color: t.sub }]}>{name}</Text>
-              <View style={styles.emptyMealAdd}>
-                <Icon name="plus" size={13} color={t.sub} />
-                <Text style={{ fontSize: 15, fontWeight: '600', color: t.sub }}>{tr.common.add}</Text>
-              </View>
-            </Pressable>
+            <Animated.View key={meal.id} entering={appear} exiting={disappear} layout={reflow}>
+              <Card style={styles.meal}>
+                <View style={styles.mealHead}>
+                  <Text style={[styles.mealName, { color: t.text }]} accessibilityRole="header" numberOfLines={1}>
+                    {name}
+                  </Text>
+                  <Text style={[styles.mealSum, { color: t.colors.fersken.ink }]}>{tr.food.proteinOf(proteinText(mt.protein))}</Text>
+                </View>
+                {entries.map((e, i) => (
+                  <Animated.View key={e.id} entering={appear} exiting={disappear} layout={reflow}>
+                    <FoodEntryRow entry={e} day={day} showKcal={food.showKcal} editable={editable} first={i === 0} />
+                  </Animated.View>
+                ))}
+                {editable ? (
+                  <Pressable
+                    onPress={() => open(meal.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={tr.food.addToMeal(name)}
+                    style={({ pressed }) => [styles.addRow, { borderTopColor: t.separator, opacity: pressed ? 0.6 : 1 }]}>
+                    <Icon name="plus" size={14} color={t.sub} />
+                    <Text style={{ fontSize: 15, color: t.sub, fontWeight: '500' }}>{tr.common.add}</Text>
+                  </Pressable>
+                ) : null}
+              </Card>
+            </Animated.View>
           );
-        }
-        // Navnet og summen står inne i kortet, sammen med det som hører til måltidet.
-        return (
-          <Card key={meal.id} style={styles.meal}>
-            <View style={styles.mealHead}>
-              <Text style={[styles.mealName, { color: t.text }]} accessibilityRole="header" numberOfLines={1}>
-                {name}
-              </Text>
-              <Text style={[styles.mealSum, { color: t.colors.fersken.ink }]}>{tr.food.proteinOf(proteinText(mt.protein))}</Text>
-            </View>
-            {entries.map((e, i) => (
-              <FoodEntryRow key={e.id} entry={e} day={day} showKcal={food.showKcal} editable={editable} first={i === 0} />
-            ))}
-            {editable ? (
-              <Pressable
-                onPress={() => open(meal.id)}
-                accessibilityRole="button"
-                accessibilityLabel={tr.food.addToMeal(name)}
-                style={({ pressed }) => [styles.addRow, { borderTopColor: t.separator, opacity: pressed ? 0.6 : 1 }]}>
-                <Icon name="plus" size={14} color={t.sub} />
-                <Text style={{ fontSize: 15, color: t.sub, fontWeight: '500' }}>{tr.common.add}</Text>
-              </Pressable>
-            ) : null}
-          </Card>
-        );
-      })}
+        })}
+      </LayoutAnimationConfig>
 
       <Card style={styles.linkCard}>
         <Pressable onPress={() => router.push('/foods')} accessibilityRole="button" style={({ pressed }) => [styles.linkRow, { opacity: pressed ? 0.6 : 1 }]}>

@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, AppState, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { Icon } from '@/components/Icon';
+import { appear, disappear, reflow } from '@/components/motion';
 import { TimeField } from '@/components/TimeField';
 import { Card, Row, SectionLabel, Segmented, SwitchRow } from '@/components/ui';
 import { tr } from '@/i18n';
@@ -92,23 +94,23 @@ export default function SettingsScreen() {
         </Pressable>
       ) : null}
 
-      <View style={styles.section}>
+      <Animated.View layout={reflow} style={styles.section}>
         <SectionLabel>{tr.settings.morning}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
           <SwitchRow first label={tr.settings.morningNotification} value={settings.morningEnabled} onChange={(v) => enable({ morningEnabled: v })} />
           {settings.morningEnabled ? (
-            <>
+            <Animated.View entering={appear} exiting={disappear}>
               <Row>
                 <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.time}</Text>
                 <TimeField value={settings.morningTime} min="04:00" max="12:00" label={tr.settings.time} onChange={(v) => update({ morningTime: v })} />
               </Row>
               <Text style={[styles.help, { color: t.sub, borderTopColor: t.separator }]}>{tr.settings.morningHelp}</Text>
-            </>
+            </Animated.View>
           ) : null}
         </Card>
-      </View>
+      </Animated.View>
 
-      <View style={styles.section}>
+      <Animated.View layout={reflow} style={styles.section}>
         <SectionLabel>{tr.settings.habits}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
           {/* Alle vanene, og rekkefølgen på I dag. */}
@@ -135,9 +137,9 @@ export default function SettingsScreen() {
           </View>
         </Card>
         <Text style={[styles.footnote, { color: t.sub }]}>{tr.settings.remindersHelp}</Text>
-      </View>
+      </Animated.View>
 
-      <View style={styles.section}>
+      <Animated.View layout={reflow} style={styles.section}>
         <SectionLabel>{tr.settings.modules}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
           <SwitchRow first label={tr.settings.moneyModule} value={settings.modules.money} onChange={(money) => update({ modules: { ...settings.modules, money } })} />
@@ -153,28 +155,28 @@ export default function SettingsScreen() {
           <SwitchRow label={tr.settings.foodModule} value={!!settings.modules.food} onChange={(food) => update({ modules: { ...settings.modules, food } })} />
         </Card>
         <Text style={[styles.footnote, { color: t.sub }]}>{tr.settings.modulesHelp}</Text>
-      </View>
+      </Animated.View>
 
       {settings.modules.journal ? (
-        <View style={styles.section}>
+        <Animated.View layout={reflow} style={styles.section}>
           <SectionLabel>{tr.settings.journal}</SectionLabel>
           <Card style={{ overflow: 'hidden' }}>
             <SwitchRow first label={tr.settings.eveningNotification} value={settings.eveningEnabled} onChange={(v) => enable({ eveningEnabled: v })} />
             {settings.eveningEnabled ? (
-              <>
+              <Animated.View entering={appear} exiting={disappear}>
                 <Row>
                   <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.time}</Text>
                   <TimeField value={settings.eveningTime} min="17:00" max="23:45" label={tr.settings.time} onChange={(v) => update({ eveningTime: v })} />
                 </Row>
                 <Text style={[styles.help, { color: t.sub, borderTopColor: t.separator }]}>{tr.settings.eveningHelp}</Text>
-              </>
+              </Animated.View>
             ) : null}
           </Card>
-        </View>
+        </Animated.View>
       ) : null}
 
       {settings.modules.food ? (
-        <View style={styles.section}>
+        <Animated.View layout={reflow} style={styles.section}>
           <SectionLabel>{tr.settings.food}</SectionLabel>
           <Card style={{ overflow: 'hidden' }}>
             <Pressable onPress={() => router.push('/food-goal')} accessibilityRole="button">
@@ -201,19 +203,21 @@ export default function SettingsScreen() {
           <Card style={{ overflow: 'hidden' }}>
             <SwitchRow first label={tr.settings.foodEvening} value={foodEvening} onChange={enableFoodEvening} />
             {foodEvening ? (
-              <Row>
-                <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.time}</Text>
-                <TimeField value={foodEveningTime} min="12:00" max="23:45" label={tr.settings.time} onChange={(v) => setFoodEvening({ eveningTime: v })} />
-              </Row>
+              <Animated.View entering={appear} exiting={disappear}>
+                <Row>
+                  <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.time}</Text>
+                  <TimeField value={foodEveningTime} min="12:00" max="23:45" label={tr.settings.time} onChange={(v) => setFoodEvening({ eveningTime: v })} />
+                </Row>
+              </Animated.View>
             ) : null}
             <Text style={[styles.help, { color: t.sub, borderTopColor: t.separator }]}>{tr.settings.foodEveningHelp}</Text>
           </Card>
           <Text style={[styles.footnote, { color: t.sub }]}>{tr.food.source}</Text>
-        </View>
+        </Animated.View>
       ) : null}
 
       {settings.modules.money ? (
-        <View style={styles.section}>
+        <Animated.View layout={reflow} style={styles.section}>
           <SectionLabel>{tr.settings.money}</SectionLabel>
           <Card style={{ overflow: 'hidden' }}>
             <Pressable onPress={() => router.push('/categories')} accessibilityRole="button">
@@ -236,10 +240,10 @@ export default function SettingsScreen() {
               </Row>
             </Pressable>
           </Card>
-        </View>
+        </Animated.View>
       ) : null}
 
-      <View style={styles.section}>
+      <Animated.View layout={reflow} style={styles.section}>
         <SectionLabel>{tr.backup.title}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
           <Pressable onPress={() => router.push('/data')} accessibilityRole="button">
@@ -249,9 +253,9 @@ export default function SettingsScreen() {
             </Row>
           </Pressable>
         </Card>
-      </View>
+      </Animated.View>
 
-      <View style={styles.section}>
+      <Animated.View layout={reflow} style={styles.section}>
         <Card style={{ overflow: 'hidden' }}>
           <Pressable onPress={test} accessibilityRole="button">
             <Row first>
@@ -267,7 +271,7 @@ export default function SettingsScreen() {
             </Row>
           </Pressable>
         </Card>
-      </View>
+      </Animated.View>
 
       <Text style={[styles.version, { color: t.sub }]}>{tr.settings.version(appVersion())}</Text>
     </ScrollView>

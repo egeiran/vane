@@ -1,8 +1,10 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { appear, disappear, reflow } from '@/components/motion';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { TimeField } from '@/components/TimeField';
@@ -142,7 +144,7 @@ export default function HabitFormScreen() {
             ]}
           />
           {f.freq === 'days' ? (
-            <View style={styles.days}>
+            <Animated.View entering={appear} exiting={disappear} style={styles.days}>
               {/* Vist i ukas rekkefølge, men lagret med mandag = 0 (se `weekOrder`). */}
               {weekOrder(weekStart).map((i) => {
                 const on = f.days[i];
@@ -158,10 +160,10 @@ export default function HabitFormScreen() {
                   </Pressable>
                 );
               })}
-            </View>
+            </Animated.View>
           ) : null}
           {f.freq === 'weekly' ? (
-            <View style={styles.inline}>
+            <Animated.View entering={appear} exiting={disappear} style={styles.inline}>
               <Text style={[styles.inlineLabel, { color: t.text }]}>{tr.habitForm.timesPerWeek}</Text>
               <Stepper
                 value={String(f.times)}
@@ -170,61 +172,67 @@ export default function HabitFormScreen() {
                 decreaseLabel={tr.habitForm.oneLess}
                 increaseLabel={tr.habitForm.oneMore}
               />
-            </View>
+            </Animated.View>
           ) : null}
         </Card>
 
         {f.freq !== 'weekly' ? (
-          <Card style={styles.card}>
-            <Text style={[styles.label, { color: t.sub }]}>{tr.habitForm.howToCheck}</Text>
-            <Segmented
-              label={tr.habitForm.type}
-              value={f.type}
-              onChange={(type) => set({ type })}
-              options={[
-                { value: 'check', label: tr.habitForm.check },
-                { value: 'count', label: tr.habitForm.count },
-              ]}
-            />
-            {f.type === 'count' ? (
-              <>
-                <View style={styles.inline}>
-                  <Text style={[styles.inlineLabel, { color: t.text }]}>{tr.habitForm.targetPerDay}</Text>
-                  <Stepper
-                    value={String(f.target)}
-                    onDecrease={() => set({ target: Math.max(2, f.target - 1) })}
-                    onIncrease={() => set({ target: Math.min(99, f.target + 1) })}
-                    decreaseLabel={tr.habitForm.targetLess}
-                    increaseLabel={tr.habitForm.targetMore}
-                  />
-                </View>
-                <View style={styles.inline}>
-                  <Text style={[styles.inlineLabel, { color: t.text }]} nativeID="unit-label">
-                    {tr.habitForm.unit}
-                  </Text>
-                  <TextInput
-                    value={f.unit}
-                    onChangeText={(unit) => set({ unit })}
-                    placeholder={tr.habits.defaultUnit}
-                    placeholderTextColor={t.faint}
-                    accessibilityLabelledBy="unit-label"
-                    style={[styles.unit, { backgroundColor: t.field, color: t.text }]}
-                  />
-                </View>
-              </>
-            ) : null}
-          </Card>
+          <Animated.View entering={appear} exiting={disappear} layout={reflow}>
+            <Card style={styles.card}>
+              <Text style={[styles.label, { color: t.sub }]}>{tr.habitForm.howToCheck}</Text>
+              <Segmented
+                label={tr.habitForm.type}
+                value={f.type}
+                onChange={(type) => set({ type })}
+                options={[
+                  { value: 'check', label: tr.habitForm.check },
+                  { value: 'count', label: tr.habitForm.count },
+                ]}
+              />
+              {f.type === 'count' ? (
+                <Animated.View entering={appear} exiting={disappear} style={styles.countBlock}>
+                  <View style={styles.inline}>
+                    <Text style={[styles.inlineLabel, { color: t.text }]}>{tr.habitForm.targetPerDay}</Text>
+                    <Stepper
+                      value={String(f.target)}
+                      onDecrease={() => set({ target: Math.max(2, f.target - 1) })}
+                      onIncrease={() => set({ target: Math.min(99, f.target + 1) })}
+                      decreaseLabel={tr.habitForm.targetLess}
+                      increaseLabel={tr.habitForm.targetMore}
+                    />
+                  </View>
+                  <View style={styles.inline}>
+                    <Text style={[styles.inlineLabel, { color: t.text }]} nativeID="unit-label">
+                      {tr.habitForm.unit}
+                    </Text>
+                    <TextInput
+                      value={f.unit}
+                      onChangeText={(unit) => set({ unit })}
+                      placeholder={tr.habits.defaultUnit}
+                      placeholderTextColor={t.faint}
+                      accessibilityLabelledBy="unit-label"
+                      style={[styles.unit, { backgroundColor: t.field, color: t.text }]}
+                    />
+                  </View>
+                </Animated.View>
+              ) : null}
+            </Card>
+          </Animated.View>
         ) : null}
 
-        <Card style={{ overflow: 'hidden' }}>
-          <SwitchRow first label={tr.habitForm.reminder} value={f.reminderOn} onChange={(reminderOn) => set({ reminderOn })} />
-          {f.reminderOn ? (
-            <Row>
-              <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.habitForm.time}</Text>
-              <TimeField value={f.reminder} label={tr.habitForm.time} onChange={(v) => set({ reminder: v })} />
-            </Row>
-          ) : null}
-        </Card>
+        <Animated.View layout={reflow}>
+          <Card style={{ overflow: 'hidden' }}>
+            <SwitchRow first label={tr.habitForm.reminder} value={f.reminderOn} onChange={(reminderOn) => set({ reminderOn })} />
+            {f.reminderOn ? (
+              <Animated.View entering={appear} exiting={disappear}>
+                <Row>
+                  <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.habitForm.time}</Text>
+                  <TimeField value={f.reminder} label={tr.habitForm.time} onChange={(v) => set({ reminder: v })} />
+                </Row>
+              </Animated.View>
+            ) : null}
+          </Card>
+        </Animated.View>
       </ScrollView>
     </View>
   );
@@ -238,6 +246,7 @@ const styles = StyleSheet.create({
   swatches: { flexDirection: 'row', justifyContent: 'space-between' },
   swatchHit: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   swatch: { width: 34, height: 34, borderRadius: 17 },
+  countBlock: { gap: 10 },
   days: { flexDirection: 'row', justifyContent: 'space-between' },
   dayChip: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   inline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },

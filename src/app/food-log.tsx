@@ -1,10 +1,12 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AmountPicker } from '@/components/AmountPicker';
 import { Field } from '@/components/Field';
+import { appear, disappear } from '@/components/motion';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
 import { ProteinBar } from '@/components/ProteinBar';
@@ -151,13 +153,13 @@ export default function FoodLogScreen() {
         </Card>
 
         {added ? (
-          <View style={[styles.added, { backgroundColor: t.colors.fersken.soft }]} accessibilityLiveRegion="polite">
+          <Animated.View entering={appear} exiting={disappear} style={[styles.added, { backgroundColor: t.colors.fersken.soft }]} accessibilityLiveRegion="polite">
             <Icon name="checkmark" size={14} color={t.colors.fersken.ink} />
             <Text style={[styles.addedText, { color: t.colors.fersken.ink }]} numberOfLines={2}>
               {added.text}
             </Text>
             <TextButton label={tr.food.undo} bold color={t.colors.fersken.ink} onPress={undo} />
-          </View>
+          </Animated.View>
         ) : null}
 
         {mode.kind === 'amount' ? (

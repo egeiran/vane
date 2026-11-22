@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CheckButton } from '@/components/CheckButton';
@@ -6,7 +7,7 @@ import { ColumnGrid, WeekRows, type HeatWeek } from '@/components/HeatGrid';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { Card, TextButton, tick } from '@/components/ui';
 import { tr } from '@/i18n';
-import { formatShort, relativeDayName } from '@/lib/dates';
+import { formatShort, relativeDayName, type DateKey } from '@/lib/dates';
 import { weekColumns, weekRows, isFuture, daysInRange, monthLabels } from '@/lib/grid';
 import { amountText, fractionOn, frequencyText, isDone, isWeekly, periodSummary, summaryText, weekCount, weeklyTarget } from '@/lib/habits';
 import { showTime, weekStartOf } from '@/lib/region';
@@ -26,6 +27,8 @@ function back() {
 export default function HabitScreen() {
   const t = useTheme();
   const today = useToday();
+  // Dagen man har trykket på i rutenettet (som i Oversikt).
+  const [picked, setPicked] = useState<DateKey>(today);
   const { id } = useLocalSearchParams<{ id: string }>();
   const data = useData();
   const toggle = useStore((s) => s.toggle);
@@ -56,6 +59,11 @@ export default function HabitScreen() {
     .filter(Boolean)
     .join(' · ');
 
+  const dayLabel = (day: DateKey) => {
+    const f = fractionOn(data, habit, day);
+    return tr.habitDetail.dayState(relativeDayName(day, today), f === null ? 'none' : f >= 1 ? 'done' : f > 0 ? 'partly' : 'not');
+  };
+
   const weeks: HeatWeek[] = weekRows(today, 5, weekStart).map((row) => ({
     label: formatShort(row[0]),
     cells: row.map((day) => {
@@ -65,7 +73,9 @@ export default function HabitScreen() {
         key: day,
         color: future ? 'transparent' : shade(t, c.solid, f),
         today: day === today,
-        label: tr.habitDetail.dayState(relativeDayName(day, today), f === null ? 'none' : f >= 1 ? 'done' : f > 0 ? 'partly' : 'not'),
+        selected: day === picked,
+        label: dayLabel(day),
+        onPress: future ? undefined : () => setPicked(day),
       };
     }),
   }));
@@ -149,6 +159,9 @@ export default function HabitScreen() {
           <Text style={{ fontSize: 13, color: t.sub }}>{summaryText(periodSummary(data, habit, today, daysInRange(today, 5, weekStart)))}</Text>
         </View>
         <WeekRows weeks={weeks} weekStart={weekStart} />
+        <Text accessibilityLiveRegion="polite" style={[styles.dayLine, { backgroundColor: t.bg, color: t.text }]}>
+          {dayLabel(picked)}
+        </Text>
       </Card>
 
       <Card style={styles.card}>
@@ -181,5 +194,6 @@ const styles = StyleSheet.create({
   card: { marginHorizontal: 16, marginTop: 14, padding: 16, gap: 10 },
   cardHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   cardTitle: { fontSize: 17, fontWeight: '700' },
+  dayLine: { borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, lineHeight: 20, overflow: 'hidden' },
   month: { position: 'absolute', fontSize: 11 },
 });

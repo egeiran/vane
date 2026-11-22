@@ -128,7 +128,8 @@ export default function DataScreen() {
             ))}
           </View>
           <Text style={[styles.body, { color: t.sub }]}>{tr.backup.previewWarning}</Text>
-          <PrimaryButton label={tr.backup.replace} onPress={replace} />
+          {/* Erstatter alle dataene på telefonen: rød, som andre handlinger som ikke kan angres. */}
+          <PrimaryButton label={tr.backup.replace} onPress={replace} destructive />
           <View style={{ alignItems: 'center' }}>
             <TextButton label={tr.common.cancel} color={t.sub} onPress={() => setPending(null)} />
           </View>
