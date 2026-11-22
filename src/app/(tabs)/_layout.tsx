@@ -13,7 +13,9 @@ export default function TabLayout() {
   const foodOn = useStore((s) => !!s.settings.modules.food);
   return (
     <NativeTabs tintColor={t.text}>
-      <NativeTabs.Trigger name="index">
+      {/* I dag og Mat blar sidelengs mellom dagene, med en loddrett ScrollView per dag. iOS skal ikke
+          gi den første (vannrette) listen innrykk for fanelinja; det gjør hver dag selv. */}
+      <NativeTabs.Trigger name="index" disableAutomaticContentInsets>
         <NativeTabs.Trigger.Label>{tr.tabs.today}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'checkmark.circle', selected: 'checkmark.circle.fill' }} />
       </NativeTabs.Trigger>
@@ -22,7 +24,7 @@ export default function TabLayout() {
         <NativeTabs.Trigger.Icon sf={{ default: 'square.grid.2x2', selected: 'square.grid.2x2.fill' }} />
       </NativeTabs.Trigger>
       {/* Med Mat av er fanen borte. Dataene ligger der fortsatt. */}
-      <NativeTabs.Trigger name="food" hidden={!foodOn}>
+      <NativeTabs.Trigger name="food" hidden={!foodOn} disableAutomaticContentInsets>
         <NativeTabs.Trigger.Label>{tr.tabs.food}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'fork.knife.circle', selected: 'fork.knife.circle.fill' }} />
       </NativeTabs.Trigger>

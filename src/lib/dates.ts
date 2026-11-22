@@ -97,9 +97,6 @@ export function relativeDayName(key: DateKey, today: DateKey): string {
   return formatLong(key);
 }
 
-/** Ukestripa viser så mange dager bakover. Brukes bare til ukestripa er byttet ut. */
-export const STRIP_PAST_DAYS = 5;
-
 /**
  * Den første dagen man kan bla tilbake til: den eldste dagen i `days` (dager med data), men aldri
  * senere enn i går. Alle dagene kan leses, men bare i dag og i går kan endres.
