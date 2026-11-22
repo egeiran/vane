@@ -42,6 +42,13 @@ export default function RootLayout() {
     headerLargeTitleShadowVisible: false,
   } as const;
 
+  // Skjemaene har også native header, med Avbryt og Lagre (settes av skjermen med `ScreenHeader`).
+  // Små skjemaer og loggearket er ark med høyder som kan dras (formSheet); store skjemaer åpner fullt.
+  // Ugjennomsiktig header, så innholdet (som måltidsknappene i loggearket) starter under den.
+  const form = { presentation: 'modal', headerShown: true, headerTransparent: false, headerTintColor: t.text, headerShadowVisible: false } as const;
+  const sheet = (detents: number[]) =>
+    ({ ...form, presentation: 'formSheet', sheetAllowedDetents: detents, sheetGrabberVisible: true, sheetInitialDetentIndex: 0 }) as const;
+
   const base = t.dark ? DarkTheme : DefaultTheme;
   const navTheme = {
     ...base,
@@ -58,26 +65,26 @@ export default function RootLayout() {
           <Stack.Protected guard={!onboarding} redirectTo="/onboarding">
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="habit/[id]" options={pushed} />
-            <Stack.Screen name="goals" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="habit-form" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="goals" options={sheet([0.6, 1])} />
+            <Stack.Screen name="habit-form" options={form} />
             <Stack.Screen name="purchases" options={pushed} />
             <Stack.Screen name="categories" options={pushed} />
             {/* Et annet kjøp (eller et nytt) får sitt eget skjema, også når skjemaet allerede er åpent. */}
-            <Stack.Screen name="purchase-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
-            <Stack.Screen name="category-form" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="currency" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="purchase-form" options={form} getId={({ params }) => params?.id} />
+            <Stack.Screen name="category-form" options={sheet([0.75, 1])} />
+            <Stack.Screen name="currency" options={sheet([0.6, 1])} />
             <Stack.Screen name="recurring" options={pushed} />
-            <Stack.Screen name="recurring-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id ?? params?.merchant} />
+            <Stack.Screen name="recurring-form" options={form} getId={({ params }) => params?.id ?? params?.merchant} />
             <Stack.Screen name="data" options={pushed} />
             {/* Et varsel for et annet måltid (eller en annen dag) åpner et nytt ark, med riktig måltid valgt. */}
-            <Stack.Screen name="food-log" options={{ presentation: 'modal' }} getId={({ params }) => `${params?.day ?? ''}:${params?.meal ?? ''}`} />
-            <Stack.Screen name="food-entry" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
-            <Stack.Screen name="food-goal" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="food-log" options={sheet([0.6, 1])} getId={({ params }) => `${params?.day ?? ''}:${params?.meal ?? ''}`} />
+            <Stack.Screen name="food-entry" options={sheet([0.75, 1])} getId={({ params }) => params?.id} />
+            <Stack.Screen name="food-goal" options={sheet([0.6, 1])} />
             <Stack.Screen name="foods" options={pushed} />
-            <Stack.Screen name="food-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id ?? params?.mvt} />
-            <Stack.Screen name="dish-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
+            <Stack.Screen name="food-form" options={form} getId={({ params }) => params?.id ?? params?.mvt} />
+            <Stack.Screen name="dish-form" options={form} getId={({ params }) => params?.id} />
             <Stack.Screen name="meals" options={pushed} />
-            <Stack.Screen name="meal-form" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="meal-form" options={sheet([0.75, 1])} />
           </Stack.Protected>
           <Stack.Protected guard={onboarding}>
             <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />

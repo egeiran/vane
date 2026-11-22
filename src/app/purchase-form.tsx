@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { Card, IconButton, Row, SwitchRow, TextButton } from '@/components/ui';
@@ -82,6 +84,13 @@ export default function PurchaseFormScreen() {
   const renameMerchant = useMoney((s) => s.renameMerchant);
   const deletePurchase = useMoney((s) => s.deletePurchase);
   const [f, setF] = useState(() => initialForm(data, existing, today));
+  // Endringer som ikke er lagret: spør før arket lukkes (Avbryt, sveip ned eller tilbake).
+  const [initial] = useState(() => JSON.stringify(initialForm(data, existing, today)));
+  const allowClose = useDiscardGuard(JSON.stringify(f) !== initial);
+  const done = () => {
+    allowClose();
+    close();
+  };
   const set = (patch: Partial<Form>) => setF((prev) => ({ ...prev, ...patch }));
 
   if (id && !existing) {
@@ -134,7 +143,7 @@ export default function PurchaseFormScreen() {
       const state = navigation.getState();
       if (state?.routes[state.index - 1]?.name === '(tabs)') return router.dismissTo(moneyHome());
     }
-    close();
+    done();
   };
 
   const changeMerchant = (merchant: string) => {
@@ -156,7 +165,7 @@ export default function PurchaseFormScreen() {
         text: tr.common.delete,
         style: 'destructive',
         onPress: () => {
-          close();
+          done();
           if (existing) deletePurchase(existing.id);
         },
       },
@@ -167,13 +176,11 @@ export default function PurchaseFormScreen() {
 
   return (
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={styles.bar}>
-        <TextButton label={tr.common.cancel} onPress={close} />
-        <Text style={[styles.barTitle, { color: t.text }]} accessibilityRole="header">
-          {title}
-        </Text>
-        <TextButton label={existing ? tr.common.save : tr.common.add} bold onPress={save} disabled={!canSave} />
-      </View>
+      <ScreenHeader
+        title={title}
+        left={[{ label: tr.common.cancel, onPress: close }]}
+        right={[{ label: existing ? tr.common.save : tr.common.add, variant: 'done', onPress: save, disabled: !canSave }]}
+      />
 
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
@@ -297,8 +304,6 @@ export default function PurchaseFormScreen() {
 
 const styles = StyleSheet.create({
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 4 },
-  barTitle: { fontSize: 17, fontWeight: '600' },
   content: { padding: 16, gap: 12 },
   card: { padding: 14, gap: 10 },
   label: { fontSize: 13, fontWeight: '600' },

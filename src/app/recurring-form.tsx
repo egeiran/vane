@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { Card, IconButton, Row, Segmented, SwitchRow, TextButton } from '@/components/ui';
 import { getLang, tr } from '@/i18n';
@@ -94,6 +96,13 @@ export default function RecurringFormScreen() {
   const updateRecurring = useMoney((s) => s.updateRecurring);
   const deleteRecurring = useMoney((s) => s.deleteRecurring);
   const [f, setF] = useState(() => initialForm(data, existing, merchant, today));
+  // Endringer som ikke er lagret: spør før arket lukkes (Avbryt, sveip ned eller tilbake).
+  const [initial] = useState(() => JSON.stringify(initialForm(data, existing, merchant, today)));
+  const allowClose = useDiscardGuard(JSON.stringify(f) !== initial);
+  const done = () => {
+    allowClose();
+    close();
+  };
   const set = (patch: Partial<Form>) => setF((prev) => ({ ...prev, ...patch }));
 
   if (id && !existing) {
@@ -130,7 +139,7 @@ export default function RecurringFormScreen() {
     };
     if (existing) updateRecurring(existing.id, input);
     else addRecurring({ ...input, merchantKey: f.merchantKey });
-    close();
+    done();
   };
 
   // Varslene legges inn når utgiften lagres. Sier man nei til varsler, står valget likevel, som for vanene.
@@ -146,7 +155,7 @@ export default function RecurringFormScreen() {
         text: tr.common.delete,
         style: 'destructive',
         onPress: () => {
-          close();
+          done();
           if (existing) deleteRecurring(existing.id);
         },
       },
@@ -154,13 +163,11 @@ export default function RecurringFormScreen() {
 
   return (
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={styles.bar}>
-        <TextButton label={tr.common.cancel} onPress={close} />
-        <Text style={[styles.barTitle, { color: t.text }]} accessibilityRole="header">
-          {existing ? tr.recurring.editTitle : tr.recurring.new}
-        </Text>
-        <TextButton label={existing ? tr.common.save : tr.common.add} bold onPress={save} disabled={!canSave} />
-      </View>
+      <ScreenHeader
+        title={existing ? tr.recurring.editTitle : tr.recurring.new}
+        left={[{ label: tr.common.cancel, onPress: close }]}
+        right={[{ label: existing ? tr.common.save : tr.common.add, variant: 'done', onPress: save, disabled: !canSave }]}
+      />
 
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
@@ -260,8 +267,6 @@ function DateButton({ icon, label, enabled, onPress }: { icon: 'chevron.left' | 
 
 const styles = StyleSheet.create({
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 4 },
-  barTitle: { fontSize: 17, fontWeight: '600', flexShrink: 1, textAlign: 'center' },
   content: { padding: 16, gap: 12 },
   card: { padding: 14, gap: 10 },
   label: { fontSize: 13, fontWeight: '600' },

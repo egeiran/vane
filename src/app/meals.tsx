@@ -67,9 +67,6 @@ export default function MealsScreen() {
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 40 },
-  bar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingTop: 4 },
-  backButton: { flexDirection: 'row', alignItems: 'center', gap: 2, minHeight: 44, paddingHorizontal: 4 },
-  title: { fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.5, paddingHorizontal: 20, paddingTop: 6, paddingBottom: 12 },
   list: { marginHorizontal: 16, paddingLeft: 14, paddingRight: 4 },
   row: { flexDirection: 'row', alignItems: 'center', minHeight: 56 },
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56 },

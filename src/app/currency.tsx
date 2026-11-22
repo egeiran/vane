@@ -2,8 +2,9 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
-import { Card, Row, TextButton, tick } from '@/components/ui';
+import { Card, Row, tick } from '@/components/ui';
 import { tr } from '@/i18n';
 import { useMoney } from '@/lib/moneyStore';
 import { getDeviceRegion } from '@/lib/region';
@@ -46,13 +47,7 @@ export default function CurrencyScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={styles.bar}>
-        <View style={{ width: 70 }} />
-        <Text style={[styles.barTitle, { color: t.text }]} accessibilityRole="header">
-          {tr.currency.title}
-        </Text>
-        <TextButton label={tr.common.done} bold onPress={close} />
-      </View>
+      <ScreenHeader title={tr.currency.title} right={[{ label: tr.common.done, variant: 'done', onPress: close }]} />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={{ overflow: 'hidden' }}>
           <View accessibilityRole="radiogroup" accessibilityLabel={tr.currency.title}>
@@ -67,8 +62,6 @@ export default function CurrencyScreen() {
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 4 },
-  barTitle: { fontSize: 17, fontWeight: '600' },
   content: { padding: 16, gap: 8 },
   footnote: { fontSize: 13, lineHeight: 18, paddingHorizontal: 4 },
 });

@@ -11,6 +11,10 @@ const vaner = (n: number) => `${n} ${n === 1 ? 'vane' : 'vaner'}`;
 export const nb = {
   common: {
     cancel: 'Avbryt',
+    /** Spørsmålet når et skjema med endringer lukkes. */
+    discardTitle: 'Forkaste endringene?',
+    discard: 'Forkast endringer',
+    keepEditing: 'Fortsett å redigere',
     save: 'Lagre',
     add: 'Legg til',
     back: 'Tilbake',

@@ -79,9 +79,6 @@ function ListRow({ name, sub, onPress, first }: { name: string; sub: string; onP
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 40 },
-  bar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingTop: 4 },
-  backButton: { flexDirection: 'row', alignItems: 'center', gap: 2, minHeight: 44, paddingHorizontal: 4 },
-  title: { fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.5, paddingHorizontal: 20, paddingTop: 6, paddingBottom: 4 },
   section: { paddingHorizontal: 16, paddingTop: 18, gap: 8 },
   list: { paddingHorizontal: 14 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 8 },

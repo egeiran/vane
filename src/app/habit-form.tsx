@@ -3,7 +3,9 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Card, Row, Segmented, Stepper, SwitchRow, TextButton } from '@/components/ui';
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { useDiscardGuard } from '@/components/useDiscardGuard';
+import { Card, Row, Segmented, Stepper, SwitchRow } from '@/components/ui';
 import { tr } from '@/i18n';
 import { shiftTime, weekOrder } from '@/lib/dates';
 import { requestPermission, scheduleNotificationSync } from '@/lib/notifications';
@@ -47,6 +49,13 @@ export default function HabitFormScreen() {
   const updateHabit = useStore((s) => s.updateHabit);
   const [f, setF] = useState(() => initialForm(existing));
   const set = (patch: Partial<typeof f>) => setF((prev) => ({ ...prev, ...patch }));
+  // Endringer som ikke er lagret: spør før arket lukkes (Avbryt, sveip ned eller tilbake).
+  const [initial] = useState(() => JSON.stringify(initialForm(existing)));
+  const allowClose = useDiscardGuard(JSON.stringify(f) !== initial);
+  const done = () => {
+    allowClose();
+    close();
+  };
 
   const c = t.colors[f.color];
   const canSave = f.name.trim().length > 0 && (f.freq !== 'days' || f.days.some(Boolean));
@@ -68,18 +77,16 @@ export default function HabitFormScreen() {
     else addHabit(input, today);
     // En påminnelse trenger lov til å sende varsler. iOS spør bare hvis den ikke har spurt før.
     if (input.reminder) requestPermission().then((ok) => ok && scheduleNotificationSync(0)).catch(() => {});
-    close();
+    done();
   };
 
   return (
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={styles.bar}>
-        <TextButton label={tr.common.cancel} onPress={close} />
-        <Text style={[styles.barTitle, { color: t.text }]} accessibilityRole="header">
-          {existing ? tr.habitForm.editTitle : tr.habitForm.newTitle}
-        </Text>
-        <TextButton label={existing ? tr.common.save : tr.common.add} bold onPress={save} disabled={!canSave} />
-      </View>
+      <ScreenHeader
+        title={existing ? tr.habitForm.editTitle : tr.habitForm.newTitle}
+        left={[{ label: tr.common.cancel, onPress: close }]}
+        right={[{ label: existing ? tr.common.save : tr.common.add, variant: 'done', onPress: save, disabled: !canSave }]}
+      />
 
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
@@ -230,15 +237,6 @@ export default function HabitFormScreen() {
 }
 
 const styles = StyleSheet.create({
-  bar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingTop: 10,
-    paddingBottom: 4,
-  },
-  barTitle: { fontSize: 17, fontWeight: '600' },
   content: { padding: 16, gap: 12 },
   card: { padding: 14, gap: 10 },
   label: { fontSize: 13, fontWeight: '600' },

@@ -172,9 +172,6 @@ function ActionRow({ label, help, icon, onPress, first }: { label: string; help:
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 40 },
-  bar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingTop: 4 },
-  backButton: { flexDirection: 'row', alignItems: 'center', gap: 2, minHeight: 44, paddingHorizontal: 4 },
-  title: { fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.5, paddingHorizontal: 20, paddingTop: 6, paddingBottom: 6 },
   lead: { fontSize: 15, lineHeight: 21, paddingHorizontal: 20 },
   message: { marginHorizontal: 16, marginTop: 16, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
   preview: { marginHorizontal: 16, marginTop: 16, padding: 18, gap: 10 },

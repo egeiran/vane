@@ -171,12 +171,9 @@ export default function HabitScreen() {
 const styles = StyleSheet.create({
   content: { paddingBottom: 40 },
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 4 },
-  backButton: { flexDirection: 'row', alignItems: 'center', gap: 2, minHeight: 44, paddingHorizontal: 4 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingTop: 4, paddingBottom: 6 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   dot: { width: 10, height: 10, borderRadius: 5 },
-  title: { fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.5 },
   plusOne: { height: 52, borderRadius: 26, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center' },
   card: { marginHorizontal: 16, marginTop: 14, padding: 16, gap: 10 },
   cardHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },

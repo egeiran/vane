@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { Card, Row, Stepper, SwitchRow, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
 import { minutesOf as minutes, shiftTime } from '@/lib/dates';
@@ -34,6 +36,13 @@ export default function MealFormScreen() {
   const [start, setStart] = useState(existing?.start ?? '12:00');
   const [end, setEnd] = useState(existing?.end ?? '13:00');
   const [remind, setRemind] = useState(existing?.remind ?? false);
+  // Endringer som ikke er lagret: spør før arket lukkes (Avbryt, sveip ned eller tilbake).
+  const [initial] = useState(() => JSON.stringify({ name, hasWindow, start, end, remind }));
+  const allowClose = useDiscardGuard(JSON.stringify({ name, hasWindow, start, end, remind }) !== initial);
+  const done = () => {
+    allowClose();
+    close();
+  };
 
   const canSave = !!name.trim();
 
@@ -44,7 +53,7 @@ export default function MealFormScreen() {
     const input = { name: keepName, start: hasWindow ? start : null, end: hasWindow ? end : null, remind: hasWindow && remind };
     if (existing) updateMeal(existing.id, input);
     else addMeal(input);
-    close();
+    done();
   };
 
   const toggleRemind = (on: boolean) => {
@@ -60,7 +69,7 @@ export default function MealFormScreen() {
         text: tr.common.delete,
         style: 'destructive',
         onPress: () => {
-          close();
+          done();
           deleteMeal(existing.id);
         },
       },
@@ -80,13 +89,11 @@ export default function MealFormScreen() {
 
   return (
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={styles.bar}>
-        <TextButton label={tr.common.cancel} onPress={close} />
-        <Text style={[styles.barTitle, { color: t.text }]} accessibilityRole="header">
-          {existing ? tr.food.editMeal : tr.food.newMeal}
-        </Text>
-        <TextButton label={existing ? tr.common.save : tr.common.add} bold onPress={save} disabled={!canSave} />
-      </View>
+      <ScreenHeader
+        title={existing ? tr.food.editMeal : tr.food.newMeal}
+        left={[{ label: tr.common.cancel, onPress: close }]}
+        right={[{ label: existing ? tr.common.save : tr.common.add, variant: 'done', onPress: save, disabled: !canSave }]}
+      />
 
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
@@ -146,8 +153,6 @@ export default function MealFormScreen() {
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 4 },
-  barTitle: { fontSize: 17, fontWeight: '600', flexShrink: 1, textAlign: 'center' },
   content: { padding: 16, gap: 12 },
   card: { padding: 14, gap: 10 },
   label: { fontSize: 13, fontWeight: '600' },

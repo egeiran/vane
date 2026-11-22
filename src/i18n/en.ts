@@ -8,6 +8,9 @@ const habits = (n: number) => `${n} ${n === 1 ? 'habit' : 'habits'}`;
 export const en: Strings = {
   common: {
     cancel: 'Cancel',
+    discardTitle: 'Discard changes?',
+    discard: 'Discard Changes',
+    keepEditing: 'Keep Editing',
     save: 'Save',
     add: 'Add',
     back: 'Back',

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AmountPicker } from '@/components/AmountPicker';
 import { Field } from '@/components/Field';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
 import { ProteinBar } from '@/components/ProteinBar';
 import { Card, Chip, IconButton, PrimaryButton, SectionLabel, TextButton, tick } from '@/components/ui';
@@ -124,13 +125,11 @@ export default function FoodLogScreen() {
 
   return (
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={styles.bar}>
-        {mode.kind === 'list' ? <View style={{ width: 70 }} /> : <TextButton label={tr.common.back} onPress={() => setMode({ kind: 'list' })} />}
-        <Text style={[styles.barTitle, { color: t.text }]} accessibilityRole="header" numberOfLines={1}>
-          {title}
-        </Text>
-        <TextButton label={tr.common.done} bold onPress={close} />
-      </View>
+      <ScreenHeader
+        title={title}
+        left={mode.kind === 'list' ? [] : [{ label: tr.common.back, onPress: () => setMode({ kind: 'list' }) }]}
+        right={[{ label: tr.common.done, variant: 'done', onPress: close }]}
+      />
 
       {/* Måltidet står fast øverst, så man ser hvor det man legger til havner, også etter rulling. */}
       <ScrollView
@@ -352,8 +351,6 @@ function QuickForm({
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 4 },
-  barTitle: { fontSize: 17, fontWeight: '600', flexShrink: 1, textAlign: 'center' },
   content: { padding: 16, gap: 14 },
   progress: { padding: 14 },
   added: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingLeft: 14, paddingRight: 4, minHeight: 48 },
