@@ -1,11 +1,11 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AmountPicker } from '@/components/AmountPicker';
 import { Field } from '@/components/Field';
-import { Card, Row, Stepper, TextButton } from '@/components/ui';
+import { Card, Chip, Row, Stepper, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
 import { shiftTime } from '@/lib/dates';
 import { canEditFood, decimalInput, entriesOn, mealById, mealName, parseKcal, parseProtein, PROTEIN_SCALE, visibleMeals } from '@/lib/food';
@@ -110,14 +110,7 @@ export default function FoodEntryScreen() {
             {meals.map((m) => {
               const on = m.id === mealId;
               return (
-                <Pressable
-                  key={m.id}
-                  onPress={() => setMealId(m.id)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: on }}
-                  style={({ pressed }) => [styles.chip, { backgroundColor: on ? t.inverse : t.button, opacity: pressed ? 0.7 : 1 }]}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: on ? t.onInverse : t.text }}>{mealName(m)}</Text>
-                </Pressable>
+                <Chip key={m.id} label={mealName(m)} on={on} onPress={() => setMealId(m.id)} />
               );
             })}
           </View>
@@ -153,5 +146,4 @@ const styles = StyleSheet.create({
   card: { padding: 14, gap: 12 },
   label: { fontSize: 13, fontWeight: '600' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { minHeight: 40, borderRadius: 20, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' },
 });

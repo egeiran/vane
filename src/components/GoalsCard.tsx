@@ -66,7 +66,7 @@ export function GoalsCard({ day, when }: { day: DateKey; when: DayWhen }) {
         </View>
       </View>
       {goals.map((g) => (
-        <View key={g.id} style={[styles.goal, { borderTopColor: t.hair }]}>
+        <View key={g.id} style={[styles.goal, { borderTopColor: t.separator }]}>
           <Text style={[styles.goalText, { color: g.done ? t.sub : t.text }]}>{g.text}</Text>
           <CheckButton
             size={30}

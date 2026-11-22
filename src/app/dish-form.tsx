@@ -87,7 +87,7 @@ export default function DishFormScreen() {
           <Text style={[styles.cardTitle, { color: t.text }]}>{tr.food.ingredients}</Text>
           {items.length ? (
             items.map((item, i) => (
-              <View key={`${item.name}-${i}`} style={[styles.item, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }]}>
+              <View key={`${item.name}-${i}`} style={[styles.item, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }]}>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={{ fontSize: 16, fontWeight: '600', color: t.text }} numberOfLines={2}>
                     {item.name}
@@ -103,7 +103,7 @@ export default function DishFormScreen() {
             <Text style={{ fontSize: 15, color: t.sub }}>{tr.food.dishEmpty}</Text>
           )}
           {items.length ? (
-            <View style={[styles.total, { borderTopColor: t.border }]}>
+            <View style={[styles.total, { borderTopColor: t.separator }]}>
               <Text style={{ fontSize: 16, fontWeight: '700', color: t.text }}>{tr.food.total}</Text>
               <Text style={{ fontSize: 16, fontWeight: '700', color: t.text, fontVariant: ['tabular-nums'] }}>
                 {[proteinText(total.protein, true), data.showKcal && total.kcal !== null ? kcalText(total.kcal) : ''].filter(Boolean).join(' · ')}

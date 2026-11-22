@@ -261,7 +261,7 @@ function LinkRow({ icon, label, onPress, first }: { icon: 'square.grid.2x2' | 'w
       accessibilityRole="button"
       style={({ pressed }) => [
         styles.linkRow,
-        !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.border },
+        !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator },
         { opacity: pressed ? 0.6 : 1 },
       ]}>
       <Icon name={icon} size={18} color={t.sub} />

@@ -240,7 +240,7 @@ export default function OverviewScreen() {
           <SectionLabel>{tr.overview.lastGoals}</SectionLabel>
           <Card style={{ paddingHorizontal: 16, paddingVertical: 4 }}>
             {recentGoals.map(({ day, goal }, i) => (
-              <View key={goal.id} style={[styles.goalRow, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }]}>
+              <View key={goal.id} style={[styles.goalRow, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }]}>
                 <Text style={[styles.goalDay, { color: t.sub }]}>{relativeWeekday(day, today)}</Text>
                 <Text style={[styles.goalText, { color: t.text }]} numberOfLines={1}>
                   {goal.text}

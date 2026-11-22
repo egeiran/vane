@@ -38,7 +38,7 @@ export default function MealsScreen() {
           const name = mealName(m);
           const window = m.start && m.end ? tr.food.mealWindow(showTime(m.start), showTime(m.end)) : tr.food.noWindow;
           return (
-            <View key={m.id} style={[styles.row, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }]}>
+            <View key={m.id} style={[styles.row, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }]}>
               <Pressable
                 onPress={() => router.push({ pathname: '/meal-form', params: { id: m.id } })}
                 accessibilityRole="button"

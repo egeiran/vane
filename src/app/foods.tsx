@@ -74,7 +74,7 @@ function ListRow({ name, sub, onPress, first }: { name: string; sub: string; onP
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${name}. ${sub}`}
-      style={({ pressed }) => [styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }, { opacity: pressed ? 0.6 : 1 }]}>
+      style={({ pressed }) => [styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }, { opacity: pressed ? 0.6 : 1 }]}>
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={{ fontSize: 16, fontWeight: '600', color: t.text }} numberOfLines={1}>
           {name}

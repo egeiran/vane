@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Icon } from '@/components/Icon';
-import { Card, PrimaryButton, SectionLabel, tick } from '@/components/ui';
+import { Card, Chip, PrimaryButton, SectionLabel, tick } from '@/components/ui';
 import { tr } from '@/i18n';
 import { categoryById, formatAmount } from '@/lib/money';
 import { useMoney, useMoneyData } from '@/lib/moneyStore';
@@ -60,7 +60,7 @@ export default function RecurringScreen() {
                 onPress={() => router.push({ pathname: '/recurring-form', params: { id: e.id } })}
                 accessibilityRole="button"
                 accessibilityLabel={tr.recurring.rowLabel(e.name, amount, meta)}
-                style={({ pressed }) => [styles.row, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }, { opacity: pressed ? 0.6 : 1 }]}>
+                style={({ pressed }) => [styles.row, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }, { opacity: pressed ? 0.6 : 1 }]}>
                 <CategoryIcon category={category} size={36} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={[styles.name, { color: t.text }]} numberOfLines={1}>
@@ -82,7 +82,7 @@ export default function RecurringScreen() {
           <SectionLabel>{tr.recurring.suggestions}</SectionLabel>
           <Card style={[styles.list, { marginHorizontal: 0 }]}>
             {suggestions.map((s, i) => (
-              <View key={s.merchantKey} style={[styles.suggestion, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }]}>
+              <View key={s.merchantKey} style={[styles.suggestion, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }]}>
                 <View style={styles.suggestionTop}>
                   <CategoryIcon category={s.categoryId ? categoryById(data, s.categoryId) : null} size={36} />
                   <View style={{ flex: 1, gap: 2 }}>
@@ -95,15 +95,18 @@ export default function RecurringScreen() {
                   </View>
                 </View>
                 <View style={styles.buttons}>
-                  <Pill
+                  <Chip
+                    role="button"
                     label={tr.recurring.add}
-                    a11y={tr.recurring.addLabel(s.name)}
-                    strong
+                    accessibilityLabel={tr.recurring.addLabel(s.name)}
+                    on
                     onPress={() => router.push({ pathname: '/recurring-form', params: { merchant: s.merchantKey } })}
                   />
-                  <Pill
+                  <Chip
+                    role="button"
                     label={tr.recurring.dismiss}
-                    a11y={tr.recurring.dismissLabel(s.name)}
+                    accessibilityLabel={tr.recurring.dismissLabel(s.name)}
+                    on={false}
                     onPress={() => {
                       tick();
                       dismiss(s.merchantKey);
@@ -125,19 +128,6 @@ export default function RecurringScreen() {
   );
 }
 
-function Pill({ label, a11y, onPress, strong }: { label: string; a11y: string; onPress: () => void; strong?: boolean }) {
-  const t = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={a11y}
-      hitSlop={4}
-      style={({ pressed }) => [styles.pill, { backgroundColor: strong ? t.inverse : t.button, opacity: pressed ? 0.7 : 1 }]}>
-      <Text style={{ fontSize: 15, fontWeight: '600', color: strong ? t.onInverse : t.text }}>{label}</Text>
-    </Pressable>
-  );
-}
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 40 },
@@ -155,6 +145,5 @@ const styles = StyleSheet.create({
   suggestion: { paddingVertical: 10, gap: 8 },
   suggestionTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   buttons: { flexDirection: 'row', gap: 8, marginLeft: 48 },
-  pill: { minHeight: 36, borderRadius: 18, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' },
   footnote: { fontSize: 13, lineHeight: 18, paddingHorizontal: 20, paddingTop: 8 },
 });

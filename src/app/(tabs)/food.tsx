@@ -84,7 +84,7 @@ export default function FoodScreen() {
                   onPress={() => open(meal.id)}
                   accessibilityRole="button"
                   accessibilityLabel={tr.food.addToMeal(name)}
-                  style={({ pressed }) => [styles.addRow, { borderTopColor: t.hair, opacity: pressed ? 0.6 : 1 }]}>
+                  style={({ pressed }) => [styles.addRow, { borderTopColor: t.separator, opacity: pressed ? 0.6 : 1 }]}>
                   <Icon name="plus" size={14} color={t.sub} />
                   <Text style={{ fontSize: 15, color: t.sub, fontWeight: '500' }}>{tr.common.add}</Text>
                 </Pressable>

@@ -7,7 +7,7 @@ import { AmountPicker } from '@/components/AmountPicker';
 import { Field } from '@/components/Field';
 import { Icon } from '@/components/Icon';
 import { ProteinBar } from '@/components/ProteinBar';
-import { Card, IconButton, PrimaryButton, SectionLabel, TextButton, tick } from '@/components/ui';
+import { Card, Chip, IconButton, PrimaryButton, SectionLabel, TextButton, tick } from '@/components/ui';
 import { tr } from '@/i18n';
 import { dayWhen, relativeWeekday, type DateKey } from '@/lib/dates';
 import {
@@ -153,14 +153,7 @@ export default function FoodLogScreen() {
             {meals.map((m) => {
               const on = m.id === mealId;
               return (
-                <Pressable
-                  key={m.id}
-                  onPress={() => setMealId(m.id)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: on }}
-                  style={({ pressed }) => [styles.chip, { backgroundColor: on ? t.inverse : t.button, opacity: pressed ? 0.7 : 1 }]}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: on ? t.onInverse : t.text }}>{mealName(m)}</Text>
-                </Pressable>
+                <Chip key={m.id} label={mealName(m)} on={on} onPress={() => setMealId(m.id)} />
               );
             })}
           </View>
@@ -285,7 +278,7 @@ function ActionRow({ icon, title, sub, onPress, first }: { icon: 'number' | 'arr
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${title}. ${sub}`}
-      style={({ pressed }) => [styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }, { opacity: pressed ? 0.6 : 1 }]}>
+      style={({ pressed }) => [styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }, { opacity: pressed ? 0.6 : 1 }]}>
       <View style={[styles.rowIcon, { backgroundColor: t.colors.fersken.soft }]}>
         <Icon name={icon} size={15} color={t.colors.fersken.ink} />
       </View>
@@ -303,7 +296,7 @@ function ActionRow({ icon, title, sub, onPress, first }: { icon: 'number' | 'arr
 function ItemRow({ name, sub, onOpen, onAdd, first }: { name: string; sub: string; onOpen: () => void; onAdd?: () => void; first?: boolean }) {
   const t = useTheme();
   return (
-    <View style={[styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }]}>
+    <View style={[styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }]}>
       <Pressable onPress={onOpen} accessibilityRole="button" accessibilityLabel={`${name}. ${sub}`} style={({ pressed }) => [{ flex: 1, gap: 2, opacity: pressed ? 0.6 : 1 }]}>
         <Text style={[styles.rowName, { color: t.text }]} numberOfLines={2}>
           {name}
@@ -365,7 +358,6 @@ const styles = StyleSheet.create({
   addedText: { flex: 1, fontSize: 15, fontWeight: '600' },
   label: { fontSize: 13, fontWeight: '600', marginBottom: 8, paddingHorizontal: 4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { minHeight: 40, borderRadius: 20, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' },
   searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingLeft: 12, paddingRight: 4, minHeight: 46 },
   searchInput: { flex: 1, fontSize: 17, paddingVertical: 10 },
   group: { gap: 8 },

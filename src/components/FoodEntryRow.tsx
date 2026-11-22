@@ -35,7 +35,7 @@ export function FoodEntryRow({ entry: e, day, showKcal, editable, first }: Props
       <Text style={[styles.protein, { color: t.text }]}>{protein}</Text>
     </>
   );
-  const style = [styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }];
+  const style = [styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }];
   if (!editable) {
     return (
       <View style={style} accessible accessibilityLabel={`${name}, ${protein}. ${meta}`}>

@@ -47,7 +47,7 @@ export function PurchaseRow({ purchase: p, data, today, first, timeOnly }: Props
   const amount = p.amount ? formatAmount(p.amount, p.currency) : tr.money.amountMissing;
 
   return (
-    <View style={[styles.wrap, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }]}>
+    <View style={[styles.wrap, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }]}>
       <Pressable
         onPress={() => router.push({ pathname: '/purchase-form', params: { id: p.id } })}
         accessibilityRole="button"

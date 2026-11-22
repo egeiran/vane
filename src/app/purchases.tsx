@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 
 import { Icon } from '@/components/Icon';
 import { PurchaseRow } from '@/components/PurchaseRow';
-import { Card, SectionLabel } from '@/components/ui';
+import { Card, Chip, SectionLabel } from '@/components/ui';
 import { tr } from '@/i18n';
 import { relativeDayName, type DateKey } from '@/lib/dates';
 import { capitalize, categoryName, findPurchases, monthName, visibleCategories } from '@/lib/money';
@@ -82,11 +82,11 @@ export default function PurchasesScreen() {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
         {params.month ? (
-          <Chip label={capitalize(monthName(params.month, today))} on={onlyMonth} onPress={() => setOnlyMonth(!onlyMonth)} />
+          <Chip role="button" label={capitalize(monthName(params.month, today))} on={onlyMonth} onPress={() => setOnlyMonth(!onlyMonth)} />
         ) : null}
-        <Chip label={tr.purchases.allCategories} on={!categoryId} onPress={() => setCategoryId(undefined)} />
+        <Chip role="button" label={tr.purchases.allCategories} on={!categoryId} onPress={() => setCategoryId(undefined)} />
         {chips.map((c) => (
-          <Chip key={c.id} label={categoryName(c)} on={c.id === categoryId} onPress={() => setCategoryId(c.id === categoryId ? undefined : c.id)} />
+          <Chip role="button" key={c.id} label={categoryName(c)} on={c.id === categoryId} onPress={() => setCategoryId(c.id === categoryId ? undefined : c.id)} />
         ))}
       </ScrollView>
 
@@ -114,18 +114,6 @@ export default function PurchasesScreen() {
   );
 }
 
-function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
-  const t = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ selected: on }}
-      style={[styles.chip, { backgroundColor: on ? t.inverse : t.card }]}>
-      <Text style={{ fontSize: 14, fontWeight: '600', color: on ? t.onInverse : t.text }}>{label}</Text>
-    </Pressable>
-  );
-}
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 40 },
@@ -135,7 +123,6 @@ const styles = StyleSheet.create({
   searchWrap: { paddingHorizontal: 16, paddingTop: 12 },
   search: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 12 },
   chips: { gap: 8, paddingHorizontal: 16, paddingTop: 12 },
-  chip: { height: 36, borderRadius: 18, paddingHorizontal: 14, justifyContent: 'center' },
   empty: { fontSize: 15, textAlign: 'center', marginTop: 40 },
   section: { paddingHorizontal: 16, paddingTop: 18, gap: 8 },
   list: { paddingHorizontal: 14, paddingVertical: 2 },

@@ -49,6 +49,8 @@ const LIGHT = {
   segmentOn: '#FFFFFF',
   hair: '#ECECE8',
   border: '#DCDCD7',
+  /** Skillelinjer mellom rader i et kort. Én farge overalt. */
+  separator: '#E2E2DD',
   empty: '#E9E9E4',
   none: '#F3F3EF',
   slate: '#2B3440',
@@ -72,6 +74,7 @@ const DARK: typeof LIGHT = {
   segmentOn: '#48484C',
   hair: '#2C2C2F',
   border: '#3A3A3D',
+  separator: '#333336',
   empty: '#2A2A2D',
   none: '#1F1F21',
   slate: '#C9D3DE',

@@ -109,7 +109,7 @@ export default function SettingsScreen() {
                   increaseLabel={tr.common.later15}
                 />
               </Row>
-              <Text style={[styles.help, { color: t.sub, borderTopColor: t.border }]}>{tr.settings.morningHelp}</Text>
+              <Text style={[styles.help, { color: t.sub, borderTopColor: t.separator }]}>{tr.settings.morningHelp}</Text>
             </>
           ) : null}
         </Card>
@@ -119,7 +119,7 @@ export default function SettingsScreen() {
         <SectionLabel>{tr.settings.habits}</SectionLabel>
         <Card style={{ overflow: 'hidden' }}>
           <SwitchRow first label={tr.settings.reminders} value={settings.remindersEnabled} onChange={(v) => enable({ remindersEnabled: v })} />
-          <View style={[styles.block, { borderTopColor: t.border }]}>
+          <View style={[styles.block, { borderTopColor: t.separator }]}>
             <Text style={{ fontSize: 16, color: t.text }}>{tr.settings.weekStart}</Text>
             <Segmented
               label={tr.settings.weekStart}
@@ -172,7 +172,7 @@ export default function SettingsScreen() {
                     increaseLabel={tr.common.later15}
                   />
                 </Row>
-                <Text style={[styles.help, { color: t.sub, borderTopColor: t.border }]}>{tr.settings.eveningHelp}</Text>
+                <Text style={[styles.help, { color: t.sub, borderTopColor: t.separator }]}>{tr.settings.eveningHelp}</Text>
               </>
             ) : null}
           </Card>
@@ -219,7 +219,7 @@ export default function SettingsScreen() {
                 />
               </Row>
             ) : null}
-            <Text style={[styles.help, { color: t.sub, borderTopColor: t.border }]}>{tr.settings.foodEveningHelp}</Text>
+            <Text style={[styles.help, { color: t.sub, borderTopColor: t.separator }]}>{tr.settings.foodEveningHelp}</Text>
           </Card>
           <Text style={[styles.footnote, { color: t.sub }]}>{tr.food.source}</Text>
         </View>

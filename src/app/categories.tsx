@@ -36,7 +36,7 @@ export default function CategoriesScreen() {
 
       <Card style={styles.list}>
         {categories.map((c, i) => (
-          <View key={c.id} style={[styles.row, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }]}>
+          <View key={c.id} style={[styles.row, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }]}>
             <Pressable
               onPress={() => router.push({ pathname: '/category-form', params: { id: c.id } })}
               accessibilityRole="button"

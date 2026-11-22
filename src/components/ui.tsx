@@ -1,15 +1,92 @@
 import * as Haptics from 'expo-haptics';
-import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { Pressable, StyleSheet, Switch, Text, View, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
+import Animated, { cubicBezier, useReducedMotion } from 'react-native-reanimated';
 import type { SFSymbol } from 'sf-symbols-typescript';
 
-import { useTheme } from '@/theme';
+import { useTheme, type HabitColor } from '@/theme';
 
 import { Icon } from './Icon';
 
 /** Et lite, rolig «tikk» ved avhuking. */
 export function tick() {
   Haptics.selectionAsync().catch(() => {});
+}
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
+
+/**
+ * En knapp som krymper litt når fingeren er på den (100–150 ms), som iOS-knapper. Med «Reduser
+ * bevegelse» blir den bare litt svakere i stedet.
+ */
+export function PressableScale({
+  style,
+  scale = 0.96,
+  onPressIn,
+  onPressOut,
+  ...props
+}: Omit<PressableProps, 'style'> & { style?: StyleProp<ViewStyle>; scale?: number }) {
+  const [pressed, setPressed] = useState(false);
+  const reduced = useReducedMotion();
+  return (
+    <AnimatedPressable
+      {...props}
+      onPressIn={(e) => {
+        setPressed(true);
+        onPressIn?.(e);
+      }}
+      onPressOut={(e) => {
+        setPressed(false);
+        onPressOut?.(e);
+      }}
+      style={[
+        style,
+        reduced ? { opacity: pressed ? 0.7 : 1 } : { transform: [{ scale: pressed ? scale : 1 }] },
+        { transitionProperty: reduced ? 'opacity' : 'transform', transitionDuration: pressed ? 100 : 160, transitionTimingFunction: EASE_OUT },
+      ]}
+    />
+  );
+}
+
+/**
+ * Valgknappen som brukes overalt: måltid, kategori, filter, mengde. `on` er valgt. Med `color` får den
+ * vanens eller kategoriens farge.
+ */
+export function Chip({
+  label,
+  on,
+  onPress,
+  icon,
+  color,
+  role = 'radio',
+  accessibilityLabel,
+}: {
+  label: string;
+  on: boolean;
+  onPress: () => void;
+  icon?: ReactNode;
+  color?: HabitColor;
+  role?: 'radio' | 'button';
+  accessibilityLabel?: string;
+}) {
+  const t = useTheme();
+  const bg = color ? (on ? color.ink : color.soft) : on ? t.inverse : t.button;
+  const fg = color ? (on ? t.card : color.ink) : on ? t.onInverse : t.text;
+  return (
+    <PressableScale
+      onPress={onPress}
+      accessibilityRole={role}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ selected: on }}
+      hitSlop={4}
+      style={[styles.chip, { backgroundColor: bg }]}>
+      {icon}
+      <Text style={[styles.chipLabel, { color: fg }]} numberOfLines={1}>
+        {label}
+      </Text>
+    </PressableScale>
+  );
 }
 
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
@@ -174,7 +251,7 @@ export function Stepper({
 
 export function Row({ children, first }: { children: ReactNode; first?: boolean }) {
   const t = useTheme();
-  return <View style={[styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.border }]}>{children}</View>;
+  return <View style={[styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }]}>{children}</View>;
 }
 
 export function SwitchRow({ label, value, onChange, first }: { label: string; value: boolean; onChange: (v: boolean) => void; first?: boolean }) {
@@ -196,5 +273,7 @@ const styles = StyleSheet.create({
   segment: { flexDirection: 'row', padding: 2, borderRadius: 12 },
   segmentItem: { flex: 1, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  chip: { minHeight: 40, borderRadius: 20, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  chipLabel: { fontSize: 15, fontWeight: '600' },
   row: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 16, paddingRight: 12, paddingVertical: 4 },
 });
