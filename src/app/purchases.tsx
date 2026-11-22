@@ -1,15 +1,15 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Icon } from '@/components/Icon';
+import { HeaderSearch } from '@/components/HeaderSearch';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { PurchaseRow } from '@/components/PurchaseRow';
 import { Card, Chip, SectionLabel } from '@/components/ui';
 import { tr } from '@/i18n';
 import { relativeDayName, type DateKey } from '@/lib/dates';
 import { capitalize, categoryName, findPurchases, monthName, visibleCategories } from '@/lib/money';
 import { useMoneyData } from '@/lib/moneyStore';
-import { moneyHome } from '@/lib/store';
 import type { Purchase } from '@/lib/types';
 import { useToday } from '@/lib/useToday';
 import { useTheme } from '@/theme';
@@ -17,10 +17,6 @@ import { useTheme } from '@/theme';
 /** Så mange kjøp vises før «Vis flere». */
 const PAGE = 60;
 
-function back() {
-  if (router.canGoBack()) router.back();
-  else router.replace(moneyHome());
-}
 
 /** Alle kjøp, eller én måned (?month=YYYY-MM), med filter på kategori (?category=…) og søk. */
 export default function PurchasesScreen() {
@@ -54,31 +50,9 @@ export default function PurchasesScreen() {
       contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={styles.content}>
-      <View style={styles.bar}>
-        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel={tr.common.back} style={styles.backButton}>
-          <Icon name="chevron.left" size={20} color={t.text} />
-          <Text style={{ fontSize: 17, color: t.text, fontWeight: '500' }}>{tr.common.back}</Text>
-        </Pressable>
-      </View>
-      <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-        {month ? tr.money.purchasesIn(monthName(month, today)) : tr.purchases.allTitle}
-      </Text>
+      <ScreenHeader title={month ? tr.money.purchasesIn(monthName(month, today)) : tr.purchases.allTitle} large />
 
-      <View style={styles.searchWrap}>
-        <View style={[styles.search, { backgroundColor: t.card }]}>
-          <Icon name="magnifyingglass" size={16} color={t.sub} />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder={tr.purchases.search}
-            placeholderTextColor={t.faint}
-            returnKeyType="search"
-            clearButtonMode="while-editing"
-            accessibilityLabel={tr.purchases.search}
-            style={{ flex: 1, fontSize: 16, color: t.text, height: 44 }}
-          />
-        </View>
-      </View>
+      <HeaderSearch value={query} onChange={setQuery} placeholder={tr.purchases.search} />
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
         {params.month ? (
@@ -120,8 +94,6 @@ const styles = StyleSheet.create({
   bar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingTop: 4 },
   backButton: { flexDirection: 'row', alignItems: 'center', gap: 2, minHeight: 44, paddingHorizontal: 4 },
   title: { fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.5, paddingHorizontal: 20, paddingTop: 6 },
-  searchWrap: { paddingHorizontal: 16, paddingTop: 12 },
-  search: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 12 },
   chips: { gap: 8, paddingHorizontal: 16, paddingTop: 12 },
   empty: { fontSize: 15, textAlign: 'center', marginTop: 40 },
   section: { paddingHorizontal: 16, paddingTop: 18, gap: 8 },

@@ -1,17 +1,14 @@
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
-import { Card, PrimaryButton, SectionLabel, TextButton } from '@/components/ui';
+import { Card, PrimaryButton, SectionLabel } from '@/components/ui';
 import { tr } from '@/i18n';
 import { dishItem, foodItem } from '@/lib/foodItems';
-import { foodHome, useFoodData } from '@/lib/foodStore';
+import { useFoodData } from '@/lib/foodStore';
 import { useTheme } from '@/theme';
 
-function back() {
-  if (router.canGoBack()) router.back();
-  else router.replace(foodHome());
-}
 
 /** Egne matvarer og retter. Trykk for å endre. */
 export default function FoodsScreen() {
@@ -22,18 +19,10 @@ export default function FoodsScreen() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
-      <View style={styles.bar}>
-        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel={tr.common.back} style={styles.backButton}>
-          <Icon name="chevron.left" size={20} color={t.text} />
-          <Text style={{ fontSize: 17, color: t.text, fontWeight: '500' }}>{tr.common.back}</Text>
-        </Pressable>
-      </View>
-      <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-        {tr.food.foodsAndDishes}
-      </Text>
+      <ScreenHeader title={tr.food.foodsAndDishes} large right={[{ label: tr.common.add, icon: 'plus', items: [{ label: tr.food.newFood, icon: 'carrot', onPress: () => router.push('/food-form') }, { label: tr.food.newDish, icon: 'fork.knife', onPress: () => router.push('/dish-form') }] }]} />
 
       <View style={styles.section}>
-        <SectionLabel right={<TextButton label={tr.common.add} bold onPress={() => router.push('/food-form')} />}>{tr.food.foods}</SectionLabel>
+        <SectionLabel>{tr.food.foods}</SectionLabel>
         {foods.length ? (
           <Card style={styles.list}>
             {foods.map((f, i) => (
@@ -46,7 +35,7 @@ export default function FoodsScreen() {
       </View>
 
       <View style={styles.section}>
-        <SectionLabel right={<TextButton label={tr.common.add} bold onPress={() => router.push('/dish-form')} />}>{tr.food.dishes}</SectionLabel>
+        <SectionLabel>{tr.food.dishes}</SectionLabel>
         {dishes.length ? (
           <Card style={styles.list}>
             {dishes.map((d, i) => (

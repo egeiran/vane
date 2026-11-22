@@ -1,18 +1,15 @@
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
-import { Card, IconButton, PrimaryButton, tick } from '@/components/ui';
+import { Card, IconButton, tick } from '@/components/ui';
 import { tr } from '@/i18n';
 import { mealName } from '@/lib/food';
-import { foodHome, useFood } from '@/lib/foodStore';
+import { useFood } from '@/lib/foodStore';
 import { showTime } from '@/lib/region';
 import { useTheme } from '@/theme';
 
-function back() {
-  if (router.canGoBack()) router.back();
-  else router.replace(foodHome());
-}
 
 /** Måltidene: rekkefølge, skjule og vise, og trykk for å endre navn, tidsrom og varsel. */
 export default function MealsScreen() {
@@ -23,15 +20,7 @@ export default function MealsScreen() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
-      <View style={styles.bar}>
-        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel={tr.common.back} style={styles.backButton}>
-          <Icon name="chevron.left" size={20} color={t.text} />
-          <Text style={{ fontSize: 17, color: t.text, fontWeight: '500' }}>{tr.common.back}</Text>
-        </Pressable>
-      </View>
-      <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-        {tr.food.mealsTitle}
-      </Text>
+      <ScreenHeader title={tr.food.mealsTitle} large right={[{ label: tr.food.newMeal, icon: 'plus', onPress: () => router.push('/meal-form') }]} />
 
       <Card style={styles.list}>
         {meals.map((m, i) => {
@@ -72,10 +61,6 @@ export default function MealsScreen() {
         })}
       </Card>
       <Text style={[styles.footnote, { color: t.sub }]}>{tr.food.mealsHelp}</Text>
-
-      <View style={{ paddingHorizontal: 16, paddingTop: 20 }}>
-        <PrimaryButton label={tr.food.newMeal} onPress={() => router.push('/meal-form')} />
-      </View>
     </ScrollView>
   );
 }

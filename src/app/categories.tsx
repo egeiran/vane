@@ -1,19 +1,14 @@
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { CategoryIcon } from '@/components/CategoryIcon';
-import { Icon } from '@/components/Icon';
-import { Card, IconButton, PrimaryButton, tick } from '@/components/ui';
+import { Card, IconButton, tick } from '@/components/ui';
 import { tr } from '@/i18n';
 import { categoryName } from '@/lib/money';
 import { useMoney } from '@/lib/moneyStore';
-import { moneyHome } from '@/lib/store';
 import { useTheme } from '@/theme';
 
-function back() {
-  if (router.canGoBack()) router.back();
-  else router.replace(moneyHome());
-}
 
 /** Kategoriene: rekkefølge, skjule og vise, og trykk for å endre navn, ikon og farge. */
 export default function CategoriesScreen() {
@@ -24,15 +19,7 @@ export default function CategoriesScreen() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
-      <View style={styles.bar}>
-        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel={tr.common.back} style={styles.backButton}>
-          <Icon name="chevron.left" size={20} color={t.text} />
-          <Text style={{ fontSize: 17, color: t.text, fontWeight: '500' }}>{tr.common.back}</Text>
-        </Pressable>
-      </View>
-      <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-        {tr.categories.title}
-      </Text>
+      <ScreenHeader title={tr.categories.title} large right={[{ label: tr.categories.new, icon: 'plus', onPress: () => router.push('/category-form') }]} />
 
       <Card style={styles.list}>
         {categories.map((c, i) => (
@@ -81,10 +68,6 @@ export default function CategoriesScreen() {
         ))}
       </Card>
       <Text style={[styles.footnote, { color: t.sub }]}>{tr.categories.help}</Text>
-
-      <View style={{ paddingHorizontal: 16, paddingTop: 20 }}>
-        <PrimaryButton label={tr.categories.new} onPress={() => router.push('/category-form')} />
-      </View>
     </ScrollView>
   );
 }

@@ -32,6 +32,16 @@ export default function RootLayout() {
     SplashScreen.hideAsync();
   }, []);
 
+  // Undersidene har den native headeren: stor tittel som krymper når man ruller, bare pil tilbake,
+  // og knappene (+, Endre) til høyre. Tittel og knapper settes av skjermen selv med `ScreenHeader`.
+  const pushed = {
+    headerShown: true,
+    headerBackButtonDisplayMode: 'minimal',
+    headerTintColor: t.text,
+    headerShadowVisible: false,
+    headerLargeTitleShadowVisible: false,
+  } as const;
+
   const base = t.dark ? DarkTheme : DefaultTheme;
   const navTheme = {
     ...base,
@@ -47,26 +57,26 @@ export default function RootLayout() {
           {/* En ny bruker ser oppstarten først. Også en lenke fra en widget går dit. */}
           <Stack.Protected guard={!onboarding} redirectTo="/onboarding">
             <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="habit/[id]" />
+            <Stack.Screen name="habit/[id]" options={pushed} />
             <Stack.Screen name="goals" options={{ presentation: 'modal' }} />
             <Stack.Screen name="habit-form" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="purchases" />
-            <Stack.Screen name="categories" />
+            <Stack.Screen name="purchases" options={pushed} />
+            <Stack.Screen name="categories" options={pushed} />
             {/* Et annet kjøp (eller et nytt) får sitt eget skjema, også når skjemaet allerede er åpent. */}
             <Stack.Screen name="purchase-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
             <Stack.Screen name="category-form" options={{ presentation: 'modal' }} />
             <Stack.Screen name="currency" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="recurring" />
+            <Stack.Screen name="recurring" options={pushed} />
             <Stack.Screen name="recurring-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id ?? params?.merchant} />
-            <Stack.Screen name="data" />
+            <Stack.Screen name="data" options={pushed} />
             {/* Et varsel for et annet måltid (eller en annen dag) åpner et nytt ark, med riktig måltid valgt. */}
             <Stack.Screen name="food-log" options={{ presentation: 'modal' }} getId={({ params }) => `${params?.day ?? ''}:${params?.meal ?? ''}`} />
             <Stack.Screen name="food-entry" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
             <Stack.Screen name="food-goal" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="foods" />
+            <Stack.Screen name="foods" options={pushed} />
             <Stack.Screen name="food-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id ?? params?.mvt} />
             <Stack.Screen name="dish-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
-            <Stack.Screen name="meals" />
+            <Stack.Screen name="meals" options={pushed} />
             <Stack.Screen name="meal-form" options={{ presentation: 'modal' }} />
           </Stack.Protected>
           <Stack.Protected guard={onboarding}>

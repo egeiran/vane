@@ -1,7 +1,7 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
 import { Card, PrimaryButton, Row, SectionLabel, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
@@ -26,10 +26,6 @@ import { getMoney, replaceMoney } from '@/lib/moneyStore';
 import { getData, replaceData, useStore } from '@/lib/store';
 import { useTheme } from '@/theme';
 
-function back() {
-  if (router.canGoBack()) router.back();
-  else router.replace('/settings');
-}
 
 type Message = { kind: 'error'; error: BackupError | 'read' | 'share' } | { kind: 'done' };
 
@@ -92,15 +88,7 @@ export default function DataScreen() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
-      <View style={styles.bar}>
-        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel={tr.common.back} style={styles.backButton}>
-          <Icon name="chevron.left" size={20} color={t.text} />
-          <Text style={{ fontSize: 17, color: t.text, fontWeight: '500' }}>{tr.common.back}</Text>
-        </Pressable>
-      </View>
-      <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-        {tr.backup.title}
-      </Text>
+      <ScreenHeader title={tr.backup.title} large />
       <Text style={[styles.lead, { color: t.sub }]}>{tr.backup.lead}</Text>
 
       {message ? (

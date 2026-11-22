@@ -3,7 +3,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 
 import { CheckButton } from '@/components/CheckButton';
 import { ColumnGrid, WeekRows, type HeatWeek } from '@/components/HeatGrid';
-import { Icon } from '@/components/Icon';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Card, TextButton, tick } from '@/components/ui';
 import { tr } from '@/i18n';
 import { formatShort, relativeDayName } from '@/lib/dates';
@@ -91,23 +91,18 @@ export default function HabitScreen() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
-      <View style={styles.bar}>
-        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel={tr.common.back} style={styles.backButton}>
-          <Icon name="chevron.left" size={20} color={t.text} />
-          <Text style={{ fontSize: 17, color: t.text, fontWeight: '500' }}>{tr.common.back}</Text>
-        </Pressable>
-        <TextButton label={tr.common.edit} onPress={() => router.push({ pathname: '/habit-form', params: { id: habit.id } })} />
-      </View>
+      <ScreenHeader
+        title={habit.name}
+        large
+        right={[{ label: tr.common.edit, onPress: () => router.push({ pathname: '/habit-form', params: { id: habit.id } }) }]}
+      />
 
       <View style={styles.header}>
         <View style={{ flex: 1, gap: 4 }}>
           <View style={styles.metaRow}>
             <View style={[styles.dot, { backgroundColor: c.solid }]} />
-            <Text style={{ fontSize: 14, color: t.sub, flexShrink: 1 }}>{meta}</Text>
+            <Text style={{ fontSize: 15, color: t.sub, flexShrink: 1 }}>{meta}</Text>
           </View>
-          <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-            {habit.name}
-          </Text>
         </View>
         {isCount && done ? (
           // Målet er nådd: samme hake som de andre vanene. Trykk trekker fra én, som ringen i «I dag».
@@ -178,7 +173,7 @@ const styles = StyleSheet.create({
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 4 },
   backButton: { flexDirection: 'row', alignItems: 'center', gap: 2, minHeight: 44, paddingHorizontal: 4 },
-  header: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 6 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingTop: 4, paddingBottom: 6 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   dot: { width: 10, height: 10, borderRadius: 5 },
   title: { fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.5 },
