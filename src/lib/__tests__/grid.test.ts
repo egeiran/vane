@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { periodEnd, periodsBack, weekRows } from '../grid';
+import { periodEnd, periodsBack, periodText, weekRows } from '../grid';
 
 describe('perioder i Oversikt', () => {
   const today = '2026-11-13'; // fredag
@@ -22,5 +22,11 @@ describe('perioder i Oversikt', () => {
     expect(periodsBack('2026-10-19', today, 4)).toBe(0); // første uke i perioden som slutter i dag
     expect(periodsBack('2026-10-18', today, 4)).toBe(1);
     expect(periodsBack('2025-01-01', today, 53)).toBe(1);
+  });
+
+  it('overskriften for en eldre periode', () => {
+    expect(periodText(weekRows(periodEnd(today, 4, 1), 4), false)).toBe('21. sep – 18. okt');
+    expect(periodText(weekRows('2026-11-13', 53), true)).toBe('2025–2026');
+    expect(periodText(weekRows('2026-12-31', 1), true)).toBe('2026–2027');
   });
 });

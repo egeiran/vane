@@ -191,7 +191,6 @@ export function updateCategory(data: MoneyData, id: string, patch: Partial<Omit<
   };
 }
 
-/** Flytter en kategori opp (-1) eller ned (+1) i lista. */
 /** Flytter kategorien `id` til plass `to` (dra for å flytte). Utenfor lista: uendret. */
 export function moveCategory(data: MoneyData, id: string, to: number): MoneyData {
   const categories = moveItem(data.categories, data.categories.findIndex((c) => c.id === id), to);

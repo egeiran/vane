@@ -93,19 +93,20 @@ export function HabitRow({ habit, day, showReminder, editable = true }: Props) {
     <RowMenu href={{ pathname: '/habit/[id]', params: { id: habit.id } }} items={[...countItems, ...habitItems(habit, deleteHabit)]}>
       <View style={[styles.row, { backgroundColor: done ? c.soft : t.card, opacity: editable ? 1 : 0.6 }]}>
         {isCount ? (
-          // Ringen legger til én, som +. Én mindre ligger i hold-inne-menyen.
+          // Ringen legger til én, som +. Når målet er nådd (det kan ikke gå over), trekker den fra én.
+          // Én mindre ligger også i hold-inne-menyen.
           <CountRing
             value={value}
             target={habit.target}
             color={c.solid}
             track={done ? t.card : c.soft}
             textColor={c.ink}
-            label={editable ? tr.habits.plusOne(habit.name, amountText(habit, value)) : `${habit.name}: ${amountText(habit, value)}`}
+            label={editable ? (done ? tr.habits.minusOne : tr.habits.plusOne)(habit.name, amountText(habit, value)) : `${habit.name}: ${amountText(habit, value)}`}
             onPress={
               editable
                 ? () => {
                     tick();
-                    increment(habit.id, day, 1);
+                    increment(habit.id, day, done ? -1 : 1);
                   }
                 : undefined
             }

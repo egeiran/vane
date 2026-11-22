@@ -1,6 +1,6 @@
 import { tr } from '@/i18n';
 
-import { addDays, compareKeys, dayOfWeek, daysBetween, fromKey, startOfWeek, type DateKey, type WeekStart } from './dates';
+import { addDays, compareKeys, dayOfWeek, daysBetween, formatShort, fromKey, startOfWeek, type DateKey, type WeekStart } from './dates';
 
 /** `n` uker som rader (mandag–søndag eller søndag–lørdag). Siste rad er uka `today` ligger i. */
 export function weekRows(today: DateKey, n: number, weekStart: WeekStart = 'mon'): DateKey[][] {
@@ -45,4 +45,12 @@ export function periodEnd(today: DateKey, weeks: number, offset: number): DateKe
 export function periodsBack(first: DateKey, today: DateKey, weeks: number, weekStart: WeekStart = 'mon'): number {
   const span = daysBetween(startOfWeek(first, weekStart), startOfWeek(today, weekStart)) / 7;
   return Math.max(0, Math.floor(span / weeks));
+}
+
+/** Overskriften for en eldre periode i Oversikt: «12. okt – 8. nov», eller årene for et år. */
+export function periodText(rows: DateKey[][], year: boolean): string {
+  const a = rows[0][0];
+  const b = rows[rows.length - 1][6];
+  if (year) return a.slice(0, 4) === b.slice(0, 4) ? a.slice(0, 4) : `${a.slice(0, 4)}–${b.slice(0, 4)}`;
+  return tr.overview.span(formatShort(a), formatShort(b));
 }

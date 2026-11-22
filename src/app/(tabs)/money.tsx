@@ -11,22 +11,7 @@ import { appear, disappear, reflow } from '@/components/motion';
 import { SwipePager } from '@/components/SwipePager';
 import { Card, IconButton, PrimaryButton, SectionLabel, TextButton, tick } from '@/components/ui';
 import { tr } from '@/i18n';
-import {
-  addMonths,
-  capitalize,
-  categoryById,
-  categoryName,
-  formatAmount,
-  isPending,
-  monthName,
-  monthOf,
-  monthShort,
-  monthSummary,
-  pendingPurchases,
-  recentMonths,
-  suggestionFor,
-  type MonthKey,
-} from '@/lib/money';
+import { addMonths, capitalize, categoryById, categoryName, firstMonth, formatAmount, isPending, monthName, monthOf, monthShort, monthSummary, pendingPurchases, recentMonths, suggestionFor, type MonthKey } from '@/lib/money';
 import { useMoney, useMoneyData } from '@/lib/moneyStore';
 import { recurringOn } from '@/lib/recurring';
 import { useStore } from '@/lib/store';
@@ -45,7 +30,7 @@ export default function MoneyScreen() {
   const current = monthOf(today);
   const [picked, setPicked] = useState<MonthKey>(current);
   // Den eldste måneden med et kjøp. Man kan bla tilbake dit, men ikke lenger.
-  const oldest = data.purchases.reduce((min, p) => (p.day < min ? p.day : min), today).slice(0, 7);
+  const oldest = firstMonth(data, today);
   const month = picked > current ? current : picked < oldest ? oldest : picked;
 
   // Første gang fanen åpnes: veiviseren for Snarveier.
@@ -238,6 +223,7 @@ export default function MoneyScreen() {
               <Pressable
                 key={m.month}
                 onPress={() => setPicked(m.month)}
+                disabled={m.month < oldest}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
                 accessibilityLabel={`${monthName(m.month, today)}: ${formatAmount(m.total, m.currency)}`}

@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector, type LegacyPanGesture } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -27,8 +27,11 @@ type Props<T> = {
  * eller trykk Endre og dra i håndtaket. De andre radene glir unna, og det kommer et lett tikk når
  * raden løftes og når den passerer en plass. Rekkefølgen lagres når raden slippes.
  */
-export function SortableList<T>({ items, keyOf, rowHeight, editing, onMove, renderRow }: Props<T>) {
+export function SortableList<T>({ items, keyOf, rowHeight: baseHeight, editing, onMove, renderRow }: Props<T>) {
   const t = useTheme();
+  // Radene står fast i høyden (de flyttes med transform), så høyden følger tekststørrelsen.
+  const { fontScale } = useWindowDimensions();
+  const rowHeight = Math.round(baseHeight * Math.max(1, fontScale));
   const ids = items.map(keyOf);
   const order = ids.join('|');
   const positions = useSharedValue<Record<string, number>>(Object.fromEntries(ids.map((id, i) => [id, i])));
@@ -126,9 +129,18 @@ function SortableRow({
     return { transform: [{ translateY: reduced ? slot : withTiming(slot, { duration: 200 }) }, { scale: 1 }], zIndex: 0, shadowOpacity: 0 };
   });
 
+  // VoiceOver: håndtaket har «Flytt opp» og «Flytt ned» som handlinger.
   const handle = editing ? (
     <GestureDetector gesture={handlePan}>
-      <View style={styles.handle} accessibilityRole="adjustable" accessibilityLabel={tr.common.dragToMove}>
+      <View
+        style={styles.handle}
+        accessible
+        accessibilityLabel={tr.common.dragToMove}
+        accessibilityActions={[
+          ...(index > 0 ? [{ name: 'moveUp', label: tr.common.moveUp }] : []),
+          ...(index < count - 1 ? [{ name: 'moveDown', label: tr.common.moveDown }] : []),
+        ]}
+        onAccessibilityAction={(e) => onMove(id, index + (e.nativeEvent.actionName === 'moveUp' ? -1 : 1))}>
         <Icon name="line.3.horizontal" size={18} color={t.faint} />
       </View>
     </GestureDetector>

@@ -16,7 +16,7 @@ type Props = {
 
 /**
  * Ring som fylles etter hvert som antallet øker. Når målet er nådd, blir den en hake som de andre
- * vanene. Trykk trekker fra én, også når den viser haken.
+ * vanene. Trykk legger til én (eller trekker fra én når målet er nådd), også når den viser haken.
  */
 export function CountRing({ value, target, color, track, textColor, onPress, label, size = 44 }: Props) {
   const stroke = 4;

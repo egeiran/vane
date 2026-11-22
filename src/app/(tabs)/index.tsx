@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, LayoutAnimationConfig } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DayPager } from '@/components/DayPager';
@@ -87,56 +87,59 @@ function DayPage({ day, today }: { day: DateKey; today: DateKey }) {
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="interactive"
       contentContainerStyle={styles.content}>
-      {!isToday ? <Text style={[styles.note, { color: t.sub }]}>{editable ? tr.today.yesterdayNote : tr.today.olderNote}</Text> : null}
+      {/* Det som tones inn (som haken), gjør det bare når man endrer noe, ikke når dagen åpnes. */}
+      <LayoutAnimationConfig skipEntering>
+        {!isToday ? <Text style={[styles.note, { color: t.sub }]}>{editable ? tr.today.yesterdayNote : tr.today.olderNote}</Text> : null}
 
-      <View style={styles.section}>
-        <GoalsCard day={day} when={when} />
-      </View>
-
-      {/* Dagboken er en modul. Er den av, er kortet borte, men det som er skrevet, ligger der. */}
-      {journalOn ? (
         <View style={styles.section}>
-          <JournalCard day={day} when={when} />
+          <GoalsCard day={day} when={when} />
         </View>
-      ) : null}
 
-      {habits.length === 0 ? (
-        <Card style={styles.empty}>
-          <Text style={[styles.emptyTitle, { color: t.text }]}>{tr.today.emptyTitle}</Text>
-          <Text style={[styles.emptyText, { color: t.sub }]}>{tr.today.emptyText}</Text>
-          <PrimaryButton label={tr.today.addFirst} onPress={() => router.push('/habit-form')} />
-        </Card>
-      ) : null}
+        {/* Dagboken er en modul. Er den av, er kortet borte, men det som er skrevet, ligger der. */}
+        {journalOn ? (
+          <View style={styles.section}>
+            <JournalCard day={day} when={when} />
+          </View>
+        ) : null}
 
-      {daily.length > 0 || resting.length > 0 ? (
-        <View style={styles.section}>
-          <SectionLabel right={daily.length ? tr.today.doneOf(doneCount, daily.length) : undefined}>{tr.today.daily}</SectionLabel>
-          {daily.map((h) => (
-            <HabitRow key={h.id} habit={h} day={day} showReminder={isToday} editable={editable} />
-          ))}
-          {resting.length ? (
-            <Text style={[styles.note, styles.resting, { color: t.sub }]}>
-              {tr.today.resting(inlineDayName(day, today), resting.map((h) => tr.today.restingItem(h.name, frequencyText(h, weekStart))).join(', '))}
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
+        {habits.length === 0 ? (
+          <Card style={styles.empty}>
+            <Text style={[styles.emptyTitle, { color: t.text }]}>{tr.today.emptyTitle}</Text>
+            <Text style={[styles.emptyText, { color: t.sub }]}>{tr.today.emptyText}</Text>
+            <PrimaryButton label={tr.today.addFirst} onPress={() => router.push('/habit-form')} />
+          </Card>
+        ) : null}
 
-      {weekly.length > 0 ? (
-        <View style={styles.section}>
-          <SectionLabel right={showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(day)) : undefined}>{tr.today.thisWeek}</SectionLabel>
-          {weekly.map((h) => (
-            <WeeklyRow key={h.id} habit={h} day={day} editable={editable} />
-          ))}
-        </View>
-      ) : null}
+        {daily.length > 0 || resting.length > 0 ? (
+          <View style={styles.section}>
+            <SectionLabel right={daily.length ? tr.today.doneOf(doneCount, daily.length) : undefined}>{tr.today.daily}</SectionLabel>
+            {daily.map((h) => (
+              <HabitRow key={h.id} habit={h} day={day} showReminder={isToday} editable={editable} />
+            ))}
+            {resting.length ? (
+              <Text style={[styles.note, styles.resting, { color: t.sub }]}>
+                {tr.today.resting(inlineDayName(day, today), resting.map((h) => tr.today.restingItem(h.name, frequencyText(h, weekStart))).join(', '))}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
 
-      {/* Mat er en modul. Er den av, er kortet borte, men det som er logget, ligger der. */}
-      {foodOn ? (
-        <View style={styles.section}>
-          <FoodCard day={day} today={today} />
-        </View>
-      ) : null}
+        {weekly.length > 0 ? (
+          <View style={styles.section}>
+            <SectionLabel right={showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(day)) : undefined}>{tr.today.thisWeek}</SectionLabel>
+            {weekly.map((h) => (
+              <WeeklyRow key={h.id} habit={h} day={day} editable={editable} />
+            ))}
+          </View>
+        ) : null}
+
+        {/* Mat er en modul. Er den av, er kortet borte, men det som er logget, ligger der. */}
+        {foodOn ? (
+          <View style={styles.section}>
+            <FoodCard day={day} today={today} />
+          </View>
+        ) : null}
+      </LayoutAnimationConfig>
     </ScrollView>
   );
 }

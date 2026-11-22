@@ -406,3 +406,8 @@ export function nativePurchaseConfig(data: MoneyData, enabled = true): NativePur
   }
   return { categories, merchants, currency: mainCurrency(data), enabled };
 }
+
+/** Den eldste måneden med et kjøp (eller måneden `today` ligger i). Penger kan ikke bla lenger tilbake. */
+export function firstMonth(data: Pick<MoneyData, 'purchases'>, today: DateKey): MonthKey {
+  return data.purchases.reduce((min, p) => (p.day < min ? p.day : min), today).slice(0, 7);
+}

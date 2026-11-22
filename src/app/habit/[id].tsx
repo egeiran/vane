@@ -115,17 +115,29 @@ export default function HabitScreen() {
           <Text style={[styles.name, { color: t.text }]} accessibilityRole="header">
             {habit.name}
           </Text>
+          {isCount && value > 0 && !done ? (
+            <View style={{ alignSelf: 'flex-start', marginLeft: -8 }}>
+              <TextButton
+                label={tr.habits.menuLess}
+                color={t.sub}
+                onPress={() => {
+                  tick();
+                  increment(habit.id, today, -1);
+                }}
+              />
+            </View>
+          ) : null}
         </View>
         {isCount && done ? (
-          // Målet er nådd: samme hake som de andre vanene. Trykk legger til én, som ringen på I dag.
+          // Målet er nådd: samme hake som de andre vanene. Trykk trekker fra én, som ringen på I dag.
           <CheckButton
             size={52}
             done
             color={c.solid}
-            label={tr.habits.plusOne(habit.name, amountText(habit, value))}
+            label={tr.habits.minusOne(habit.name, amountText(habit, value))}
             onPress={() => {
               tick();
-              increment(habit.id, today, 1);
+              increment(habit.id, today, -1);
             }}
           />
         ) : isCount ? (

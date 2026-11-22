@@ -77,7 +77,13 @@ export function SwipePager({ pageKey, canPrev, canNext, onPrev, onNext, children
       x.set(
         withTiming(dir * width * 0.6, { duration: 160, easing: EASE_OUT }, (finished) => {
           'worklet';
-          if (finished) scheduleOnRN(go, dir);
+          if (finished) {
+            scheduleOnRN(go, dir);
+            return;
+          }
+          // Avbrutt av et nytt drag: perioden byttes ikke, og innholdet skal synes igjen.
+          from.set(0);
+          opacity.set(withTiming(1, { duration: 120 }));
         })
       );
     });

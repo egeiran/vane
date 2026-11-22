@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
+  firstMonth,
   addMonths,
   amountInputText,
   cleanMerchant,
@@ -303,5 +304,13 @@ describe('oppsett til Swift', () => {
     expect(config.categories.dagligvarer).toBe('Dagligvarer');
     expect(config.categories.shopping).toBeUndefined();
     expect(config.merchants).toEqual({ REMA: { categoryId: 'dagligvarer' }, KAFE: { name: 'Kafeen' } });
+  });
+});
+
+describe('bla i måneder', () => {
+  it('den eldste måneden med et kjøp, ellers denne måneden', () => {
+    expect(firstMonth({ purchases: [] }, '2026-11-04')).toBe('2026-11');
+    const p = (day: string) => ({ day }) as never;
+    expect(firstMonth({ purchases: [p('2026-10-12'), p('2025-07-01'), p('2026-11-01')] }, '2026-11-04')).toBe('2025-07');
   });
 });

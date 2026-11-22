@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { FlatList, View } from 'react-native';
+import { View, type FlatList as RNFlatList, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+// Gesture Handler sin liste, så sveip på en rad (SwipeRow) og bladingen ikke slåss om samme drag.
+import { FlatList } from 'react-native-gesture-handler';
 
 import type { DateKey } from '@/lib/dates';
 
@@ -24,10 +26,22 @@ type Props = {
  */
 export function DayPager({ days, day, onChange, renderDay }: Props) {
   const [width, setWidth] = useState(0);
-  const list = useRef<FlatList<DateKey>>(null);
+  const list = useRef<RNFlatList<DateKey>>(null);
   const index = Math.max(0, days.indexOf(day));
   // Siden som ligger i ro. Oppdateres når bladingen stopper, og når dagen velges utenfra.
   const shown = useRef(index);
+
+  const settle = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const x = e.nativeEvent.contentOffset.x;
+    const i = Math.round(x / width);
+    if (Math.abs(x - i * width) > 1 || i === shown.current) return;
+    shown.current = i;
+    const next = days[i];
+    if (next && next !== day) {
+      tick();
+      onChange(next);
+    }
+  };
 
   useEffect(() => {
     if (!width || shown.current === index) return;
@@ -54,19 +68,11 @@ export function DayPager({ days, day, onChange, renderDay }: Props) {
           windowSize={3}
           initialNumToRender={1}
           maxToRenderPerBatch={2}
-          // Når bladingen har stoppet på en side (også på web, der det ikke finnes momentum-hendelser).
-          onScroll={(e) => {
-            const x = e.nativeEvent.contentOffset.x;
-            const i = Math.round(x / width);
-            if (Math.abs(x - i * width) > 1 || i === shown.current) return;
-            shown.current = i;
-            const next = days[i];
-            if (next && next !== day) {
-              tick();
-              onChange(next);
-            }
-          }}
-          scrollEventThrottle={16}
+          // Dagen settes når bladingen har stoppet. På web finnes ikke momentum-hendelsen, så der
+          // brukes rullingen (en side ligger i ro når den står helt på plass).
+          onMomentumScrollEnd={process.env.EXPO_OS === 'web' ? undefined : settle}
+          onScroll={process.env.EXPO_OS === 'web' ? settle : undefined}
+          scrollEventThrottle={process.env.EXPO_OS === 'web' ? 16 : undefined}
           renderItem={({ item }) => <View style={{ width, flex: 1 }}>{renderDay(item)}</View>}
         />
       ) : null}

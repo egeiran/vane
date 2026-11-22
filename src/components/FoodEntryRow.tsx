@@ -1,5 +1,6 @@
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { tr } from '@/i18n';
 import { compareKeys, formatTime, type DateKey } from '@/lib/dates';
@@ -10,6 +11,7 @@ import type { FoodEntry } from '@/lib/types';
 import { useToday } from '@/lib/useToday';
 import { useTheme } from '@/theme';
 
+import { confirmDestructive } from './confirm';
 import { RowMenu, type MenuItem } from './RowMenu';
 import { SwipeRow } from './SwipeRow';
 
@@ -43,20 +45,30 @@ export function FoodEntryRow({ entry: e, day, showKcal, editable, first }: Props
   const copyToToday = () => {
     const now = new Date();
     addEntry(today, { time: formatTime({ hour: now.getHours(), minute: now.getMinutes() }), mealId: e.mealId, name: e.name, protein: e.protein, kcal: e.kcal, ref: e.ref, amount: e.amount });
+    // Kopien havner på en annen dag enn den man ser på: et lett «ferdig» og beskjed til skjermleseren.
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    AccessibilityInfo.announceForAccessibility(tr.food.copiedToToday(name));
   };
+  // Samme spørsmål som i skjemaet.
+  const remove = () => confirmDestructive(tr.food.deleteConfirm(name), undefined, tr.common.delete, () => removeEntry(day, e.id));
+  const otherMeals = meals.filter((m) => m.id !== e.mealId);
   const items: MenuItem[] = [
     ...(editable
       ? [
           { label: tr.common.edit, icon: 'pencil' as const, onPress: edit },
-          {
-            label: tr.food.moveToMeal,
-            icon: 'arrow.right.square' as const,
-            items: meals.filter((m) => m.id !== e.mealId).map((m) => ({ label: mealName(m), onPress: () => updateEntry(day, e.id, { mealId: m.id }) })),
-          },
+          ...(otherMeals.length
+            ? [
+                {
+                  label: tr.food.moveToMeal,
+                  icon: 'arrow.right.square' as const,
+                  items: otherMeals.map((m) => ({ label: mealName(m), onPress: () => updateEntry(day, e.id, { mealId: m.id }) })),
+                },
+              ]
+            : []),
         ]
       : []),
     ...(compareKeys(day, today) < 0 ? [{ label: tr.food.copyToToday, icon: 'doc.on.doc' as const, onPress: copyToToday }] : []),
-    ...(editable ? [{ label: tr.food.deleteEntry, icon: 'trash' as const, destructive: true, onPress: () => removeEntry(day, e.id) }] : []),
+    ...(editable ? [{ label: tr.food.deleteEntry, icon: 'trash' as const, destructive: true, onPress: remove }] : []),
   ];
 
   const body = (
@@ -75,7 +87,7 @@ export function FoodEntryRow({ entry: e, day, showKcal, editable, first }: Props
   const style = [styles.row, { backgroundColor: t.card }, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }];
 
   return (
-    <SwipeRow enabled={editable} actions={[{ label: tr.food.deleteEntry, color: t.danger, onPress: () => removeEntry(day, e.id) }]}>
+    <SwipeRow enabled={editable} actions={[{ label: tr.food.deleteEntry, color: t.danger, onPress: remove }]}>
       <RowMenu href={{ pathname: '/food-entry', params: { day, id: e.id } }} items={items}>
         <View>
           {editable ? (

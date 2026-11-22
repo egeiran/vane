@@ -36,12 +36,12 @@ export function WeekStrip({ today, selected, first, weekStart, onSelect, dot }: 
   const list = useRef<FlatList<DateKey>>(null);
   const shownWeek = useRef(selWeek);
 
-  // Byttes dagen til en annen uke (sveip i innholdet, eller «I dag»), blar stripa dit.
+  // Byttes dagen (sveip i innholdet, eller «I dag»), og stripa viser en annen uke, blar den dit.
   useEffect(() => {
     if (!width || shownWeek.current === selWeek) return;
     shownWeek.current = selWeek;
     list.current?.scrollToIndex({ index: selWeek, animated: true });
-  }, [selWeek, width]);
+  }, [selected, selWeek, width]);
 
   return (
     <View onLayout={(e) => setWidth(Math.round(e.nativeEvent.layout.width))} style={styles.wrap}>

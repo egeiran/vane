@@ -9,13 +9,13 @@ export type MenuItem =
 
 /** Menyen godtar bare sine egne elementer som barn, så dette er en vanlig funksjon, ikke en komponent. */
 function renderItems(items: MenuItem[]) {
-  return items.map((item) =>
+  return items.map((item, i) =>
     'items' in item ? (
-      <Link.Menu key={item.label} title={item.label} icon={item.icon}>
+      <Link.Menu key={`${i}:${item.label}`} title={item.label} icon={item.icon}>
         {renderItems(item.items)}
       </Link.Menu>
     ) : (
-      <Link.MenuAction key={item.label} icon={item.icon} destructive={item.destructive} onPress={item.onPress}>
+      <Link.MenuAction key={`${i}:${item.label}`} icon={item.icon} destructive={item.destructive} onPress={item.onPress}>
         {item.label}
       </Link.MenuAction>
     )

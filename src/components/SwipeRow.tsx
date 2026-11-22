@@ -19,6 +19,8 @@ export function SwipeRow({ actions, enabled = true, children }: { actions: Swipe
       ref={ref}
       friction={2}
       rightThreshold={40}
+      // Det finnes ingen knapper til venstre: et drag mot høyre skal bla til forrige dag (DayPager).
+      dragOffsetFromLeft={Number.MAX_SAFE_INTEGER}
       overshootRight={false}
       onSwipeableWillOpen={() => tick()}
       renderRightActions={() => (

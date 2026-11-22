@@ -7,8 +7,8 @@ import { Icon } from '@/components/Icon';
 import { SwipePager } from '@/components/SwipePager';
 import { Card, SectionLabel, Segmented, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
-import { addDays, formatShort, isoWeek, relativeDayName, relativeWeekday, type DateKey } from '@/lib/dates';
-import { daysInRange, isFuture, periodEnd, periodsBack, weekColumns, weekRows } from '@/lib/grid';
+import { addDays, formatShort, isoWeek, relativeDayName, relativeWeekday, type DateKey, startOfWeek } from '@/lib/dates';
+import { daysInRange, isFuture, periodEnd, periodsBack, periodText, weekColumns, weekRows } from '@/lib/grid';
 import { dayStats, firstDataDay, fractionOn, goalsOn, periodSummary, summaryText } from '@/lib/habits';
 import { dayTotals, firstFoodDay, fractionOn as proteinFraction, kcalText, proteinText } from '@/lib/food';
 import { useFoodData } from '@/lib/foodStore';
@@ -21,16 +21,6 @@ import { shade, useTheme } from '@/theme';
 type Range = 'week' | 'month' | 'year';
 
 const RANGE_WEEKS: Record<Range, number> = { week: 1, month: 4, year: 53 };
-/** «12. okt – 8. nov», eller årene for et år. */
-function periodText(range: Range, rows: DateKey[][]): string {
-  const a = rows[0][0];
-  const b = rows[rows.length - 1][6];
-  if (range === 'year') return a.slice(0, 4) === b.slice(0, 4) ? a.slice(0, 4) : `${a.slice(0, 4)}–${b.slice(0, 4)}`;
-  return tr.overview.span(formatShort(a), formatShort(b));
-}
-
-const minKey = (a: DateKey, b: DateKey) => (a < b ? a : b);
-
 const rangeTitle = (range: Range) => ({ week: tr.overview.rangeWeek, month: tr.overview.rangeMonth, year: tr.overview.rangeYear })[range];
 
 export default function OverviewScreen() {
@@ -47,7 +37,7 @@ export default function OverviewScreen() {
   const weeks = RANGE_WEEKS[range];
   const weekStart = weekStartOf(data.settings);
   const end = periodEnd(today, weeks, offset);
-  const first = minKey(firstDataDay(data, today), firstFoodDay(food, today));
+  const first = [firstDataDay(data, today), firstFoodDay(food, today)].sort()[0];
   const canPrev = offset < periodsBack(first, today, weeks, weekStart);
   const goPeriod = (next: number) => {
     const day = periodEnd(today, weeks, next);
@@ -83,6 +73,8 @@ export default function OverviewScreen() {
 
   const legend = [0, 0.25, 0.5, 0.75, 1].map((f) => shade(t, t.slate, f));
   const nDays = offset ? weeks * 7 : daysInRange(today, weeks, weekStart);
+  // En eldre periode slutter på siste dag i rutenettet (søndag eller lørdag), ikke på `end`.
+  const summaryEnd = offset ? addDays(startOfWeek(end, weekStart), 6) : today;
   const yearCols = range === 'year' ? weekColumns(end, 53, weekStart) : [];
 
   // Dagboken: humøret som fargestyrke, og setningen for dagen man trykker på. Ingen snitt og ingen trend.
@@ -146,7 +138,7 @@ export default function OverviewScreen() {
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={[styles.sub, { color: t.sub }]}>{offset ? periodText(range, weekRows(end, weeks, weekStart)) : rangeTitle(range)}</Text>
+          <Text style={[styles.sub, { color: t.sub }]}>{offset ? periodText(weekRows(end, weeks, weekStart), range === 'year') : rangeTitle(range)}</Text>
           <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
             {tr.overview.title}
           </Text>
@@ -237,7 +229,7 @@ export default function OverviewScreen() {
             {data.habits.map((h) => {
               const c = t.colors[h.color];
               const color = (day: DateKey) => (isFuture(day, today) ? 'transparent' : shade(t, c.solid, fractionOn(data, h, day)));
-              const summary = summaryText(periodSummary(data, h, end, nDays));
+              const summary = summaryText(periodSummary(data, h, summaryEnd, nDays));
               return (
                 <Pressable
                   key={h.id}
