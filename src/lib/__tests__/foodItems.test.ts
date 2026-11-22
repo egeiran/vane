@@ -17,7 +17,7 @@ describe('det som kan logges', () => {
       { kind: 'grams', grams: 100 },
     ]);
     expect(skyr.amount).toEqual(skyr.options[0]);
-    expect(skyr.sub).toBe('1 beger · 18 g');
+    expect(skyr.sub).toBe('1 beger · 18 g protein');
     // Uten vekt og uten tall per 100 g: bare porsjoner.
     expect(foodItem(EMPTY_FOOD, SHAKE).options).toEqual([{ kind: 'portion', count: 1, label: 'shaker', grams: null }]);
   });
@@ -34,7 +34,7 @@ describe('det som kan logges', () => {
     const dish = { id: 'd', name: 'Frokostbolle', items: [{ name: 'Havregryn', protein: 81, kcal: 222, ref: null, amount: null }] };
     const item = dishItem(EMPTY_FOOD, dish);
     expect(item.options).toEqual([{ kind: 'portion', count: 1, label: '', grams: null }]);
-    expect(item.sub).toBe('Rett · 1 porsjon · 8,1 g');
+    expect(item.sub).toBe('Rett · 1 porsjon · 8,1 g protein');
   });
 
   it('en matvare fra tabellen: porsjonene i tabellen, så 100 g', () => {

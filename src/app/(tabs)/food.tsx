@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FoodEntryRow } from '@/components/FoodEntryRow';
 import { Icon } from '@/components/Icon';
 import { ProteinBar } from '@/components/ProteinBar';
-import { Card, IconButton, PrimaryButton, SectionLabel } from '@/components/ui';
+import { Card, IconButton, PrimaryButton } from '@/components/ui';
 import { WeekStrip } from '@/components/WeekStrip';
 import { tr } from '@/i18n';
 import { dayWhen, formatLong, pickedDay, type DateKey } from '@/lib/dates';
@@ -27,6 +27,7 @@ export default function FoodScreen() {
 
   const totals = sumEntries(entriesOn(food, day));
   const goal = goalOn(food, day);
+  // Eldre dager viser bare måltidene der noe er logget. I dag og i går vises også de tomme.
   const groups = mealGroups(food, day).filter((g) => g.entries.length || (editable && !g.meal.hidden));
   const open = (mealId?: string) => router.push({ pathname: '/food-log', params: mealId ? { day, meal: mealId } : { day } });
 
@@ -61,36 +62,46 @@ export default function FoodScreen() {
 
       {groups.map(({ meal, entries, totals: mt }) => {
         const name = mealName(meal);
-        const addButton = editable ? (
-          <IconButton icon="plus" label={tr.food.addToMeal(name)} size={32} background={t.button} onPress={() => open(meal.id)} />
-        ) : undefined;
+        // Et tomt måltid er en stiplet plassholder, så det ikke ser ut som det hører til kortet over.
         if (!entries.length) {
           return (
-            <View key={meal.id} style={styles.emptyMeal}>
+            <Pressable
+              key={meal.id}
+              onPress={() => open(meal.id)}
+              accessibilityRole="button"
+              accessibilityLabel={tr.food.addToMeal(name)}
+              style={({ pressed }) => [styles.emptyMeal, { borderColor: t.border, opacity: pressed ? 0.6 : 1 }]}>
               <Text style={[styles.emptyMealName, { color: t.sub }]}>{name}</Text>
-              {addButton}
-            </View>
+              <View style={styles.emptyMealAdd}>
+                <Icon name="plus" size={13} color={t.sub} />
+                <Text style={{ fontSize: 15, fontWeight: '600', color: t.sub }}>{tr.common.add}</Text>
+              </View>
+            </Pressable>
           );
         }
+        // Navnet og summen står inne i kortet, sammen med det som hører til måltidet.
         return (
-          <View key={meal.id} style={styles.section}>
-            <SectionLabel right={proteinText(mt.protein)}>{name}</SectionLabel>
-            <Card style={styles.list}>
-              {entries.map((e, i) => (
-                <FoodEntryRow key={e.id} entry={e} day={day} showKcal={food.showKcal} editable={editable} first={i === 0} />
-              ))}
-              {editable ? (
-                <Pressable
-                  onPress={() => open(meal.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={tr.food.addToMeal(name)}
-                  style={({ pressed }) => [styles.addRow, { borderTopColor: t.separator, opacity: pressed ? 0.6 : 1 }]}>
-                  <Icon name="plus" size={14} color={t.sub} />
-                  <Text style={{ fontSize: 15, color: t.sub, fontWeight: '500' }}>{tr.common.add}</Text>
-                </Pressable>
-              ) : null}
-            </Card>
-          </View>
+          <Card key={meal.id} style={styles.meal}>
+            <View style={styles.mealHead}>
+              <Text style={[styles.mealName, { color: t.text }]} accessibilityRole="header" numberOfLines={1}>
+                {name}
+              </Text>
+              <Text style={[styles.mealSum, { color: t.colors.fersken.ink }]}>{tr.food.proteinOf(proteinText(mt.protein))}</Text>
+            </View>
+            {entries.map((e, i) => (
+              <FoodEntryRow key={e.id} entry={e} day={day} showKcal={food.showKcal} editable={editable} first={i === 0} />
+            ))}
+            {editable ? (
+              <Pressable
+                onPress={() => open(meal.id)}
+                accessibilityRole="button"
+                accessibilityLabel={tr.food.addToMeal(name)}
+                style={({ pressed }) => [styles.addRow, { borderTopColor: t.separator, opacity: pressed ? 0.6 : 1 }]}>
+                <Icon name="plus" size={14} color={t.sub} />
+                <Text style={{ fontSize: 15, color: t.sub, fontWeight: '500' }}>{tr.common.add}</Text>
+              </Pressable>
+            ) : null}
+          </Card>
         );
       })}
 
@@ -115,11 +126,14 @@ const styles = StyleSheet.create({
   setupText: { fontSize: 15, lineHeight: 21 },
   progress: { marginHorizontal: 16, marginTop: 18, padding: 16 },
   empty: { fontSize: 15, marginHorizontal: 20, marginTop: 18 },
-  section: { paddingHorizontal: 16, paddingTop: 18, gap: 8 },
-  list: { paddingHorizontal: 14 },
+  meal: { marginHorizontal: 16, marginTop: 14, paddingHorizontal: 14 },
+  mealHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, paddingTop: 14, paddingBottom: 6 },
+  mealName: { fontSize: 19, fontWeight: '700', flexShrink: 1 },
+  mealSum: { fontSize: 15, fontWeight: '600', fontVariant: ['tabular-nums'] },
   addRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, borderTopWidth: StyleSheet.hairlineWidth },
-  emptyMeal: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 20, marginTop: 14, minHeight: 36 },
-  emptyMealName: { fontSize: 13, lineHeight: 20, fontWeight: '600', letterSpacing: 0.5, textTransform: 'uppercase' },
+  emptyMeal: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 16, marginTop: 10, minHeight: 50, paddingHorizontal: 14, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed' },
+  emptyMealName: { fontSize: 17, fontWeight: '600' },
+  emptyMealAdd: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   linkCard: { marginHorizontal: 16, marginTop: 24 },
   linkRow: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
 });

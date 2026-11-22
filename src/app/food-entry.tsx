@@ -40,9 +40,12 @@ export default function FoodEntryScreen() {
   const [mealId, setMealId] = useState(entry?.mealId ?? '');
   const [time, setTime] = useState(entry?.time ?? '12:00');
 
+  // Slettet, eller en dag som ikke kan endres lenger (for eksempel åpnet fra et gammelt varsel).
   if (!entry || !canEditFood(day, today)) {
     return (
       <View style={[styles.missing, { backgroundColor: t.bg }]}>
+        <Text style={[styles.missingTitle, { color: t.text }]}>{entry ? tr.food.entryLocked : tr.food.entryMissing}</Text>
+        <Text style={[styles.missingText, { color: t.sub }]}>{entry ? tr.food.entryLockedText : tr.food.entryMissingText}</Text>
         <TextButton label={tr.common.close} bold onPress={close} />
       </View>
     );
@@ -139,7 +142,9 @@ export default function FoodEntryScreen() {
 }
 
 const styles = StyleSheet.create({
-  missing: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 32 },
+  missingTitle: { fontSize: 19, fontWeight: '700', textAlign: 'center' },
+  missingText: { fontSize: 15, lineHeight: 21, textAlign: 'center' },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 4 },
   barTitle: { fontSize: 17, fontWeight: '600', flexShrink: 1, textAlign: 'center' },
   content: { padding: 16, gap: 12 },

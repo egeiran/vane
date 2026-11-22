@@ -589,6 +589,9 @@ export const nb = {
     undo: 'Angre',
     source: 'Kilde: Matvaretabellen 2026, Mattilsynet (matvaretabellen.no)',
     per100: (protein: string) => `${protein} protein per 100 g`,
+    /** «33 g protein»: summen i et måltid og proteinet i en matvare. */
+    proteinOf: (amount: string) => `${amount} protein`,
+    kcalLabel: 'Kalorier',
     dish: 'Rett',
     // Mengden
     amount: 'Mengde',
@@ -605,6 +608,10 @@ export const nb = {
     quickNamePlaceholder: 'F.eks. Kantina',
     // Føringen
     entryTitle: 'Endre',
+    entryMissing: 'Føringen finnes ikke lenger',
+    entryMissingText: 'Den kan ha blitt slettet.',
+    entryLocked: 'Denne dagen kan ikke endres',
+    entryLockedText: 'Bare i dag og i går kan endres. Eldre dager kan leses på Mat-fanen.',
     time: 'Klokkeslett',
     deleteEntry: 'Slett',
     // Matvarer og retter

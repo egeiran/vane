@@ -132,6 +132,20 @@ export default function FoodLogScreen() {
         <TextButton label={tr.common.done} bold onPress={close} />
       </View>
 
+      {/* Måltidet står fast øverst, så man ser hvor det man legger til havner, også etter rulling. */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        accessibilityRole="radiogroup"
+        accessibilityLabel={tr.food.meal}
+        style={styles.chipBar}
+        contentContainerStyle={styles.chips}>
+        {meals.map((m) => (
+          <Chip key={m.id} label={mealName(m)} on={m.id === mealId} onPress={() => setMealId(m.id)} />
+        ))}
+      </ScrollView>
+
       <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.progress}>
           <ProteinBar protein={totals.protein} goal={goalOn(data, day)} kcal={data.showKcal ? totals.kcal : null} compact />
@@ -146,18 +160,6 @@ export default function FoodLogScreen() {
             <TextButton label={tr.food.undo} bold color={t.colors.fersken.ink} onPress={undo} />
           </View>
         ) : null}
-
-        <View>
-          <Text style={[styles.label, { color: t.sub }]}>{tr.food.meal}</Text>
-          <View style={styles.chips} accessibilityRole="radiogroup">
-            {meals.map((m) => {
-              const on = m.id === mealId;
-              return (
-                <Chip key={m.id} label={mealName(m)} on={on} onPress={() => setMealId(m.id)} />
-              );
-            })}
-          </View>
-        </View>
 
         {mode.kind === 'amount' ? (
           <Card style={styles.panel}>
@@ -197,7 +199,7 @@ export default function FoodLogScreen() {
                     first
                     icon="arrow.uturn.backward"
                     title={when === 'today' ? tr.food.sameAsYesterday : tr.food.sameAsDayBefore}
-                    sub={`${sameAsBefore.map((e) => e.name || tr.food.quickName).join(', ')} · ${proteinText(sumEntries(sameAsBefore).protein)}`}
+                    sub={`${sameAsBefore.map((e) => e.name || tr.food.quickName).join(', ')} · ${tr.food.proteinOf(proteinText(sumEntries(sameAsBefore).protein))}`}
                     onPress={copyPrevious}
                   />
                 ) : null}
@@ -214,7 +216,7 @@ export default function FoodLogScreen() {
                       key={s.key}
                       first={i === 0}
                       name={s.name || tr.food.quickName}
-                      sub={s.amount ? `${amountText(s.amount)} · ${proteinText(s.nutrients.protein, true)}` : proteinText(s.nutrients.protein, true)}
+                      sub={[s.amount ? amountText(s.amount) : '', tr.food.proteinOf(proteinText(s.nutrients.protein, true))].filter(Boolean).join(' · ')}
                       onOpen={() => openSuggestion(s)}
                       onAdd={() => logSuggestion(s)}
                     />
@@ -356,8 +358,8 @@ const styles = StyleSheet.create({
   progress: { padding: 14 },
   added: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingLeft: 14, paddingRight: 4, minHeight: 48 },
   addedText: { flex: 1, fontSize: 15, fontWeight: '600' },
-  label: { fontSize: 13, fontWeight: '600', marginBottom: 8, paddingHorizontal: 4 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chipBar: { flexGrow: 0, flexShrink: 0 },
+  chips: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 10 },
   searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingLeft: 12, paddingRight: 4, minHeight: 46 },
   searchInput: { flex: 1, fontSize: 17, paddingVertical: 10 },
   group: { gap: 8 },
