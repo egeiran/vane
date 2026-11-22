@@ -64,7 +64,7 @@ Bare Apples språkmodell på telefonen. Ingenting sendes ut. Krever en iPhone me
 
 ## Åpne spørsmål
 
-- **Retting av eldre dager.** I dag kan bare i dag og i går rettes. De fem dagene i ukestripa kan åpnes og leses (13. november 2026), men ikke endres. Det er ikke et ufravikelig prinsipp, men vi venter med å endre det. Alternativer: siste 7 dager for alle, eller eldre dager med Vane+.
+- **Retting av eldre dager.** I dag kan bare i dag og i går rettes. Siden 22. november 2026 (#31) kan man bla tilbake til den første dagen med data og lese den, men ikke endre den. Det er ikke et ufravikelig prinsipp, men vi venter med å endre det. Alternativer: siste 7 dager for alle, eller eldre dager med Vane+.
 - **Mat og Vane+.** Om Mat er gratis, eller om for eksempel søk i Matvaretabellen og «Som i går» krever Vane+, avgjøres sammen med #13.
 - **Matvaretabellen i en betalt app.** Mattilsynet ber om at tabellen oppgis som kilde, og sier at dataene kan lagres lokalt. Det står ingen egen lisens for API-et. Før lansering bør vi spørre matvaretabellen@mattilsynet.no om bruk i en app man betaler for.
 - **Kategori i App Store:** Produktivitet eller Helse og trening.
@@ -86,5 +86,7 @@ Mat (#28) ble lagt til 13. november 2026, som en egen modul med fane. Den er lag
 - Som for vanene kan bare i dag og i går endres.
 - Varslene er av som standard.
 - Widgets, Snarveier og Apple Helse kommer senere.
+
+UX-runden (#31) ble lagt inn før App Store-siden (#17), 22. november 2026, etter en gjennomgang med klikkbare forslag: sveip mellom dager og perioder, native headere og ark, hold-inne-menyer og sveip på rader, dra for å flytte, iOS sine tidsvelgere, rolige overganger, og en tydeligere Mat-side. Skjermbildene til App Store tas etter den.
 
 4. **Senere:** Apple Watch.
