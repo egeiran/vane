@@ -183,6 +183,7 @@ export const en: Strings = {
     rangeWeek: 'This week',
     rangeMonth: 'Last four weeks',
     rangeYear: 'Last 12 months',
+    span: (from: string, to: string) => `${from} – ${to}`,
     period: 'Period',
     segWeek: 'Week',
     segMonth: '4 weeks',

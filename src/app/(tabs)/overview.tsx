@@ -4,12 +4,13 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ColumnGrid, Legend, WeekRows, type HeatWeek } from '@/components/HeatGrid';
 import { Icon } from '@/components/Icon';
-import { Card, SectionLabel, Segmented } from '@/components/ui';
+import { SwipePager } from '@/components/SwipePager';
+import { Card, SectionLabel, Segmented, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
 import { addDays, formatShort, isoWeek, relativeDayName, relativeWeekday, type DateKey } from '@/lib/dates';
-import { daysInRange, isFuture, weekColumns, weekRows } from '@/lib/grid';
-import { dayStats, fractionOn, goalsOn, periodSummary, summaryText } from '@/lib/habits';
-import { dayTotals, fractionOn as proteinFraction, kcalText, proteinText } from '@/lib/food';
+import { daysInRange, isFuture, periodEnd, periodsBack, weekColumns, weekRows } from '@/lib/grid';
+import { dayStats, firstDataDay, fractionOn, goalsOn, periodSummary, summaryText } from '@/lib/habits';
+import { dayTotals, firstFoodDay, fractionOn as proteinFraction, kcalText, proteinText } from '@/lib/food';
 import { useFoodData } from '@/lib/foodStore';
 import { journalOn, moodFraction } from '@/lib/journal';
 import { showsWeekNumber, weekStartOf } from '@/lib/region';
@@ -20,6 +21,16 @@ import { shade, useTheme } from '@/theme';
 type Range = 'week' | 'month' | 'year';
 
 const RANGE_WEEKS: Record<Range, number> = { week: 1, month: 4, year: 53 };
+/** «12. okt – 8. nov», eller årene for et år. */
+function periodText(range: Range, rows: DateKey[][]): string {
+  const a = rows[0][0];
+  const b = rows[rows.length - 1][6];
+  if (range === 'year') return a.slice(0, 4) === b.slice(0, 4) ? a.slice(0, 4) : `${a.slice(0, 4)}–${b.slice(0, 4)}`;
+  return tr.overview.span(formatShort(a), formatShort(b));
+}
+
+const minKey = (a: DateKey, b: DateKey) => (a < b ? a : b);
+
 const rangeTitle = (range: Range) => ({ week: tr.overview.rangeWeek, month: tr.overview.rangeMonth, year: tr.overview.rangeYear })[range];
 
 export default function OverviewScreen() {
@@ -27,17 +38,29 @@ export default function OverviewScreen() {
   const today = useToday();
   const data = useData();
   const [range, setRange] = useState<Range>('month');
+  // Perioden: 0 er den som slutter i dag, 1 er perioden før, osv. Én periode for hele siden.
+  const [offset, setOffset] = useState(0);
   const [picked, setPicked] = useState<DateKey>(today);
   const [journalPicked, setJournalPicked] = useState<DateKey>(today);
   const [foodPicked, setFoodPicked] = useState<DateKey>(today);
   const food = useFoodData();
   const weeks = RANGE_WEEKS[range];
   const weekStart = weekStartOf(data.settings);
+  const end = periodEnd(today, weeks, offset);
+  const first = minKey(firstDataDay(data, today), firstFoodDay(food, today));
+  const canPrev = offset < periodsBack(first, today, weeks, weekStart);
+  const goPeriod = (next: number) => {
+    const day = periodEnd(today, weeks, next);
+    setOffset(next);
+    setPicked(day);
+    setJournalPicked(day);
+    setFoodPicked(day);
+  };
 
   const dayColor = (day: DateKey) => (isFuture(day, today) ? 'transparent' : shade(t, t.slate, dayStats(data, day).average));
 
-  const heroWeeks: HeatWeek[] = weekRows(today, weeks, weekStart).map((row) => ({
-    label: range === 'week' && showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(today)) : formatShort(row[0]),
+  const heroWeeks: HeatWeek[] = weekRows(end, weeks, weekStart).map((row) => ({
+    label: range === 'week' && showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(end)) : formatShort(row[0]),
     cells: row.map((day) => {
       const future = isFuture(day, today);
       const s = dayStats(data, day);
@@ -59,8 +82,8 @@ export default function OverviewScreen() {
     (pickedGoals.length ? tr.overview.goalsDone(pickedGoals.filter((g) => g.done).length, pickedGoals.length) : tr.overview.noGoals);
 
   const legend = [0, 0.25, 0.5, 0.75, 1].map((f) => shade(t, t.slate, f));
-  const nDays = daysInRange(today, weeks, weekStart);
-  const yearCols = range === 'year' ? weekColumns(today, 53, weekStart) : [];
+  const nDays = offset ? weeks * 7 : daysInRange(today, weeks, weekStart);
+  const yearCols = range === 'year' ? weekColumns(end, 53, weekStart) : [];
 
   // Dagboken: humøret som fargestyrke, og setningen for dagen man trykker på. Ingen snitt og ingen trend.
   const journalOnModule = data.settings.modules.journal;
@@ -76,8 +99,8 @@ export default function OverviewScreen() {
     const name = relativeDayName(day, today);
     return e ? tr.journal.dayEntry(name, e.mood ? tr.journal.moods[e.mood - 1] : '', e.text.trim()) : tr.journal.dayEmpty(name);
   };
-  const journalWeeks: HeatWeek[] = weekRows(today, weeks, weekStart).map((row) => ({
-    label: range === 'week' && showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(today)) : formatShort(row[0]),
+  const journalWeeks: HeatWeek[] = weekRows(end, weeks, weekStart).map((row) => ({
+    label: range === 'week' && showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(end)) : formatShort(row[0]),
     cells: row.map((day) => {
       const future = isFuture(day, today);
       return {
@@ -100,8 +123,8 @@ export default function OverviewScreen() {
     if (!totals.count) return tr.food.dayEmpty(name);
     return tr.food.dayLine(name, [proteinText(totals.protein), food.showKcal ? kcalText(totals.kcal) : ''].filter(Boolean).join(' · '));
   };
-  const foodWeeks: HeatWeek[] = weekRows(today, weeks, weekStart).map((row) => ({
-    label: range === 'week' && showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(today)) : formatShort(row[0]),
+  const foodWeeks: HeatWeek[] = weekRows(end, weeks, weekStart).map((row) => ({
+    label: range === 'week' && showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(end)) : formatShort(row[0]),
     cells: row.map((day) => {
       const future = isFuture(day, today);
       return {
@@ -122,10 +145,13 @@ export default function OverviewScreen() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={[styles.sub, { color: t.sub }]}>{rangeTitle(range)}</Text>
-        <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-          {tr.overview.title}
-        </Text>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={[styles.sub, { color: t.sub }]}>{offset ? periodText(range, weekRows(end, weeks, weekStart)) : rangeTitle(range)}</Text>
+          <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
+            {tr.overview.title}
+          </Text>
+        </View>
+        {offset ? <TextButton label={tr.today.backToToday} bold onPress={() => goPeriod(0)} /> : null}
       </View>
 
       <View style={{ paddingHorizontal: 16 }}>
@@ -134,6 +160,7 @@ export default function OverviewScreen() {
           value={range}
           onChange={(r) => {
             setRange(r);
+            setOffset(0);
             setPicked(today);
             setJournalPicked(today);
             setFoodPicked(today);
@@ -146,94 +173,97 @@ export default function OverviewScreen() {
         />
       </View>
 
-      <Card style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Text style={[styles.cardTitle, { color: t.text }]}>{tr.overview.all}</Text>
-          <Text style={{ fontSize: 13, color: t.sub }}>{tr.overview.allSub}</Text>
-        </View>
-        {range === 'year' ? (
-          <ColumnGrid columns={yearCols.map((col) => col.map(dayColor))} size={5} gap={1} />
-        ) : (
-          <>
-            <WeekRows weeks={heroWeeks} weekStart={weekStart} />
-            <Text accessibilityLiveRegion="polite" style={[styles.dayLine, { backgroundColor: t.bg, color: t.text }]}>
-              {dayLine}
-            </Text>
-          </>
-        )}
-        <Legend colors={legend} />
-      </Card>
-
-      {journalOnModule ? (
+      {/* Dra sidelengs for forrige periode (uke, 4 uker eller år). */}
+      <SwipePager pageKey={`${range}:${offset}`} canPrev={canPrev} canNext={offset > 0} onPrev={() => goPeriod(offset + 1)} onNext={() => goPeriod(offset - 1)}>
         <Card style={styles.card}>
           <View style={styles.cardHeader}>
-            <Text style={[styles.cardTitle, { color: t.text }]}>{tr.journal.overviewTitle}</Text>
-            <Text style={{ fontSize: 13, color: t.sub }}>{tr.journal.overviewSub}</Text>
+            <Text style={[styles.cardTitle, { color: t.text }]}>{tr.overview.all}</Text>
+            <Text style={{ fontSize: 13, color: t.sub }}>{tr.overview.allSub}</Text>
           </View>
           {range === 'year' ? (
-            <ColumnGrid columns={yearCols.map((col) => col.map(moodColor))} size={5} gap={1} />
+            <ColumnGrid columns={yearCols.map((col) => col.map(dayColor))} size={5} gap={1} />
           ) : (
             <>
-              <WeekRows weeks={journalWeeks} weekStart={weekStart} />
+              <WeekRows weeks={heroWeeks} weekStart={weekStart} />
               <Text accessibilityLiveRegion="polite" style={[styles.dayLine, { backgroundColor: t.bg, color: t.text }]}>
-                {journalLine(journalPicked)}
+                {dayLine}
               </Text>
             </>
           )}
+          <Legend colors={legend} />
         </Card>
-      ) : null}
 
-      {foodOnModule ? (
-        <Card style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={[styles.cardTitle, { color: t.text }]}>{tr.food.overviewTitle}</Text>
-            <Text style={{ fontSize: 13, color: t.sub }}>{tr.food.overviewSub}</Text>
-          </View>
-          {range === 'year' ? (
-            <ColumnGrid columns={yearCols.map((col) => col.map(foodColor))} size={5} gap={1} />
-          ) : (
-            <>
-              <WeekRows weeks={foodWeeks} weekStart={weekStart} />
-              <Text accessibilityLiveRegion="polite" style={[styles.dayLine, { backgroundColor: t.bg, color: t.text }]}>
-                {foodLine(foodPicked)}
-              </Text>
-            </>
-          )}
-        </Card>
-      ) : null}
+        {journalOnModule ? (
+          <Card style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={[styles.cardTitle, { color: t.text }]}>{tr.journal.overviewTitle}</Text>
+              <Text style={{ fontSize: 13, color: t.sub }}>{tr.journal.overviewSub}</Text>
+            </View>
+            {range === 'year' ? (
+              <ColumnGrid columns={yearCols.map((col) => col.map(moodColor))} size={5} gap={1} />
+            ) : (
+              <>
+                <WeekRows weeks={journalWeeks} weekStart={weekStart} />
+                <Text accessibilityLiveRegion="polite" style={[styles.dayLine, { backgroundColor: t.bg, color: t.text }]}>
+                  {journalLine(journalPicked)}
+                </Text>
+              </>
+            )}
+          </Card>
+        ) : null}
 
-      {data.habits.length ? (
-        <View style={styles.section}>
-          <SectionLabel>{tr.overview.each}</SectionLabel>
-          {data.habits.map((h) => {
-            const c = t.colors[h.color];
-            const color = (day: DateKey) => (isFuture(day, today) ? 'transparent' : shade(t, c.solid, fractionOn(data, h, day)));
-            const summary = summaryText(periodSummary(data, h, today, nDays));
-            return (
-              <Pressable
-                key={h.id}
-                onPress={() => router.push({ pathname: '/habit/[id]', params: { id: h.id } })}
-                accessibilityRole="button"
-                accessibilityLabel={tr.overview.habitSummary(h.name, summary)}
-                style={({ pressed }) => [styles.habitCard, { backgroundColor: t.card, opacity: pressed ? 0.8 : 1 }]}>
-                <View style={styles.habitTop}>
-                  <View style={{ flex: 1, gap: 3 }}>
-                    <View style={styles.nameRow}>
-                      <View style={[styles.dot, { backgroundColor: c.solid }]} />
-                      <Text style={[styles.habitName, { color: t.text }]} numberOfLines={1}>
-                        {h.name}
-                      </Text>
+        {foodOnModule ? (
+          <Card style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={[styles.cardTitle, { color: t.text }]}>{tr.food.overviewTitle}</Text>
+              <Text style={{ fontSize: 13, color: t.sub }}>{tr.food.overviewSub}</Text>
+            </View>
+            {range === 'year' ? (
+              <ColumnGrid columns={yearCols.map((col) => col.map(foodColor))} size={5} gap={1} />
+            ) : (
+              <>
+                <WeekRows weeks={foodWeeks} weekStart={weekStart} />
+                <Text accessibilityLiveRegion="polite" style={[styles.dayLine, { backgroundColor: t.bg, color: t.text }]}>
+                  {foodLine(foodPicked)}
+                </Text>
+              </>
+            )}
+          </Card>
+        ) : null}
+
+        {data.habits.length ? (
+          <View style={styles.section}>
+            <SectionLabel>{tr.overview.each}</SectionLabel>
+            {data.habits.map((h) => {
+              const c = t.colors[h.color];
+              const color = (day: DateKey) => (isFuture(day, today) ? 'transparent' : shade(t, c.solid, fractionOn(data, h, day)));
+              const summary = summaryText(periodSummary(data, h, end, nDays));
+              return (
+                <Pressable
+                  key={h.id}
+                  onPress={() => router.push({ pathname: '/habit/[id]', params: { id: h.id } })}
+                  accessibilityRole="button"
+                  accessibilityLabel={tr.overview.habitSummary(h.name, summary)}
+                  style={({ pressed }) => [styles.habitCard, { backgroundColor: t.card, opacity: pressed ? 0.8 : 1 }]}>
+                  <View style={styles.habitTop}>
+                    <View style={{ flex: 1, gap: 3 }}>
+                      <View style={styles.nameRow}>
+                        <View style={[styles.dot, { backgroundColor: c.solid }]} />
+                        <Text style={[styles.habitName, { color: t.text }]} numberOfLines={1}>
+                          {h.name}
+                        </Text>
+                      </View>
+                      <Text style={{ fontSize: 13, color: t.sub }}>{summary}</Text>
                     </View>
-                    <Text style={{ fontSize: 13, color: t.sub }}>{summary}</Text>
+                    {range !== 'year' ? <MiniRows rows={weekRows(end, weeks, weekStart)} color={color} today={today} big={range === 'week'} /> : null}
                   </View>
-                  {range !== 'year' ? <MiniRows rows={weekRows(today, weeks, weekStart)} color={color} today={today} big={range === 'week'} /> : null}
-                </View>
-                {range === 'year' ? <ColumnGrid columns={yearCols.map((col) => col.map(color))} size={5} gap={1} /> : null}
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
+                  {range === 'year' ? <ColumnGrid columns={yearCols.map((col) => col.map(color))} size={5} gap={1} /> : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
+      </SwipePager>
 
       {recentGoals.length ? (
         <View style={styles.section}>
@@ -285,7 +315,7 @@ function MiniRows({ rows, color, today, big }: { rows: DateKey[][]; color: (d: D
 
 const styles = StyleSheet.create({
   content: { paddingTop: 8, paddingBottom: 40 },
-  header: { paddingHorizontal: 20, paddingBottom: 14, gap: 2 },
+  header: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 14 },
   sub: { fontSize: 15, fontWeight: '500' },
   title: { fontSize: 34, lineHeight: 40, fontWeight: '700', letterSpacing: -0.5 },
   card: { marginHorizontal: 16, marginTop: 12, padding: 16, gap: 12 },

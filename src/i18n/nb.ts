@@ -203,6 +203,8 @@ export const nb = {
     rangeWeek: 'Denne uka',
     rangeMonth: 'Siste fire uker',
     rangeYear: 'Siste 12 måneder',
+    /** En eldre periode: «12. okt – 8. nov». */
+    span: (from: string, to: string) => `${from} – ${to}`,
     period: 'Periode',
     segWeek: 'Uke',
     segMonth: '4 uker',

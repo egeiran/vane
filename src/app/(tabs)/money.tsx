@@ -6,6 +6,7 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { Icon } from '@/components/Icon';
 import { PurchaseRow } from '@/components/PurchaseRow';
 import { RecurringCard } from '@/components/RecurringCard';
+import { SwipePager } from '@/components/SwipePager';
 import { Card, IconButton, PrimaryButton, SectionLabel, TextButton, tick } from '@/components/ui';
 import { tr } from '@/i18n';
 import {
@@ -41,7 +42,9 @@ export default function MoneyScreen() {
   const showRecurring = useStore((s) => recurringOn(s.settings));
   const current = monthOf(today);
   const [picked, setPicked] = useState<MonthKey>(current);
-  const month = picked > current ? current : picked;
+  // Den eldste måneden med et kjøp. Man kan bla tilbake dit, men ikke lenger.
+  const oldest = data.purchases.reduce((min, p) => (p.day < min ? p.day : min), today).slice(0, 7);
+  const month = picked > current ? current : picked < oldest ? oldest : picked;
 
   // Første gang fanen åpnes: veiviseren for Snarveier.
   useFocusEffect(
@@ -70,7 +73,7 @@ export default function MoneyScreen() {
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View style={{ gap: 2 }}>
-          <Text style={[styles.sub, { color: t.sub }]}>{capitalize(monthName(current, today))}</Text>
+          <Text style={[styles.sub, { color: t.sub }]}>{capitalize(monthName(month, today))}</Text>
           <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
             {tr.money.title}
           </Text>
@@ -113,78 +116,106 @@ export default function MoneyScreen() {
         </View>
       ) : null}
 
-      <Card style={styles.card}>
-        <View style={styles.monthBar}>
-          <IconButton icon="chevron.left" label={tr.money.previousMonth} size={36} background="transparent" onPress={() => setPicked(addMonths(month, -1))} />
-          <Text style={[styles.cardTitle, { color: t.text }]} accessibilityRole="header">
-            {capitalize(monthName(month, today))}
+      {/* Dra månedskortet sidelengs for forrige eller neste måned. Pilene virker fortsatt. */}
+      <SwipePager pageKey={month} canPrev={month > oldest} canNext={month < current} onPrev={() => setPicked(addMonths(month, -1))} onNext={() => setPicked(addMonths(month, 1))}>
+        <Card style={styles.card}>
+          <View style={styles.monthBar}>
+            {month > oldest ? (
+              <IconButton icon="chevron.left" label={tr.money.previousMonth} size={36} background="transparent" onPress={() => setPicked(addMonths(month, -1))} />
+            ) : (
+              <View style={{ width: 36 }} />
+            )}
+            <Text style={[styles.cardTitle, { color: t.text }]} accessibilityRole="header">
+              {capitalize(monthName(month, today))}
+            </Text>
+            {month < current ? (
+              <IconButton icon="chevron.right" label={tr.money.nextMonth} size={36} background="transparent" onPress={() => setPicked(addMonths(month, 1))} />
+            ) : (
+              <View style={{ width: 36 }} />
+            )}
+          </View>
+          <Text style={[styles.total, { color: t.text }]} accessibilityLabel={tr.money.spentIn(monthName(month, today), formatAmount(summary.total, summary.currency))}>
+            {formatAmount(summary.total, summary.currency)}
           </Text>
-          {month < current ? (
-            <IconButton icon="chevron.right" label={tr.money.nextMonth} size={36} background="transparent" onPress={() => setPicked(addMonths(month, 1))} />
-          ) : (
-            <View style={{ width: 36 }} />
-          )}
-        </View>
-        <Text style={[styles.total, { color: t.text }]} accessibilityLabel={tr.money.spentIn(monthName(month, today), formatAmount(summary.total, summary.currency))}>
-          {formatAmount(summary.total, summary.currency)}
-        </Text>
 
-        {summary.count === 0 ? (
-          <Text style={[styles.body, { color: t.sub, textAlign: 'center' }]}>{tr.money.noPurchasesIn(monthName(month, today))}</Text>
-        ) : null}
+          {summary.count === 0 ? (
+            <Text style={[styles.body, { color: t.sub, textAlign: 'center' }]}>{tr.money.noPurchasesIn(monthName(month, today))}</Text>
+          ) : null}
 
-        {summary.byCategory.map((row) => {
-          const c = categoryById(data, row.categoryId);
-          const name = c ? categoryName(c) : tr.money.deletedCategory;
-          return (
-            <Pressable
-              key={row.categoryId}
-              onPress={() => router.push({ pathname: '/purchases', params: { month, category: row.categoryId } })}
-              accessibilityRole="button"
-              accessibilityLabel={tr.money.categoryAmount(name, formatAmount(row.amount, summary.currency))}
-              style={({ pressed }) => [styles.catRow, { opacity: pressed ? 0.6 : 1 }]}>
-              <CategoryIcon category={c} size={30} />
+          {summary.byCategory.map((row) => {
+            const c = categoryById(data, row.categoryId);
+            const name = c ? categoryName(c) : tr.money.deletedCategory;
+            return (
+              <Pressable
+                key={row.categoryId}
+                onPress={() => router.push({ pathname: '/purchases', params: { month, category: row.categoryId } })}
+                accessibilityRole="button"
+                accessibilityLabel={tr.money.categoryAmount(name, formatAmount(row.amount, summary.currency))}
+                style={({ pressed }) => [styles.catRow, { opacity: pressed ? 0.6 : 1 }]}>
+                <CategoryIcon category={c} size={30} />
+                <View style={{ flex: 1, gap: 6 }}>
+                  <View style={styles.catTop}>
+                    <Text style={[styles.catName, { color: t.text }]} numberOfLines={1}>
+                      {name}
+                    </Text>
+                    <Text style={[styles.catAmount, { color: t.text }]}>{formatAmount(row.amount, summary.currency)}</Text>
+                  </View>
+                  <View style={[styles.track, { backgroundColor: t.bg }]}>
+                    <View style={[styles.fill, { width: `${(row.amount / Math.max(1, summary.total)) * 100}%`, backgroundColor: color(row.categoryId) }]} />
+                  </View>
+                </View>
+              </Pressable>
+            );
+          })}
+
+          {summary.pending ? (
+            <View style={styles.catRow}>
+              <CategoryIcon size={30} />
               <View style={{ flex: 1, gap: 6 }}>
                 <View style={styles.catTop}>
-                  <Text style={[styles.catName, { color: t.text }]} numberOfLines={1}>
-                    {name}
-                  </Text>
-                  <Text style={[styles.catAmount, { color: t.text }]}>{formatAmount(row.amount, summary.currency)}</Text>
+                  <Text style={[styles.catName, { color: t.sub }]}>{tr.money.pending}</Text>
+                  <Text style={[styles.catAmount, { color: t.sub }]}>{formatAmount(summary.pending, summary.currency)}</Text>
                 </View>
                 <View style={[styles.track, { backgroundColor: t.bg }]}>
-                  <View style={[styles.fill, { width: `${(row.amount / Math.max(1, summary.total)) * 100}%`, backgroundColor: color(row.categoryId) }]} />
+                  <View style={[styles.fill, { width: `${(summary.pending / Math.max(1, summary.total)) * 100}%`, backgroundColor: t.faint }]} />
                 </View>
               </View>
-            </Pressable>
-          );
-        })}
-
-        {summary.pending ? (
-          <View style={styles.catRow}>
-            <CategoryIcon size={30} />
-            <View style={{ flex: 1, gap: 6 }}>
-              <View style={styles.catTop}>
-                <Text style={[styles.catName, { color: t.sub }]}>{tr.money.pending}</Text>
-                <Text style={[styles.catAmount, { color: t.sub }]}>{formatAmount(summary.pending, summary.currency)}</Text>
-              </View>
-              <View style={[styles.track, { backgroundColor: t.bg }]}>
-                <View style={[styles.fill, { width: `${(summary.pending / Math.max(1, summary.total)) * 100}%`, backgroundColor: t.faint }]} />
-              </View>
             </View>
-          </View>
-        ) : null}
+          ) : null}
 
-        {otherCurrencies.length || summary.skipped ? (
-          <Text style={[styles.note, { color: t.sub }]}>
-            {[
-              otherCurrencies.length ? tr.money.otherCurrencies(otherCurrencies.join(', ')) : '',
-              summary.skipped ? tr.money.skipped(summary.skipped) : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-          </Text>
-        ) : null}
-      </Card>
+          {otherCurrencies.length || summary.skipped ? (
+            <Text style={[styles.note, { color: t.sub }]}>
+              {[
+                otherCurrencies.length ? tr.money.otherCurrencies(otherCurrencies.join(', ')) : '',
+                summary.skipped ? tr.money.skipped(summary.skipped) : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            </Text>
+          ) : null}
+        </Card>
+      </SwipePager>
+
+      {/* Kjøpene i måneden står rett under måneden. */}
+      <View style={styles.section}>
+        <SectionLabel
+          right={
+            recent.length ? (
+              <TextButton label={tr.money.seeAll} onPress={() => router.push({ pathname: '/purchases', params: { month } })} />
+            ) : undefined
+          }>
+          {tr.money.purchasesIn(monthName(month, today))}
+        </SectionLabel>
+        {recent.length ? (
+          <Card style={styles.list}>
+            {recent.slice(0, RECENT).map((p, i) => (
+              <PurchaseRow key={p.id} purchase={p} data={data} today={today} first={i === 0} />
+            ))}
+          </Card>
+        ) : (
+          <Text style={[styles.note, { color: t.sub, marginHorizontal: 4 }]}>{tr.money.noCategorized}</Text>
+        )}
+      </View>
 
       {/* Faste utgifter er en egen linje, ikke en del av månedens sum. */}
       {showRecurring ? <RecurringCard data={data} today={today} /> : null}
@@ -222,26 +253,6 @@ export default function MoneyScreen() {
           );
         })}
       </Card>
-
-      <View style={styles.section}>
-        <SectionLabel
-          right={
-            recent.length ? (
-              <TextButton label={tr.money.seeAll} onPress={() => router.push({ pathname: '/purchases', params: { month } })} />
-            ) : undefined
-          }>
-          {tr.money.purchasesIn(monthName(month, today))}
-        </SectionLabel>
-        {recent.length ? (
-          <Card style={styles.list}>
-            {recent.slice(0, RECENT).map((p, i) => (
-              <PurchaseRow key={p.id} purchase={p} data={data} today={today} first={i === 0} />
-            ))}
-          </Card>
-        ) : (
-          <Text style={[styles.note, { color: t.sub, marginHorizontal: 4 }]}>{tr.money.noCategorized}</Text>
-        )}
-      </View>
 
       <View style={styles.section}>
         <Card style={{ overflow: 'hidden' }}>
