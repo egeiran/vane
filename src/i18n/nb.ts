@@ -87,9 +87,16 @@ export const nb = {
     weekDone: 'Ferdig for uka',
     weekCount: (count: number, target: number) => `${count} av ${target} denne uka`,
     reminder: (time: string) => `Påminnelse ${time}`,
-    minusOne: (name: string, amount: string) => `${name}: ${amount}. Trykk for å trekke fra én.`,
     gridHint: 'Viser rutenettet for vanen',
     addOne: (unit: string) => `Legg til én ${unit}`.trim(),
+    /** Hold-inne-menyen på en vane. */
+    menuLess: 'Én mindre',
+    menuEnterCount: 'Skriv inn antall',
+    menuEnterCountTitle: (name: string) => `Antall for ${name}`,
+    menuReset: 'Nullstill',
+    menuOverview: 'Se rutenettet',
+    menuReorder: 'Endre rekkefølge',
+    plusOne: (name: string, amount: string) => `${name}: ${amount}. Trykk for å legge til én.`,
     count: vaner,
   },
 
@@ -432,6 +439,8 @@ export const nb = {
     unknownPlace: 'Ukjent sted',
     // Rader
     notCounted: 'Ikke talt med',
+    menuCount: 'Tell med',
+    menuSkip: 'Ikke tell med',
     amountMissing: 'Beløp mangler',
     rowLabel: (name: string, amount: string, meta: string) => `${name}, ${amount}, ${meta}`,
     approve: (category: string) => `Godkjenn ${category}`,
@@ -620,6 +629,9 @@ export const nb = {
     entryLockedText: 'Bare i dag og i går kan endres. Eldre dager kan leses på Mat-fanen.',
     time: 'Klokkeslett',
     deleteEntry: 'Slett',
+    moveToMeal: 'Flytt til måltid',
+    copyToToday: 'Kopier til i dag',
+    copiedToToday: (name: string) => `${name} er lagt til i dag`,
     // Matvarer og retter
     foods: 'Matvarer',
     dishes: 'Retter',

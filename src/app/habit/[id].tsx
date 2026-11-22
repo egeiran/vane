@@ -105,15 +105,15 @@ export default function HabitScreen() {
           </View>
         </View>
         {isCount && done ? (
-          // Målet er nådd: samme hake som de andre vanene. Trykk trekker fra én, som ringen i «I dag».
+          // Målet er nådd: samme hake som de andre vanene. Trykk legger til én, som ringen på I dag.
           <CheckButton
             size={52}
             done
             color={c.solid}
-            label={tr.habits.minusOne(habit.name, amountText(habit, value))}
+            label={tr.habits.plusOne(habit.name, amountText(habit, value))}
             onPress={() => {
               tick();
-              increment(habit.id, today, -1);
+              increment(habit.id, today, 1);
             }}
           />
         ) : isCount ? (
