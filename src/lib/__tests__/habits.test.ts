@@ -3,6 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import {
   dailyHabitsOn,
   dayStats,
+  firstDataDay,
   frequencyText,
   isEditable,
   isScheduled,
@@ -12,7 +13,7 @@ import {
   weekCount,
   weeklyHabitsOn,
 } from '../habits';
-import { addGoal, addHabit, completeHabit, deleteHabit, incrementHabit, setValue, toggleGoal, toggleHabit } from '../state';
+import { addGoal, addHabit, completeHabit, deleteHabit, incrementHabit, moveHabit, moveItem, setValue, toggleGoal, toggleHabit } from '../state';
 import { EMPTY_DATA, type Data, type HabitInput } from '../types';
 
 const TODAY = '2026-10-17'; // lørdag
@@ -163,5 +164,35 @@ describe('retting', () => {
     expect(isEditable('2026-10-16', TODAY)).toBe(true);
     expect(isEditable('2026-10-15', TODAY)).toBe(false);
     expect(isEditable('2026-10-18', TODAY)).toBe(false);
+  });
+});
+
+describe('bla tilbake og rekkefølge', () => {
+  it('første dag er den eldste vanen, avhukingen, målet eller dagboken', () => {
+    expect(firstDataDay(EMPTY_DATA, TODAY)).toBe('2026-10-16'); // ingen data: i går
+    let d = setup(); // vanene er laget 1. september
+    expect(firstDataDay(d, TODAY)).toBe(START);
+    d = setValue(d, 'walk', '2026-08-20', 1);
+    expect(firstDataDay(d, TODAY)).toBe('2026-08-20');
+    d = addGoal(d, '2026-08-10', 'Rydde');
+    expect(firstDataDay(d, TODAY)).toBe('2026-08-10');
+    expect(firstDataDay({ ...d, journal: { '2026-07-01': { mood: 3, text: '' } } }, TODAY)).toBe('2026-07-01');
+  });
+
+  it('flytter et element til en ny plass', () => {
+    expect(moveItem(['a', 'b', 'c', 'd'], 0, 2)).toEqual(['b', 'c', 'a', 'd']);
+    expect(moveItem(['a', 'b', 'c', 'd'], 3, 0)).toEqual(['d', 'a', 'b', 'c']);
+    const same = ['a', 'b'];
+    expect(moveItem(same, 0, 0)).toBe(same);
+    expect(moveItem(same, 0, 5)).toBe(same);
+    expect(moveItem(same, -1, 0)).toBe(same);
+  });
+
+  it('ny rekkefølge på vanene gjelder I dag', () => {
+    const d = moveHabit(setup(), 'read', 0);
+    expect(d.habits.map((h) => h.id)).toEqual(['read', 'walk', 'water', 'gym']);
+    expect(dailyHabitsOn(d.habits, '2026-10-16').map((h) => h.id)).toEqual(['read', 'walk', 'water']); // fredag
+    const before = setup();
+    expect(moveHabit(before, 'finnes-ikke', 0)).toBe(before);
   });
 });

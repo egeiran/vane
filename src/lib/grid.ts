@@ -1,6 +1,6 @@
 import { tr } from '@/i18n';
 
-import { addDays, compareKeys, dayOfWeek, fromKey, startOfWeek, type DateKey, type WeekStart } from './dates';
+import { addDays, compareKeys, dayOfWeek, daysBetween, fromKey, startOfWeek, type DateKey, type WeekStart } from './dates';
 
 /** `n` uker som rader (mandag–søndag eller søndag–lørdag). Siste rad er uka `today` ligger i. */
 export function weekRows(today: DateKey, n: number, weekStart: WeekStart = 'mon'): DateKey[][] {
@@ -31,4 +31,18 @@ export function monthLabels(columns: DateKey[][]): { index: number; label: strin
     if (first) out.push({ index: i, label: tr.dates.monthsShort[fromKey(first).getMonth()] });
   });
   return out;
+}
+
+/**
+ * Siste dag i perioden `offset` perioder tilbake, der en periode er `weeks` uker. 0 er perioden som
+ * slutter i dag. Rutenettet viser ukene som slutter med uka denne dagen ligger i.
+ */
+export function periodEnd(today: DateKey, weeks: number, offset: number): DateKey {
+  return offset <= 0 ? today : addDays(today, -offset * weeks * 7);
+}
+
+/** Hvor mange perioder man kan bla tilbake før perioden ligger helt før `first`. */
+export function periodsBack(first: DateKey, today: DateKey, weeks: number, weekStart: WeekStart = 'mon'): number {
+  const span = daysBetween(startOfWeek(first, weekStart), startOfWeek(today, weekStart)) / 7;
+  return Math.max(0, Math.floor(span / weeks));
 }

@@ -25,6 +25,7 @@ import {
   suggestMeal,
   towardGoal,
   type Source,
+  firstFoodDay,
 } from '../food';
 import * as F from '../foodState';
 import { DEFAULT_SETTINGS, type Food, type FoodData } from '../types';
@@ -331,5 +332,13 @@ describe('mat: lasting og CSV', () => {
       ['2026-11-12', '08:00', 'Lunsj', '', '', '30.0', ''],
       ['2026-11-13', '08:00', 'Frokost', 'Skyr', '1 beger', '17.5', '99'],
     ]);
+  });
+});
+
+describe('bla tilbake', () => {
+  it('første dag er den eldste dagen med noe logget', () => {
+    const e = { id: 'x', time: '08:00', mealId: 'frokost', name: 'Egg', protein: 60, kcal: 70, ref: null, amount: null };
+    expect(firstFoodDay({ entries: {} }, '2026-11-13')).toBe('2026-11-12');
+    expect(firstFoodDay({ entries: { '2026-10-02': [e], '2026-09-01': [], '2026-11-01': [e] } }, '2026-11-13')).toBe('2026-10-02');
   });
 });

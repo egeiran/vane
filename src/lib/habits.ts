@@ -1,6 +1,6 @@
 import { tr } from '@/i18n';
 
-import { addDays, compareKeys, daysBetween, startOfWeek, weekdayIndex, weekOrder, type DateKey, type WeekStart } from './dates';
+import { addDays, compareKeys, daysBetween, firstDay, startOfWeek, weekdayIndex, weekOrder, type DateKey, type WeekStart } from './dates';
 import type { Data, Goal, Habit } from './types';
 
 export const isWeekly = (h: Habit) => h.schedule.kind === 'weekly';
@@ -161,4 +161,12 @@ export function frequencyText(h: Habit, weekStart: WeekStart = 'mon'): string {
 
 export function amountText(h: Habit, value: number): string {
   return tr.habits.amount(value, h.target, h.unit || tr.habits.defaultUnit);
+}
+
+/**
+ * Den første dagen I dag kan bla tilbake til: den eldste dagen med en vane, en avhuking, et mål eller
+ * dagbok. Aldri senere enn i går.
+ */
+export function firstDataDay(data: Pick<Data, 'habits' | 'logs' | 'goals' | 'journal'>, today: DateKey): DateKey {
+  return firstDay([...data.habits.map((h) => h.createdAt), ...Object.keys(data.logs), ...Object.keys(data.goals), ...Object.keys(data.journal ?? {})], today);
 }
