@@ -3,13 +3,14 @@ import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { DateField } from '@/components/DateField';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CategoryPicker } from '@/components/CategoryPicker';
-import { Card, IconButton, Row, SwitchRow, TextButton } from '@/components/ui';
+import { Card, Row, SwitchRow, TextButton } from '@/components/ui';
 import { getLang, tr } from '@/i18n';
-import { addDays, formatTime, relativeDayName, type DateKey } from '@/lib/dates';
+import { formatTime, relativeDayName, type DateKey } from '@/lib/dates';
 import {
   amountInputText,
   categoryName,
@@ -225,15 +226,7 @@ export default function PurchaseFormScreen() {
 
           <View style={styles.dayRow}>
             <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.purchaseForm.date}</Text>
-            <IconButton icon="chevron.left" label={tr.purchaseForm.dayBefore} size={36} background={t.field} onPress={() => set({ day: addDays(f.day, -1) })} />
-            <Text style={[styles.dayText, { color: t.text }]} accessibilityLiveRegion="polite">
-              {relativeDayName(f.day, today)}
-            </Text>
-            {f.day < today ? (
-              <IconButton icon="chevron.right" label={tr.purchaseForm.dayAfter} size={36} background={t.field} onPress={() => set({ day: addDays(f.day, 1) })} />
-            ) : (
-              <View style={{ width: 36 }} />
-            )}
+            <DateField value={f.day} max={today} text={relativeDayName(f.day, today)} label={tr.purchaseForm.date} onChange={(day) => set({ day })} />
           </View>
         </Card>
 

@@ -7,13 +7,12 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { AmountPicker } from '@/components/AmountPicker';
 import { Field } from '@/components/Field';
-import { Card, Chip, Row, Stepper, TextButton } from '@/components/ui';
+import { TimeField } from '@/components/TimeField';
+import { Card, Chip, Row, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
-import { shiftTime } from '@/lib/dates';
 import { canEditFood, decimalInput, entriesOn, mealById, mealName, parseKcal, parseProtein, PROTEIN_SCALE, visibleMeals } from '@/lib/food';
 import { itemForRef, itemNutrients } from '@/lib/foodItems';
 import { foodHome, useFood, useFoodData } from '@/lib/foodStore';
-import { showTime } from '@/lib/region';
 import type { Amount } from '@/lib/types';
 import { useToday } from '@/lib/useToday';
 import { useTheme } from '@/theme';
@@ -129,14 +128,7 @@ export default function FoodEntryScreen() {
         <Card style={{ overflow: 'hidden' }}>
           <Row first>
             <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.food.time}</Text>
-            <Stepper
-              value={showTime(time)}
-              minWidth={60}
-              onDecrease={() => setTime(shiftTime(time, -15, 0, 23 * 60 + 59))}
-              onIncrease={() => setTime(shiftTime(time, 15, 0, 23 * 60 + 59))}
-              decreaseLabel={tr.common.earlier15}
-              increaseLabel={tr.common.later15}
-            />
+            <TimeField value={time} label={tr.food.time} onChange={setTime} />
           </Row>
         </Card>
 

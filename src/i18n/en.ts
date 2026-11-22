@@ -24,6 +24,8 @@ export const en: Strings = {
     category: 'Category',
     earlier15: '15 minutes earlier',
     later15: '15 minutes later',
+    dayBefore: 'Day before',
+    dayAfter: 'Day after',
     cannotUndo: 'This can’t be undone.',
   },
 

@@ -5,14 +5,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useDiscardGuard } from '@/components/useDiscardGuard';
-import { Card, Row, Stepper, SwitchRow, TextButton } from '@/components/ui';
+import { TimeField } from '@/components/TimeField';
+import { Card, Row, SwitchRow, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
 import { minutesOf as minutes, shiftTime } from '@/lib/dates';
 import { DEFAULT_MEALS, mealName } from '@/lib/food';
 import { MAX_FOOD_NAME } from '@/lib/foodState';
 import { foodHome, useFood } from '@/lib/foodStore';
 import { requestPermission } from '@/lib/notifications';
-import { showTime } from '@/lib/region';
 import { useTheme } from '@/theme';
 
 function close() {
@@ -76,13 +76,12 @@ export default function MealFormScreen() {
     ]);
 
   // Slutten er alltid etter starten, og starten før slutten.
-  const moveStart = (delta: number) => {
-    const next = shiftTime(start, delta, 0, 23 * 60 + 30);
+  // Tidsrommet holder seg gyldig: flyttes starten forbi slutten, flytter slutten med (og omvendt).
+  const setStartTime = (next: string) => {
     setStart(next);
-    if (minutes(end) <= minutes(next)) setEnd(shiftTime(next, 15, 0, 23 * 60 + 45));
+    if (minutes(end) <= minutes(next)) setEnd(shiftTime(next, 15, 0, 23 * 60 + 59));
   };
-  const moveEnd = (delta: number) => {
-    const next = shiftTime(end, delta, 15, 23 * 60 + 45);
+  const setEndTime = (next: string) => {
     setEnd(next);
     if (minutes(next) <= minutes(start)) setStart(shiftTime(next, -15));
   };
@@ -119,11 +118,11 @@ export default function MealFormScreen() {
             <>
               <Row>
                 <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.food.from}</Text>
-                <Stepper value={showTime(start)} minWidth={60} onDecrease={() => moveStart(-15)} onIncrease={() => moveStart(15)} decreaseLabel={tr.common.earlier15} increaseLabel={tr.common.later15} />
+                <TimeField value={start} max="23:30" label={tr.food.from} onChange={setStartTime} />
               </Row>
               <Row>
                 <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.food.to}</Text>
-                <Stepper value={showTime(end)} minWidth={60} onDecrease={() => moveEnd(-15)} onIncrease={() => moveEnd(15)} decreaseLabel={tr.common.earlier15} increaseLabel={tr.common.later15} />
+                <TimeField value={end} min="00:15" label={tr.food.to} onChange={setEndTime} />
               </Row>
             </>
           ) : (

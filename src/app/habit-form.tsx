@@ -5,11 +5,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useDiscardGuard } from '@/components/useDiscardGuard';
+import { TimeField } from '@/components/TimeField';
 import { Card, Row, Segmented, Stepper, SwitchRow } from '@/components/ui';
 import { tr } from '@/i18n';
-import { shiftTime, weekOrder } from '@/lib/dates';
+import { weekOrder } from '@/lib/dates';
 import { requestPermission, scheduleNotificationSync } from '@/lib/notifications';
-import { showTime, weekStartOf } from '@/lib/region';
+import { weekStartOf } from '@/lib/region';
 import { useStore } from '@/lib/store';
 import type { ColorKey, Habit, HabitInput, Schedule } from '@/lib/types';
 import { useToday } from '@/lib/useToday';
@@ -220,14 +221,7 @@ export default function HabitFormScreen() {
           {f.reminderOn ? (
             <Row>
               <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.habitForm.time}</Text>
-              <Stepper
-                value={showTime(f.reminder)}
-                minWidth={60}
-                onDecrease={() => set({ reminder: shiftTime(f.reminder, -15) })}
-                onIncrease={() => set({ reminder: shiftTime(f.reminder, 15) })}
-                decreaseLabel={tr.common.earlier15}
-                increaseLabel={tr.common.later15}
-              />
+              <TimeField value={f.reminder} label={tr.habitForm.time} onChange={(v) => set({ reminder: v })} />
             </Row>
           ) : null}
         </Card>

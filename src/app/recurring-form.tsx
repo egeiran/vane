@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { DateField } from '@/components/DateField';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { CategoryPicker } from '@/components/CategoryPicker';
-import { Card, IconButton, Row, Segmented, SwitchRow, TextButton } from '@/components/ui';
+import { Card, Row, Segmented, SwitchRow, TextButton } from '@/components/ui';
 import { getLang, tr } from '@/i18n';
 import { addDays, daysBetween, formatFull, formatLong, type DateKey } from '@/lib/dates';
 import { amountInputText, currencyLabel, mainCurrency, parseAmount } from '@/lib/money';
@@ -211,13 +212,10 @@ export default function RecurringFormScreen() {
 
           <Text style={[styles.label, { color: t.sub }]}>{tr.recurring.nextCharge}</Text>
           <View style={styles.dateRow}>
-            <DateButton icon="chevron.left.2" label={tr.recurring.monthBefore} enabled={shiftMonths(f.next, -1) >= today} onPress={() => moveTo(shiftMonths(f.next, -1))} />
-            <DateButton icon="chevron.left" label={tr.recurring.dayBefore} enabled={f.next > today} onPress={() => moveTo(addDays(f.next, -1))} />
-            <Text style={[styles.dateText, { color: t.text }]} accessibilityLiveRegion="polite" numberOfLines={2}>
+            <Text style={[styles.dateText, { color: t.sub }]} numberOfLines={2}>
               {nextLabel(f.next, today)}
             </Text>
-            <DateButton icon="chevron.right" label={tr.recurring.dayAfter} enabled={f.next < last} onPress={() => moveTo(addDays(f.next, 1))} />
-            <DateButton icon="chevron.right.2" label={tr.recurring.monthAfter} enabled={shiftMonths(f.next, 1) <= last} onPress={() => moveTo(shiftMonths(f.next, 1))} />
+            <DateField value={f.next} min={today} max={last} text={nextLabel(f.next, today)} label={tr.recurring.nextCharge} onChange={moveTo} />
           </View>
         </Card>
 
@@ -259,11 +257,6 @@ export default function RecurringFormScreen() {
   );
 }
 
-function DateButton({ icon, label, enabled, onPress }: { icon: 'chevron.left' | 'chevron.right' | 'chevron.left.2' | 'chevron.right.2'; label: string; enabled: boolean; onPress: () => void }) {
-  const t = useTheme();
-  if (!enabled) return <View style={{ width: 36 }} />;
-  return <IconButton icon={icon} label={label} size={36} background={t.field} onPress={onPress} />;
-}
 
 const styles = StyleSheet.create({
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
@@ -276,5 +269,5 @@ const styles = StyleSheet.create({
   amountInput: { flex: 1, fontSize: 44, fontWeight: '700', textAlign: 'right', fontVariant: ['tabular-nums'] },
   unit: { flex: 1, fontSize: 24, fontWeight: '600' },
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  dateText: { flex: 1, textAlign: 'center', fontSize: 15, fontWeight: '600' },
+  dateText: { flex: 1, fontSize: 15, fontWeight: '500' },
 });

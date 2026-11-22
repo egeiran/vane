@@ -3,15 +3,14 @@ import { useEffect, useState } from 'react';
 import { Alert, AppState, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
-import { Card, Row, SectionLabel, Segmented, Stepper, SwitchRow } from '@/components/ui';
+import { TimeField } from '@/components/TimeField';
+import { Card, Row, SectionLabel, Segmented, SwitchRow } from '@/components/ui';
 import { tr } from '@/i18n';
-import { shiftTime } from '@/lib/dates';
 import { currentGoal, wantsFoodReminders } from '@/lib/food';
 import { useFood } from '@/lib/foodStore';
 import { mainCurrency } from '@/lib/money';
 import { useMoney } from '@/lib/moneyStore';
 import { permissionStatus, requestPermission, scheduleNotificationSync, sendTestNotification, type PermissionStatus } from '@/lib/notifications';
-import { showTime } from '@/lib/region';
 import { wantsEvening } from '@/lib/reminders';
 import { WRITE_REVIEW_URL } from '@/lib/review';
 import { appVersion } from '@/lib/reviewPrompt';
@@ -100,14 +99,7 @@ export default function SettingsScreen() {
             <>
               <Row>
                 <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.time}</Text>
-                <Stepper
-                  value={showTime(settings.morningTime)}
-                  minWidth={60}
-                  onDecrease={() => update({ morningTime: shiftTime(settings.morningTime, -15, 4 * 60, 12 * 60) })}
-                  onIncrease={() => update({ morningTime: shiftTime(settings.morningTime, 15, 4 * 60, 12 * 60) })}
-                  decreaseLabel={tr.common.earlier15}
-                  increaseLabel={tr.common.later15}
-                />
+                <TimeField value={settings.morningTime} min="04:00" max="12:00" label={tr.settings.time} onChange={(v) => update({ morningTime: v })} />
               </Row>
               <Text style={[styles.help, { color: t.sub, borderTopColor: t.separator }]}>{tr.settings.morningHelp}</Text>
             </>
@@ -163,14 +155,7 @@ export default function SettingsScreen() {
               <>
                 <Row>
                   <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.time}</Text>
-                  <Stepper
-                    value={showTime(settings.eveningTime)}
-                    minWidth={60}
-                    onDecrease={() => update({ eveningTime: shiftTime(settings.eveningTime, -15, 17 * 60, 23 * 60 + 45) })}
-                    onIncrease={() => update({ eveningTime: shiftTime(settings.eveningTime, 15, 17 * 60, 23 * 60 + 45) })}
-                    decreaseLabel={tr.common.earlier15}
-                    increaseLabel={tr.common.later15}
-                  />
+                  <TimeField value={settings.eveningTime} min="17:00" max="23:45" label={tr.settings.time} onChange={(v) => update({ eveningTime: v })} />
                 </Row>
                 <Text style={[styles.help, { color: t.sub, borderTopColor: t.separator }]}>{tr.settings.eveningHelp}</Text>
               </>
@@ -209,14 +194,7 @@ export default function SettingsScreen() {
             {foodEvening ? (
               <Row>
                 <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.settings.time}</Text>
-                <Stepper
-                  value={showTime(foodEveningTime)}
-                  minWidth={60}
-                  onDecrease={() => setFoodEvening({ eveningTime: shiftTime(foodEveningTime, -15, 12 * 60, 23 * 60 + 45) })}
-                  onIncrease={() => setFoodEvening({ eveningTime: shiftTime(foodEveningTime, 15, 12 * 60, 23 * 60 + 45) })}
-                  decreaseLabel={tr.common.earlier15}
-                  increaseLabel={tr.common.later15}
-                />
+                <TimeField value={foodEveningTime} min="12:00" max="23:45" label={tr.settings.time} onChange={(v) => setFoodEvening({ eveningTime: v })} />
               </Row>
             ) : null}
             <Text style={[styles.help, { color: t.sub, borderTopColor: t.separator }]}>{tr.settings.foodEveningHelp}</Text>

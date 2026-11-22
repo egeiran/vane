@@ -28,6 +28,8 @@ export const nb = {
     category: 'Kategori',
     earlier15: '15 minutter tidligere',
     later15: '15 minutter senere',
+    dayBefore: 'Dagen før',
+    dayAfter: 'Dagen etter',
     cannotUndo: 'Dette kan ikke angres.',
   },
 
