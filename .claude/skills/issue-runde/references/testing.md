@@ -47,6 +47,17 @@ node "$SKILL/scripts/skjermbilde.cjs" --sjekk
   merket på Penger-fanen vises også når det er 0, og ikonene (SF Symbols) vises
   ikke. Skjemaet for kjøp ruller sidelengs fordi feltet får fokus. Bildene viser
   tekst, tall og hva som vises, ikke utseendet på iPhone.
+- Siden UX-runden (#31) har appen komponenter som bare finnes på iPhone, med en enkel
+  `.web.tsx` ved siden av: `ScreenHeader` (knappene i `Stack.Toolbar` gjør ingenting på web,
+  så de vises som tekst), `RowMenu` (ingen hold-inne-meny), `TimeField`/`DateField` (− og +
+  i stedet for iOS-velgeren) og `HeaderSearch`. Ark åpner i full skjerm. Bildene viser altså
+  ikke iOS-utseendet på disse.
+- Gester kan testes med musa i Playwright: `mouse.wheel(dx, 0)` over `DayPager` (rulling med
+  snap), og `mouse.down`/`move`/`up` for Gesture Handler (sveip på rader, `SwipePager`, dra i
+  håndtaket i `SortableList`). `Alert` finnes ikke på web; `useDiscardGuard` og
+  `confirmDestructive` bruker `window.confirm`, som Playwright fanger med `page.on('dialog')`.
+- Les resultatet fra `localStorage` med `page.evaluate` i stedet for å lete etter tekst:
+  `DayPager` har nabodagene i DOM-en, så samme tekst finnes flere ganger.
 - expo-localization på web gir ingen valuta, og leser ikke ukestart og 12/24
   timer. Skriptet fyller inn ukestart og klokke fra nettleserens språk. Vil du
   vise en annen valuta, setter du den med `--lagre`.
