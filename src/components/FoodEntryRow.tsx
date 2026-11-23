@@ -101,7 +101,15 @@ export function FoodEntryRow({ entry: e, day, showKcal, editable, first }: Props
       <RowMenu href={{ pathname: '/food-entry', params: { day, id: e.id } }} items={items}>
         <View>
           {editable ? (
-            <Pressable onPress={edit} accessibilityRole="button" accessibilityLabel={`${name}, ${protein}. ${meta}`} style={({ pressed }) => [...style, { opacity: pressed ? 0.6 : 1 }]}>
+            <Pressable
+              onPress={edit}
+              accessibilityRole="button"
+              accessibilityLabel={`${name}, ${protein}. ${meta}`}
+              accessibilityActions={[{ name: 'delete', label: tr.common.delete }]}
+              onAccessibilityAction={(ev) => {
+                if (ev.nativeEvent.actionName === 'delete') remove();
+              }}
+              style={({ pressed }) => [...style, { opacity: pressed ? 0.6 : 1 }]}>
               {body}
             </Pressable>
           ) : (

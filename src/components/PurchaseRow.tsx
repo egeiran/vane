@@ -56,8 +56,9 @@ export function PurchaseRow({ purchase: p, data, today, first, timeOnly }: Props
   const edit = () => router.push({ pathname: '/purchase-form', params: { id: p.id } });
   // Sletter med en gang, med «Angre» nederst (som Mail), både fra sveip og fra menyen.
   const remove = () => {
+    const index = useMoney.getState().purchases.findIndex((q) => q.id === p.id);
     deletePurchase(p.id);
-    showUndo(tr.common.deleted(name), () => restorePurchase(p));
+    showUndo(tr.common.deleted(name), () => restorePurchase(p, index));
   };
   // Hold inne: Endre, godkjenn forslaget, tell med eller ikke, og slett.
   const items: MenuItem[] = [
@@ -80,6 +81,10 @@ export function PurchaseRow({ purchase: p, data, today, first, timeOnly }: Props
             }}
             accessibilityRole="button"
             accessibilityLabel={tr.money.rowLabel(name, amount, meta)}
+            accessibilityActions={[{ name: 'delete', label: tr.common.delete }]}
+            onAccessibilityAction={(e) => {
+              if (e.nativeEvent.actionName === 'delete') remove();
+            }}
             style={({ pressed }) => [styles.row, { opacity: pressed ? 0.6 : p.skipped ? 0.55 : 1 }]}>
             <CategoryIcon category={category} size={36} />
             <View style={{ flex: 1, gap: 2 }}>

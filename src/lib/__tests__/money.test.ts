@@ -154,6 +154,19 @@ describe('kjøp', () => {
     expect(restorePurchase(after, removed)).toBe(after);
   });
 
+  it('angrer på samme plass, også blant kjøp fra samme minutt', () => {
+    let d = importPurchase(EMPTY_MONEY, pay('a', 'kr 10,00', 'Kiwi'));
+    d = importPurchase(d, pay('b', 'kr 20,00', 'Rema'));
+    d = importPurchase(d, pay('c', 'kr 30,00', 'Joker'));
+    const order = d.purchases.map((p) => p.id);
+    const i = order.indexOf('a');
+    const a = d.purchases[i];
+    expect(restorePurchase(deletePurchase(d, 'a'), a, i).purchases.map((p) => p.id)).toEqual(order);
+    // En plass som ikke passer lenger: sorteres inn.
+    const old = { ...a, id: 'z', day: '2026-01-01' };
+    expect(restorePurchase(d, old, 0).purchases.map((p) => p.id).at(-1)).toBe('z');
+  });
+
   it('tar inn et kjøp uten beløp, så det kan fylles inn', () => {
     const d = importPurchase(EMPTY_MONEY, pay('a', '', 'Kiwi'));
     expect(d.purchases[0].amount).toBe(0);

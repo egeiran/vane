@@ -101,6 +101,14 @@ function SortableRow({
   const start = useSharedValue(0);
   const drop = (to: number) => onMove(id, to);
   const dragChange = (dragging: boolean) => onDragChange?.(dragging);
+  // Forsvinner raden midt i et drag, kommer ikke `onFinalize`: slå på rullingen igjen.
+  useEffect(() => {
+    return () => {
+      if (active.get()) onDragChange?.(false);
+    };
+    // Bare når raden forsvinner.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const configure = (g: LegacyPanGesture) =>
     g

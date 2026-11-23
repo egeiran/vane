@@ -35,7 +35,10 @@ export default function HabitsScreen() {
         title={tr.habits.pageTitle}
         large
         right={[
-          ...(habits.length > 1 ? [{ label: editing ? tr.common.done : tr.common.edit, variant: editing ? ('done' as const) : ('plain' as const), onPress: () => setEditing(!editing) }] : []),
+          ...(habits.length > 1 ? [{ label: editing ? tr.common.done : tr.common.edit, variant: editing ? ('done' as const) : ('plain' as const), onPress: () => {
+            setEditing(!editing);
+            setDragging(false);
+          } }] : []),
           { label: tr.today.newHabit, icon: 'plus', onPress: () => router.push('/habit-form') },
         ]}
       />

@@ -16,7 +16,7 @@ type Actions = {
   approveSuggestion: (id: string) => void;
   approveAllSuggestions: () => void;
   deletePurchase: (id: string) => void;
-  restorePurchase: (purchase: Purchase) => void;
+  restorePurchase: (purchase: Purchase, index?: number) => void;
   renameMerchant: (key: string, name: string) => void;
   addCategory: (input: M.CategoryInput) => string;
   updateCategory: (id: string, patch: Partial<Omit<Category, 'id'>>) => void;
@@ -68,7 +68,7 @@ export const useMoney = create<MoneyStore>()(
         approveSuggestion: (id) => apply((d) => M.approveSuggestion(d, id)),
         approveAllSuggestions: () => apply(M.approveAllSuggestions),
         deletePurchase: (id) => apply((d) => M.deletePurchase(d, id)),
-        restorePurchase: (purchase) => apply((d) => M.restorePurchase(d, purchase)),
+        restorePurchase: (purchase, index) => apply((d) => M.restorePurchase(d, purchase, index)),
         renameMerchant: (key, name) => apply((d) => M.renameMerchant(d, key, name)),
         addCategory: (input) => {
           const id = newId('c');

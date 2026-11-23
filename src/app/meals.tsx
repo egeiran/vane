@@ -35,7 +35,10 @@ export default function MealsScreen() {
         title={tr.food.mealsTitle}
         large
         right={[
-          { label: editing ? tr.common.done : tr.common.edit, variant: editing ? 'done' : 'plain', onPress: () => setEditing(!editing) },
+          { label: editing ? tr.common.done : tr.common.edit, variant: editing ? 'done' : 'plain', onPress: () => {
+            setEditing(!editing);
+            setDragging(false);
+          } },
           { label: tr.food.newMeal, icon: 'plus', onPress: () => router.push('/meal-form') },
         ]}
       />
@@ -47,7 +50,7 @@ export default function MealsScreen() {
           rowHeight={60}
           editing={editing}
           onDragChange={setDragging}
-              onMove={moveMeal}
+          onMove={moveMeal}
           renderRow={(m, handle) => {
             const name = mealName(m);
             const window = m.start && m.end ? tr.food.mealWindow(showTime(m.start), showTime(m.end)) : tr.food.noWindow;

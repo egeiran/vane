@@ -120,7 +120,12 @@ export default function MoneyScreen() {
       <Animated.View layout={reflow}>
         {/* Dra månedskortet sidelengs for forrige eller neste måned. Pilene virker fortsatt. */}
         <SwipePager
-        onDragChange={setDragging} pageKey={month} canPrev={month > oldest} canNext={month < current} onPrev={() => setPicked(addMonths(month, -1))} onNext={() => setPicked(addMonths(month, 1))}>
+          pageKey={month}
+          canPrev={month > oldest}
+          canNext={month < current}
+          onPrev={() => setPicked(addMonths(month, -1))}
+          onNext={() => setPicked(addMonths(month, 1))}
+          onDragChange={setDragging}>
           <Card style={styles.card}>
             <View style={styles.monthBar}>
               {month > oldest ? (

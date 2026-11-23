@@ -96,6 +96,10 @@ export function SwipeRow({ onDelete, guard, enabled = true, children }: Props) {
     setOpen(false);
   }, [close]);
   const markDrag = useCallback(() => latest.current.guard?.mark(), []);
+  // Når man tar på en annen rad, lukkes den som står åpen (som i Mail).
+  const closeOthers = useCallback(() => {
+    if (closeOpenRow && closeOpenRow !== close) closeOpenRow();
+  }, [close]);
   const remove = useCallback(() => {
     closed();
     latest.current.onDelete();
@@ -120,6 +124,10 @@ export function SwipeRow({ onDelete, guard, enabled = true, children }: Props) {
       failOffsetX: open ? undefined : 10,
       failOffsetY: [-12, 12] as [number, number],
       block: pager ?? undefined,
+      onBegin: () => {
+        'worklet';
+        scheduleOnRN(closeOthers);
+      },
       onActivate: () => {
         'worklet';
         start.set(x.get());
@@ -136,11 +144,12 @@ export function SwipeRow({ onDelete, guard, enabled = true, children }: Props) {
           scheduleOnRN(tick);
         }
       },
-      onDeactivate: (e: { velocityX: number }) => {
+      onDeactivate: (e: { velocityX: number; canceled?: boolean }) => {
         'worklet';
         dragging.set(withDelay(250, withTiming(0, { duration: 0 })));
         scheduleOnRN(markDrag);
-        if (armed.get()) {
+        // Avbrutt (varselsenteret, en samtale, appen legges bort): ingenting slettes, raden går tilbake.
+        if (armed.get() && !e.canceled) {
           armed.set(false);
           x.set(
             withTiming(-width.get(), { duration: 160, easing: EASE }, (finished) => {
@@ -148,6 +157,12 @@ export function SwipeRow({ onDelete, guard, enabled = true, children }: Props) {
               if (finished) scheduleOnRN(remove);
             })
           );
+          return;
+        }
+        armed.set(false);
+        if (e.canceled) {
+          x.set(withTiming(0, { duration: 220, easing: EASE }));
+          scheduleOnRN(closed);
           return;
         }
         if (e.velocityX < 300 && (x.get() < -ACTION / 2 || e.velocityX < -600)) {
@@ -159,7 +174,7 @@ export function SwipeRow({ onDelete, guard, enabled = true, children }: Props) {
         }
       },
     }),
-    [armed, closed, dragging, enabled, markDrag, open, opened, pager, remove, start, width, x]
+    [armed, closeOthers, closed, dragging, enabled, markDrag, open, opened, pager, remove, start, width, x]
   );
   const pan = usePanGesture(panConfig);
 
@@ -198,7 +213,11 @@ export function SwipeRow({ onDelete, guard, enabled = true, children }: Props) {
   return (
     <GestureDetector gesture={pan}>
       <Animated.View style={styles.wrap} onLayout={(e) => width.set(e.nativeEvent.layout.width)}>
-        <Animated.View style={[styles.red, { backgroundColor: t.danger }, redStyle]}>
+        {/* Skjult for VoiceOver til raden står åpen; der er Slett en handling på raden (`accessibilityActions`). */}
+        <Animated.View
+          style={[styles.red, { backgroundColor: t.danger }, redStyle]}
+          accessibilityElementsHidden={!open}
+          importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}>
           <Pressable onPress={removeAnimated} accessibilityRole="button" accessibilityLabel={tr.common.delete} style={StyleSheet.absoluteFill}>
             <Animated.View style={[styles.label, labelStyle]}>
               <Icon name="trash" size={17} color="#FFFFFF" />

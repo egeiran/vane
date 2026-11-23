@@ -165,10 +165,18 @@ export function deletePurchase(data: MoneyData, id: string): MoneyData {
   return { ...data, purchases: data.purchases.filter((p) => p.id !== id) };
 }
 
-/** «Angre» etter sletting: kjøpet kommer tilbake på sin plass. Finnes det allerede, skjer ingenting. */
-export function restorePurchase(data: MoneyData, purchase: Purchase): MoneyData {
-  if (data.purchases.some((p) => p.id === purchase.id)) return data;
-  return { ...data, purchases: insertSorted(data.purchases, purchase) };
+/**
+ * «Angre» etter sletting: kjøpet kommer tilbake på sin plass. `index` er plassen det hadde, så to kjøp
+ * fra samme minutt ikke bytter plass; passer den ikke lenger (lista er endret), sorteres det inn.
+ * Finnes kjøpet allerede, skjer ingenting.
+ */
+export function restorePurchase(data: MoneyData, purchase: Purchase, index?: number): MoneyData {
+  const list = data.purchases;
+  if (list.some((p) => p.id === purchase.id)) return data;
+  const key = sortKey(purchase);
+  const fits =
+    index !== undefined && index >= 0 && index <= list.length && (index === 0 || sortKey(list[index - 1]) >= key) && (index === list.length || sortKey(list[index]) <= key);
+  return { ...data, purchases: fits ? [...list.slice(0, index), purchase, ...list.slice(index)] : insertSorted(list, purchase) };
 }
 
 /** Gir stedet et eget navn, som brukes for alle kjøp derfra. Tomt navn tar bort det egne navnet. */

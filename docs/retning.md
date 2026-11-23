@@ -87,7 +87,7 @@ Mat (#28) ble lagt til 13. november 2026, som en egen modul med fane. Den er lag
 - Varslene er av som standard.
 - Widgets, Snarveier og Apple Helse kommer senere.
 
-UX-runden (#31) ble gjort 22.–23. november 2026, etter en gjennomgang med klikkbare forslag: sveip mellom dager og perioder, native headere og ark, hold-inne-menyer og sveip på rader, dra for å flytte, iOS sine tidsvelgere, rolige overganger, og en tydeligere Mat-side. Appen var da allerede i App Store, så skjermbildene der (#17) bør tas på nytt etter den.
+UX-runden (#31) ble gjort 22.–23. november 2026, etter en gjennomgang med klikkbare forslag: sveip mellom dager og måneder, Uke/Måned/År i Oversikt, native headere og ark, hold-inne-menyer og sveip på rader, dra for å flytte, iOS sine tidsvelgere, rolige overganger, og en tydeligere Mat-side. Appen var da allerede i App Store, så skjermbildene der (#17) bør tas på nytt etter den.
 
 Siden appen er i App Store, når «Send oppdatering» alle brukerne. En branch testes derfor med et bygg i TestFlight, og oppdateringen sendes fra `main`. Data som ligger på brukernes telefoner, må alltid kunne lastes etter en oppdatering.
 

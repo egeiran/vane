@@ -34,7 +34,10 @@ export default function CategoriesScreen() {
         title={tr.categories.title}
         large
         right={[
-          { label: editing ? tr.common.done : tr.common.edit, variant: editing ? 'done' : 'plain', onPress: () => setEditing(!editing) },
+          { label: editing ? tr.common.done : tr.common.edit, variant: editing ? 'done' : 'plain', onPress: () => {
+            setEditing(!editing);
+            setDragging(false);
+          } },
           { label: tr.categories.new, icon: 'plus', onPress: () => router.push('/category-form') },
         ]}
       />
@@ -46,7 +49,7 @@ export default function CategoriesScreen() {
           rowHeight={60}
           editing={editing}
           onDragChange={setDragging}
-              onMove={moveCategory}
+          onMove={moveCategory}
           renderRow={(c, handle) => (
             <View style={styles.row}>
               <Pressable
