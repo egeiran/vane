@@ -87,9 +87,10 @@ export function chargesBetween(e: Schedule, from: DateKey, to: DateKey): DateKey
 export type MonthCharge = { expense: RecurringExpense; day: DateKey };
 
 /**
- * Trekkene i en måned, fram til og med i dag (det som har gått ut). En fast utgift er ikke med en
- * måned der et kjøp fra samme sted (samme sted fra forslaget, eller samme navn) allerede telles med:
- * da er trekket logget som kjøp, og skal ikke telles to ganger.
+ * Trekkene i en måned, fram til og med i dag (det som har gått ut). Hvert kjøp fra samme sted (samme
+ * sted fra forslaget, eller samme navn) som telles med den måneden, regnes som ett av trekkene: det
+ * er logget som kjøp, og skal ikke telles to ganger. En ukentlig utgift med ett kjøp i måneden får
+ * altså de andre trekkene med.
  */
 export function recurringInMonth(data: MoneyData, month: MonthKey, today: DateKey): MonthCharge[] {
   const from = `${month}-01` as DateKey;
@@ -97,11 +98,14 @@ export function recurringInMonth(data: MoneyData, month: MonthKey, today: DateKe
   const end = addDays(last, -1);
   const to = end < today ? end : today;
   if (from > to) return [];
-  const bought = new Set(data.purchases.filter((p) => !p.skipped && monthOf(p.day) === month && p.merchantKey).map((p) => p.merchantKey));
+  // Kjøp per sted i måneden.
+  const bought = new Map<string, number>();
+  for (const p of data.purchases) if (!p.skipped && p.merchantKey && monthOf(p.day) === month) bought.set(p.merchantKey, (bought.get(p.merchantKey) ?? 0) + 1);
   const out: MonthCharge[] = [];
   for (const expense of data.recurring) {
-    if ((expense.merchantKey && bought.has(expense.merchantKey)) || bought.has(merchantKey(expense.name))) continue;
-    for (const day of chargesBetween(expense, from, to)) out.push({ expense, day });
+    const keys = new Set([expense.merchantKey, merchantKey(expense.name)].filter(Boolean));
+    const logged = [...keys].reduce((n, k) => n + (bought.get(k) ?? 0), 0);
+    for (const day of chargesBetween(expense, from, to).slice(logged)) out.push({ expense, day });
   }
   return out.sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0));
 }

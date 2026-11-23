@@ -170,6 +170,14 @@ describe('i månedens sum', () => {
     expect(recurringInMonth(fromSuggestion, '2026-10', TODAY)).toHaveLength(1);
   });
 
+  it('regner hvert kjøp fra stedet som ett trekk, ikke hele måneden', () => {
+    // Trening hver mandag i oktober (4 trekk), og ett av dem er logget som kjøp.
+    let d = addRecurring(NOK, input({ name: 'Trening', amount: 10000, frequency: 'week', anchor: '2026-10-05' }), 'a');
+    expect(recurringInMonth(d, '2026-10', TODAY)).toHaveLength(4);
+    d = buy(d, 'Trening', 10000, '2026-10-12');
+    expect(recurringInMonth(d, '2026-10', TODAY).map((c) => c.day)).toEqual(['2026-10-12', '2026-10-19', '2026-10-26']);
+  });
+
   it('legger trekkene til summen, og andre valutaer for seg', () => {
     let d = buy(NOK, 'Kiwi', 50000, '2026-10-05');
     d = addRecurring(d, input({ name: 'Husleie', amount: 950000, anchor: '2026-12-01' }), 'a');

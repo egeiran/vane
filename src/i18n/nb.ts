@@ -524,7 +524,7 @@ export const nb = {
     empty: 'Husleie, strøm og abonnementer. Legg dem inn én gang, så ser du hva som går ut hver måned.',
     suggestionCount: (n: number) => (n === 1 ? 'Ett forslag fra kjøpene dine' : `${n} forslag fra kjøpene dine`),
     inTotal: 'Ta med i månedens sum',
-    inTotalOn: 'Trekkene som har gått ut, legges til det du har brukt den måneden. Er et trekk alt logget som kjøp fra samme sted, telles det ikke to ganger.',
+    inTotalOn: 'Trekkene som har gått ut, legges til det du har brukt den måneden, også i måneder før du la dem inn (tilbake til det første kjøpet ditt). Er et trekk alt logget som kjøp fra samme sted, telles det ikke to ganger.',
     inTotalOff: 'Faste utgifter står for seg selv og er ikke med i det du har brukt.',
     inTotalNote: 'Med i månedens sum',
     frequency: { week: 'Hver uke', month: 'Hver måned', year: 'Hvert år' },

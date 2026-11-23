@@ -493,7 +493,7 @@ export const en: Strings = {
     empty: 'Rent, utilities and subscriptions. Add them once, and you’ll see what goes out each month.',
     suggestionCount: (n: number) => (n === 1 ? 'One suggestion from your purchases' : `${n} suggestions from your purchases`),
     inTotal: 'Include in the month’s total',
-    inTotalOn: 'Charges that have gone out are added to what you spent that month. If a charge is already logged as a purchase from the same place, it isn’t counted twice.',
+    inTotalOn: 'Charges that have gone out are added to what you spent that month, also in months before you added them (back to your first purchase). If a charge is already logged as a purchase from the same place, it isn’t counted twice.',
     inTotalOff: 'Recurring expenses stand on their own and aren’t part of what you’ve spent.',
     inTotalNote: 'Included in the month’s total',
     frequency: { week: 'Every week', month: 'Every month', year: 'Every year' },
