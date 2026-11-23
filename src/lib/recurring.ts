@@ -1,14 +1,15 @@
 import { tr } from '@/i18n';
 
 import { addDays, atTime, daysBetween, formatShort, fromKey, todayKey, toKey, type DateKey } from './dates';
-import { addMonths, categoryById, formatAmount, mainCurrency, merchantKey, merchantName, monthOf, type MonthKey } from './money';
+import { addMonths, categoryById, firstMonth, formatAmount, mainCurrency, merchantKey, merchantName, monthOf, type MonthKey, type MonthSummary } from './money';
 import { newId } from './state';
 import type { MoneyData, Purchase, RecurringExpense, RecurringFrequency, Settings } from './types';
 
 /**
- * Faste utgifter: husleie, strøm, abonnementer. Ren logikk. De ligger i pengedataene, men telles
- * aldri med i kjøpene og månedens sum, så ingenting telles to ganger. Penger viser dem som en egen
- * linje: hva som går ut i måneden. Ingen budsjett og ingen rødfarge.
+ * Faste utgifter: husleie, strøm, abonnementer. Ren logikk. De ligger i pengedataene, men er ikke
+ * kjøp. Penger viser dem som en egen linje: hva som går ut i måneden. Slår man dem på i summen
+ * (`recurringInTotal`), legges trekkene i måneden til det man har brukt, men aldri et trekk som et
+ * kjøp fra samme sted allerede dekker, så ingenting telles to ganger. Ingen budsjett og ingen rødfarge.
  */
 
 export const FREQUENCIES: RecurringFrequency[] = ['week', 'month', 'year'];
@@ -63,6 +64,65 @@ export function chargeOnOrAfter(e: Schedule, day: DateKey): DateKey {
 
 /** Neste trekk: i dag, hvis det trekkes i dag. */
 export const nextCharge = (e: Schedule, today: DateKey): DateKey => chargeOnOrAfter(e, today);
+
+/**
+ * Alle trekk fra og med `from` til og med `to`, også før ankeret: ankeret er bare én dag det trekkes,
+ * ikke når utgiften begynte.
+ */
+export function chargesBetween(e: Schedule, from: DateKey, to: DateKey): DateKey[] {
+  if (from > to) return [];
+  const a = fromKey(e.anchor);
+  const f = fromKey(from);
+  let n =
+    e.frequency === 'week'
+      ? Math.floor(daysBetween(e.anchor, from) / 7)
+      : e.frequency === 'month'
+        ? (f.getFullYear() - a.getFullYear()) * 12 + f.getMonth() - a.getMonth()
+        : f.getFullYear() - a.getFullYear();
+  const out: DateKey[] = [];
+  for (let charge = chargeAt(e, n); charge <= to; charge = chargeAt(e, ++n)) if (charge >= from) out.push(charge);
+  return out;
+}
+
+export type MonthCharge = { expense: RecurringExpense; day: DateKey };
+
+/**
+ * Trekkene i en måned, fram til og med i dag (det som har gått ut). En fast utgift er ikke med en
+ * måned der et kjøp fra samme sted (samme sted fra forslaget, eller samme navn) allerede telles med:
+ * da er trekket logget som kjøp, og skal ikke telles to ganger.
+ */
+export function recurringInMonth(data: MoneyData, month: MonthKey, today: DateKey): MonthCharge[] {
+  const from = `${month}-01` as DateKey;
+  const last = shiftMonths(from, 1);
+  const end = addDays(last, -1);
+  const to = end < today ? end : today;
+  if (from > to) return [];
+  const bought = new Set(data.purchases.filter((p) => !p.skipped && monthOf(p.day) === month && p.merchantKey).map((p) => p.merchantKey));
+  const out: MonthCharge[] = [];
+  for (const expense of data.recurring) {
+    if ((expense.merchantKey && bought.has(expense.merchantKey)) || bought.has(merchantKey(expense.name))) continue;
+    for (const day of chargesBetween(expense, from, to)) out.push({ expense, day });
+  }
+  return out.sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0));
+}
+
+/**
+ * Månedens sum med de faste utgiftene: trekkene i hovedvalutaen legges til summen (og står for seg i
+ * `recurring`), trekk i andre valutaer kommer i tillegg, som kjøp i andre valutaer. Måneder før det
+ * første kjøpet får ingen: Vane vet ikke hva som ble trukket før man begynte å bruke den.
+ */
+export function withRecurring(data: MoneyData, summary: MonthSummary, today: DateKey): MonthSummary {
+  if (summary.month < firstMonth(data, today)) return summary;
+  const charges = recurringInMonth(data, summary.month, today);
+  if (!charges.length) return summary;
+  let recurring = 0;
+  const other = { ...summary.other };
+  for (const { expense } of charges) {
+    if (expense.currency === summary.currency) recurring += expense.amount;
+    else other[expense.currency] = (other[expense.currency] ?? 0) + expense.amount;
+  }
+  return { ...summary, total: summary.total + recurring, recurring, other };
+}
 
 /** Hvor mye som går ut i en vanlig måned, uten avrunding: en uke er 52/12 av en måned. */
 function perMonthExact(e: Pick<RecurringExpense, 'amount' | 'frequency'>): number {

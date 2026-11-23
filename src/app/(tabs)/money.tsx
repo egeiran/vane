@@ -13,10 +13,10 @@ import { Card, IconButton, PrimaryButton, SectionLabel, TextButton, tick } from 
 import { tr } from '@/i18n';
 import { addMonths, capitalize, categoryById, categoryName, firstMonth, formatAmount, isPending, monthName, monthOf, monthShort, monthSummary, pendingPurchases, recentMonths, suggestionFor, type MonthKey } from '@/lib/money';
 import { useMoney, useMoneyData } from '@/lib/moneyStore';
-import { recurringOn } from '@/lib/recurring';
+import { recurringOn, withRecurring } from '@/lib/recurring';
 import { useStore } from '@/lib/store';
 import { useToday } from '@/lib/useToday';
-import { useTheme } from '@/theme';
+import { hexToRgba, useTheme } from '@/theme';
 
 const RECENT = 5;
 
@@ -44,13 +44,18 @@ export default function MoneyScreen() {
 
   const pending = pendingPurchases(data);
   const withSuggestion = pending.filter((p) => suggestionFor(data, p)).length;
-  const summary = monthSummary(data, month);
-  const months = recentMonths(data, today);
+  // Faste utgifter er med i summen bare når de er slått på der (og modulen er på).
+  const inTotal = showRecurring && data.recurringInTotal;
+  const withFixed = (s: ReturnType<typeof monthSummary>) => (inTotal ? withRecurring(data, s, today) : s);
+  const summary = withFixed(monthSummary(data, month));
+  const months = recentMonths(data, today).map(withFixed);
   const maxTotal = Math.max(1, ...months.map((m) => m.total));
   const recent = data.purchases.filter((p) => p.day.startsWith(month) && !isPending(p));
   const hasApplePay = data.purchases.some((p) => p.source === 'applepay');
   const otherCurrencies = Object.entries(summary.other).map(([cur, amount]) => formatAmount(amount, cur));
 
+  // Faste utgifter i stolpene: en dempet, nøytral farge, så kategoriene fortsatt synes.
+  const fixedColor = hexToRgba(t.slate, 0.45);
   const color = (categoryId: string) => {
     const c = categoryById(data, categoryId);
     return c ? t.colors[c.color].solid : t.faint;
@@ -159,6 +164,29 @@ export default function MoneyScreen() {
               );
             })}
 
+            {summary.recurring ? (
+              <Pressable
+                onPress={() => router.push('/recurring')}
+                accessibilityRole="button"
+                accessibilityLabel={tr.money.categoryAmount(tr.recurring.title, formatAmount(summary.recurring, summary.currency))}
+                style={({ pressed }) => [styles.catRow, { opacity: pressed ? 0.6 : 1 }]}>
+                <View style={[styles.fixedIcon, { backgroundColor: t.button }]}>
+                  <Icon name="arrow.triangle.2.circlepath" size={14} color={t.sub} />
+                </View>
+                <View style={{ flex: 1, gap: 6 }}>
+                  <View style={styles.catTop}>
+                    <Text style={[styles.catName, { color: t.text }]} numberOfLines={1}>
+                      {tr.recurring.title}
+                    </Text>
+                    <Text style={[styles.catAmount, { color: t.text }]}>{formatAmount(summary.recurring, summary.currency)}</Text>
+                  </View>
+                  <View style={[styles.track, { backgroundColor: t.bg }]}>
+                    <View style={[styles.fill, { width: `${(summary.recurring / Math.max(1, summary.total)) * 100}%`, backgroundColor: fixedColor }]} />
+                  </View>
+                </View>
+              </Pressable>
+            ) : null}
+
             {summary.pending ? (
               <View style={styles.catRow}>
                 <CategoryIcon size={30} />
@@ -208,7 +236,7 @@ export default function MoneyScreen() {
           )}
         </View>
 
-        {/* Faste utgifter er en egen linje, ikke en del av månedens sum. */}
+        {/* Faste utgifter: en egen linje, og med i månedens sum når det er slått på. */}
         {showRecurring ? <RecurringCard data={data} today={today} /> : null}
 
         <Card style={styles.card}>
@@ -236,11 +264,12 @@ export default function MoneyScreen() {
                         <View key={s.id} style={{ flex: s.amount, backgroundColor: s.color }} />
                       ))}
                       {unknown ? <View style={{ flex: unknown, backgroundColor: t.faint }} /> : null}
+                      {m.recurring ? <View style={{ flex: m.recurring, backgroundColor: fixedColor }} /> : null}
                       {m.pending ? <View style={{ flex: m.pending, backgroundColor: t.empty }} /> : null}
                     </View>
                   ) : null}
                 </View>
-                <Text style={[styles.barAmount, { color: on ? t.text : t.sub }]}>{formatAmount(m.total, m.currency)}</Text>
+                <Text style={[styles.barAmount, { color: on ? t.text : t.sub }]} numberOfLines={1}>{formatAmount(m.total, m.currency)}</Text>
               </Pressable>
             );
           })}
@@ -276,6 +305,7 @@ function LinkRow({ icon, label, onPress, first }: { icon: 'square.grid.2x2' | 'w
 }
 
 const styles = StyleSheet.create({
+  fixedIcon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   content: { paddingTop: 8, paddingBottom: 40 },
   header: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 6 },
   sub: { fontSize: 15, lineHeight: 20, fontWeight: '500' },
@@ -298,6 +328,6 @@ const styles = StyleSheet.create({
   barLabel: { width: 34, fontSize: 14 },
   barTrack: { flex: 1, height: 14, justifyContent: 'center' },
   bar: { height: 14, borderRadius: 4, overflow: 'hidden', flexDirection: 'row' },
-  barAmount: { width: 84, textAlign: 'right', fontSize: 14, fontWeight: '600', fontVariant: ['tabular-nums'] },
+  barAmount: { minWidth: 84, textAlign: 'right', fontSize: 14, fontWeight: '600', fontVariant: ['tabular-nums'] },
   linkRow: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
 });

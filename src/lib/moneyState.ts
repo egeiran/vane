@@ -62,6 +62,7 @@ export function loadMoney(persisted: unknown): MoneyData {
     imported: p.imported ?? [],
     recurring: p.recurring ?? [],
     recurringDismissed: p.recurringDismissed ?? [],
+    recurringInTotal: p.recurringInTotal === true,
     currency: p.currency !== undefined ? p.currency : persisted ? 'NOK' : null,
   };
 }

@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { CategoryIcon } from '@/components/CategoryIcon';
-import { Card, Chip, SectionLabel, tick } from '@/components/ui';
+import { Card, Chip, SectionLabel, SwitchRow, tick } from '@/components/ui';
 import { tr } from '@/i18n';
 import { categoryById, formatAmount } from '@/lib/money';
 import { useMoney, useMoneyData } from '@/lib/moneyStore';
@@ -18,6 +18,7 @@ export default function RecurringScreen() {
   const today = useToday();
   const data = useMoneyData();
   const dismiss = useMoney((s) => s.dismissRecurringSuggestion);
+  const setInTotal = useMoney((s) => s.setRecurringInTotal);
   const summary = recurringSummary(data);
   const upcoming = upcomingRecurring(data, today);
   const suggestions = suggestRecurring(data, today);
@@ -64,6 +65,14 @@ export default function RecurringScreen() {
         </Card>
       ) : null}
 
+      {/* Med i månedens sum i Penger, eller en egen linje (standard). */}
+      <View style={styles.section}>
+        <Card style={{ overflow: 'hidden' }}>
+          <SwitchRow first label={tr.recurring.inTotal} value={data.recurringInTotal} onChange={setInTotal} />
+        </Card>
+        <Text style={[styles.footnote, { color: t.sub, paddingHorizontal: 4, paddingTop: 0 }]}>{data.recurringInTotal ? tr.recurring.inTotalOn : tr.recurring.inTotalOff}</Text>
+      </View>
+
       {suggestions.length ? (
         <View style={styles.section}>
           <SectionLabel>{tr.recurring.suggestions}</SectionLabel>
@@ -108,8 +117,6 @@ export default function RecurringScreen() {
           <Text style={[styles.footnote, { color: t.sub, paddingHorizontal: 4, paddingTop: 0 }]}>{tr.recurring.suggestionsHelp}</Text>
         </View>
       ) : null}
-
-      <Text style={[styles.footnote, { color: t.sub }]}>{tr.recurring.notCounted}</Text>
     </ScrollView>
   );
 }

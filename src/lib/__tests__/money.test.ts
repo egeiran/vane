@@ -265,6 +265,7 @@ describe('summer', () => {
       month: '2026-10',
       currency: 'NOK',
       total: 90000,
+      recurring: 0,
       pending: 10000,
       byCategory: [
         { categoryId: 'dagligvarer', amount: 45000 },

@@ -13,7 +13,7 @@ import { Card } from './ui';
 
 /**
  * Faste utgifter i Penger: en egen, rolig linje med det som går ut i måneden. Den blandes ikke med
- * kjøpene, så ingenting telles to ganger. Et trykk åpner lista.
+ * kjøpene; er de slått på i månedens sum, står det her. Et trykk åpner lista.
  */
 export function RecurringCard({ data, today }: { data: MoneyData; today: DateKey }) {
   const t = useTheme();
@@ -24,6 +24,7 @@ export function RecurringCard({ data, today }: { data: MoneyData; today: DateKey
   const lines = [
     next ? tr.recurring.next(next.expense.name, chargeDay(next.next, today)) : tr.recurring.empty,
     suggestions ? tr.recurring.suggestionCount(suggestions) : '',
+    data.recurringInTotal && summary.count ? tr.recurring.inTotalNote : '',
   ].filter(Boolean);
 
   return (

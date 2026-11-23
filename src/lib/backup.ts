@@ -190,7 +190,8 @@ function validMoney(m: unknown): boolean {
     optional(m.setupSeen, isBool) &&
     optional(m.currency, (v) => v === null || isCurrency(v)) &&
     optional(m.recurring, (v) => validList(v, MAX.recurring, validRecurring)) &&
-    optional(m.recurringDismissed, (v) => Array.isArray(v) && v.length <= MAX_DISMISSED && v.every(isId))
+    optional(m.recurringDismissed, (v) => Array.isArray(v) && v.length <= MAX_DISMISSED && v.every(isId)) &&
+    optional(m.recurringInTotal, isBool)
   );
 }
 

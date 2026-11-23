@@ -79,7 +79,7 @@ Veikartet er [issue #4](https://github.com/egeiran/vane/issues/4), med en sjekkl
 
 Dagbok og humør (#19) ble gjort tidligere, i samme runde som oppstarten. Kveldsvarselet er av som standard, og kommer hver kveld når det er på, som morgenvarselet.
 
-Faste utgifter (#21) ble også gjort tidligere, 9. november 2026. De er en egen linje i Penger og telles ikke med i månedens sum. Modulen ligger under Penger og er av til man slår den på. Varselet dagen før kommer kl. 09 og er av som standard. Den er gratis til Vane+ finnes, og #13 legger den bak Vane+ som i tabellen over.
+Faste utgifter (#21) ble også gjort tidligere, 9. november 2026. De er en egen linje i Penger. Fra 23. november 2026 kan de tas med i månedens sum med en bryter (av som standard): trekkene som har gått ut, blir en egen rad i månedskortet, og et trekk som alt er logget som kjøp fra samme sted samme måned, telles ikke to ganger. Modulen ligger under Penger og er av til man slår den på. Varselet dagen før kommer kl. 09 og er av som standard. Den er gratis til Vane+ finnes, og #13 legger den bak Vane+ som i tabellen over.
 Mat (#28) ble lagt til 13. november 2026, som en egen modul med fane. Den er laget for å få i seg nok protein, og følger de samme prinsippene som resten av appen:
 - Protein har et fast mål i gram. Kalorier har ingen mål, bare en sum som kan skjules.
 - Ingen snitt, ingen streaks og ingen rødfarge.

@@ -27,6 +27,8 @@ type Actions = {
   updateRecurring: (id: string, patch: R.RecurringPatch) => void;
   deleteRecurring: (id: string) => void;
   dismissRecurringSuggestion: (key: string) => void;
+  /** Faste utgifter i månedens sum, eller ikke. */
+  setRecurringInTotal: (on: boolean) => void;
   /** Kjører en ren funksjon på dataene (brukes for køen fra Swift og svar på varsler). */
   apply: (fn: (d: MoneyData) => MoneyData) => void;
 };
@@ -42,6 +44,7 @@ export const pickMoney = (s: MoneyData): MoneyData => ({
   currency: s.currency,
   recurring: s.recurring,
   recurringDismissed: s.recurringDismissed,
+  recurringInTotal: s.recurringInTotal,
 });
 
 /**
@@ -82,6 +85,7 @@ export const useMoney = create<MoneyStore>()(
         updateRecurring: (id, patch) => apply((d) => R.updateRecurring(d, id, patch)),
         deleteRecurring: (id) => apply((d) => R.deleteRecurring(d, id)),
         dismissRecurringSuggestion: (key) => apply((d) => R.dismissSuggestion(d, key)),
+        setRecurringInTotal: (on) => apply((d) => ({ ...d, recurringInTotal: on })),
         apply,
       };
     },
