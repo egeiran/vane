@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ColumnGrid, Legend, WeekRows, type HeatWeek } from '@/components/HeatGrid';
 import { Icon } from '@/components/Icon';
 import { SwipePager } from '@/components/SwipePager';
-import { Card, SectionLabel, Segmented, TextButton } from '@/components/ui';
+import { Card, IconButton, SectionLabel, Segmented, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
 import { addDays, formatShort, isoWeek, relativeDayName, relativeWeekday, type DateKey, startOfWeek } from '@/lib/dates';
 import { daysInRange, isFuture, periodEnd, periodsBack, periodText, weekColumns, weekRows } from '@/lib/grid';
@@ -19,6 +19,9 @@ import { useToday } from '@/lib/useToday';
 import { shade, useTheme } from '@/theme';
 
 type Range = 'week' | 'month' | 'year';
+
+/** I rekkefølgen i valget øverst: sveip mot venstre går til den neste. */
+const RANGES: Range[] = ['week', 'month', 'year'];
 
 const RANGE_WEEKS: Record<Range, number> = { week: 1, month: 4, year: 53 };
 const rangeTitle = (range: Range) => ({ week: tr.overview.rangeWeek, month: tr.overview.rangeMonth, year: tr.overview.rangeYear })[range];
@@ -39,6 +42,14 @@ export default function OverviewScreen() {
   const end = periodEnd(today, weeks, offset);
   const first = [firstDataDay(data, today), firstFoodDay(food, today)].sort()[0];
   const canPrev = offset < periodsBack(first, today, weeks, weekStart);
+  const changeRange = (r: Range) => {
+    setRange(r);
+    setOffset(0);
+    setPicked(today);
+    setJournalPicked(today);
+    setFoodPicked(today);
+  };
+  const rangeIndex = RANGES.indexOf(range);
   const goPeriod = (next: number) => {
     const day = periodEnd(today, weeks, next);
     setOffset(next);
@@ -138,7 +149,7 @@ export default function OverviewScreen() {
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={[styles.sub, { color: t.sub }]}>{offset ? periodText(weekRows(end, weeks, weekStart), range === 'year') : rangeTitle(range)}</Text>
+          <Text style={[styles.sub, { color: t.sub }]}>{offset ? tr.overview.earlier : rangeTitle(range)}</Text>
           <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
             {tr.overview.title}
           </Text>
@@ -150,13 +161,7 @@ export default function OverviewScreen() {
         <Segmented
           label={tr.overview.period}
           value={range}
-          onChange={(r) => {
-            setRange(r);
-            setOffset(0);
-            setPicked(today);
-            setJournalPicked(today);
-            setFoodPicked(today);
-          }}
+          onChange={changeRange}
           options={[
             { value: 'week', label: tr.overview.segWeek },
             { value: 'month', label: tr.overview.segMonth },
@@ -165,8 +170,30 @@ export default function OverviewScreen() {
         />
       </View>
 
-      {/* Dra sidelengs for forrige periode (uke, 4 uker eller år). */}
-      <SwipePager pageKey={`${range}:${offset}`} canPrev={canPrev} canNext={offset > 0} onPrev={() => goPeriod(offset + 1)} onNext={() => goPeriod(offset - 1)}>
+      {/* Perioden med piler: forrige og neste uke, fire uker eller år. */}
+      <View style={styles.periodBar}>
+        {canPrev ? (
+          <IconButton icon="chevron.left" label={tr.overview.previousPeriod} size={36} background="transparent" onPress={() => goPeriod(offset + 1)} />
+        ) : (
+          <View style={{ width: 36 }} />
+        )}
+        <Text style={[styles.periodText, { color: t.text }]} accessibilityRole="header">
+          {periodText(weekRows(end, weeks, weekStart), range === 'year')}
+        </Text>
+        {offset > 0 ? (
+          <IconButton icon="chevron.right" label={tr.overview.nextPeriod} size={36} background="transparent" onPress={() => goPeriod(offset - 1)} />
+        ) : (
+          <View style={{ width: 36 }} />
+        )}
+      </View>
+
+      {/* Dra sidelengs for de andre valgene øverst: Uke, Måned og År. */}
+      <SwipePager
+        pageKey={range}
+        canPrev={rangeIndex > 0}
+        canNext={rangeIndex < RANGES.length - 1}
+        onPrev={() => changeRange(RANGES[rangeIndex - 1])}
+        onNext={() => changeRange(RANGES[rangeIndex + 1])}>
         <Card style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: t.text }]}>{tr.overview.all}</Text>
@@ -309,6 +336,8 @@ const styles = StyleSheet.create({
   content: { paddingTop: 8, paddingBottom: 40 },
   header: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 14 },
   sub: { fontSize: 15, fontWeight: '500' },
+  periodBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 8 },
+  periodText: { flex: 1, textAlign: 'center', fontSize: 15, fontWeight: '600', fontVariant: ['tabular-nums'] },
   title: { fontSize: 34, lineHeight: 40, fontWeight: '700', letterSpacing: -0.5 },
   card: { marginHorizontal: 16, marginTop: 12, padding: 16, gap: 12 },
   cardHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
