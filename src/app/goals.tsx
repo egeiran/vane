@@ -1,10 +1,12 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
-import { IconButton, PrimaryButton, TextButton } from '@/components/ui';
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { useDiscardGuard } from '@/components/useDiscardGuard';
+import { IconButton, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
 import { addDays, formatLong } from '@/lib/dates';
 import { dailyHabitsOn } from '@/lib/habits';
@@ -41,20 +43,25 @@ export default function GoalsScreen() {
     addGoal(today, draft);
     setDraft('');
   };
+  // Et mål som er skrevet, men ikke lagt til: spør før arket lukkes. «Ferdig» legger det til.
+  const allowClose = useDiscardGuard(!empty);
   const finish = () => {
     if (!empty) addGoal(today, draft);
+    allowClose();
     close();
   };
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
       <ScrollView
+        automaticallyAdjustKeyboardInsets
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}>
-        <View style={styles.top}>
-          <Text style={[styles.date, { color: t.sub }]}>{formatLong(today)}</Text>
-          <IconButton icon="xmark" label={tr.common.close} onPress={close} />
-        </View>
+        <ScreenHeader
+          title={formatLong(today)}
+          left={[{ label: tr.common.close, onPress: close }]}
+          right={[{ label: tr.common.done, variant: 'done', onPress: finish, disabled: empty && goals.length === 0 }]}
+        />
         <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
           {goals.length ? tr.goals.title : tr.goals.morning}
         </Text>
@@ -113,7 +120,6 @@ export default function GoalsScreen() {
             {tr.goals.alsoHabits(habitCount)}
           </Text>
         ) : null}
-        <PrimaryButton label={tr.common.done} onPress={finish} disabled={empty && goals.length === 0} />
         {goals.length === 0 ? (
           <View style={{ alignItems: 'center', marginTop: 4 }}>
             <TextButton
@@ -121,21 +127,20 @@ export default function GoalsScreen() {
               color={t.sub}
               onPress={() => {
                 skipGoals(today);
+                allowClose();
                 close();
               }}
             />
           </View>
         ) : null}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 20 },
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginRight: -6 },
-  date: { fontSize: 15, fontWeight: '500' },
-  title: { fontSize: 34, lineHeight: 40, fontWeight: '700', letterSpacing: -0.5, marginTop: 20 },
+  title: { fontSize: 34, lineHeight: 40, fontWeight: '700', letterSpacing: -0.5, marginTop: 4 },
   prompt: { fontSize: 20, lineHeight: 28, marginTop: 6 },
   inputRow: { flexDirection: 'row', gap: 8, marginTop: 22 },
   input: { flex: 1, height: 56, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 18, fontSize: 19 },

@@ -1,17 +1,18 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { AmountPicker } from '@/components/AmountPicker';
 import { Field } from '@/components/Field';
-import { Card, Row, Stepper, TextButton } from '@/components/ui';
+import { TimeField } from '@/components/TimeField';
+import { Card, Chip, Row, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
-import { shiftTime } from '@/lib/dates';
 import { canEditFood, decimalInput, entriesOn, mealById, mealName, parseKcal, parseProtein, PROTEIN_SCALE, visibleMeals } from '@/lib/food';
 import { itemForRef, itemNutrients } from '@/lib/foodItems';
 import { foodHome, useFood, useFoodData } from '@/lib/foodStore';
-import { showTime } from '@/lib/region';
 import type { Amount } from '@/lib/types';
 import { useToday } from '@/lib/useToday';
 import { useTheme } from '@/theme';
@@ -39,10 +40,23 @@ export default function FoodEntryScreen() {
   const [name, setName] = useState(entry?.name ?? '');
   const [mealId, setMealId] = useState(entry?.mealId ?? '');
   const [time, setTime] = useState(entry?.time ?? '12:00');
+  // Slettet her: arket lukkes, og skal ikke vise «finnes ikke lenger» mens det glir bort.
+  const [deleted, setDeleted] = useState(false);
+  // Endringer som ikke er lagret: spør før arket lukkes (Avbryt, sveip ned eller tilbake).
+  const [initial] = useState(() => JSON.stringify({ amount, protein, kcal, name, mealId, time }));
+  const allowClose = useDiscardGuard(JSON.stringify({ amount, protein, kcal, name, mealId, time }) !== initial);
+  const done = () => {
+    allowClose();
+    close();
+  };
 
+  // Slettet, eller en dag som ikke kan endres lenger (for eksempel åpnet fra et gammelt varsel).
+  if (deleted) return <View style={{ flex: 1, backgroundColor: t.bg }} />;
   if (!entry || !canEditFood(day, today)) {
     return (
       <View style={[styles.missing, { backgroundColor: t.bg }]}>
+        <Text style={[styles.missingTitle, { color: t.text }]}>{entry ? tr.food.entryLocked : tr.food.entryMissing}</Text>
+        <Text style={[styles.missingText, { color: t.sub }]}>{entry ? tr.food.entryLockedText : tr.food.entryMissingText}</Text>
         <TextButton label={tr.common.close} bold onPress={close} />
       </View>
     );
@@ -65,7 +79,7 @@ export default function FoodEntryScreen() {
       : { protein: p!, kcal: data.showKcal ? parseKcal(kcal) : entry.kcal };
     // Mengden sendes bare med når den er endret, så mengden Vane husker for matvaren, ikke byttes ut.
     updateEntry(day, entry.id, { ...nutrients, ...(item ? (amountChanged ? { amount: amount! } : {}) : { name: name.trim() }), mealId, time });
-    close();
+    done();
   };
 
   const confirmDelete = () =>
@@ -75,23 +89,22 @@ export default function FoodEntryScreen() {
         text: tr.common.delete,
         style: 'destructive',
         onPress: () => {
-          close();
+          setDeleted(true);
+          done();
           removeEntry(day, entry.id);
         },
       },
     ]);
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={styles.bar}>
-        <TextButton label={tr.common.cancel} onPress={close} />
-        <Text style={[styles.barTitle, { color: t.text }]} accessibilityRole="header" numberOfLines={1}>
-          {entry.name || tr.food.quickName}
-        </Text>
-        <TextButton label={tr.common.save} bold onPress={save} disabled={!canSave} />
-      </View>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <ScreenHeader
+        title={entry.name || tr.food.quickName}
+        left={[{ label: tr.common.cancel, onPress: close }]}
+        right={[{ label: tr.common.save, variant: 'done', onPress: save, disabled: !canSave }]}
+      />
 
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
           {item && amount ? (
             <AmountPicker source={item.source} options={item.options} value={amount} onChange={setAmount} showKcal={data.showKcal} />
@@ -110,14 +123,7 @@ export default function FoodEntryScreen() {
             {meals.map((m) => {
               const on = m.id === mealId;
               return (
-                <Pressable
-                  key={m.id}
-                  onPress={() => setMealId(m.id)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: on }}
-                  style={({ pressed }) => [styles.chip, { backgroundColor: on ? t.inverse : t.button, opacity: pressed ? 0.7 : 1 }]}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: on ? t.onInverse : t.text }}>{mealName(m)}</Text>
-                </Pressable>
+                <Chip key={m.id} label={mealName(m)} on={on} onPress={() => setMealId(m.id)} />
               );
             })}
           </View>
@@ -126,14 +132,7 @@ export default function FoodEntryScreen() {
         <Card style={{ overflow: 'hidden' }}>
           <Row first>
             <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.food.time}</Text>
-            <Stepper
-              value={showTime(time)}
-              minWidth={60}
-              onDecrease={() => setTime(shiftTime(time, -15, 0, 23 * 60 + 59))}
-              onIncrease={() => setTime(shiftTime(time, 15, 0, 23 * 60 + 59))}
-              decreaseLabel={tr.common.earlier15}
-              increaseLabel={tr.common.later15}
-            />
+            <TimeField value={time} label={tr.food.time} onChange={setTime} />
           </Row>
         </Card>
 
@@ -141,17 +140,16 @@ export default function FoodEntryScreen() {
           <TextButton label={tr.food.deleteEntry} color={t.danger} onPress={confirmDelete} />
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  missing: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 4 },
-  barTitle: { fontSize: 17, fontWeight: '600', flexShrink: 1, textAlign: 'center' },
+  missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 32 },
+  missingTitle: { fontSize: 19, fontWeight: '700', textAlign: 'center' },
+  missingText: { fontSize: 15, lineHeight: 21, textAlign: 'center' },
   content: { padding: 16, gap: 12 },
   card: { padding: 14, gap: 12 },
   label: { fontSize: 13, fontWeight: '600' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { minHeight: 40, borderRadius: 20, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' },
 });

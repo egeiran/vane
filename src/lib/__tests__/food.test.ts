@@ -25,6 +25,7 @@ import {
   suggestMeal,
   towardGoal,
   type Source,
+  firstFoodDay,
 } from '../food';
 import * as F from '../foodState';
 import { DEFAULT_SETTINGS, type Food, type FoodData } from '../types';
@@ -136,8 +137,10 @@ describe('mat: måltider', () => {
   });
 
   it('flytter måltider', () => {
-    const d = F.moveMeal(EMPTY_FOOD, 'lunsj', -1);
+    const d = F.moveMeal(EMPTY_FOOD, 'lunsj', 0);
     expect(d.meals.slice(0, 2).map((m) => m.id)).toEqual(['lunsj', 'frokost']);
+    expect(F.moveMeal(EMPTY_FOOD, 'mellom', 1).meals.map((m) => m.id)).toEqual(['frokost', 'mellom', 'lunsj', 'middag', 'kveldsmat']);
+    expect(F.moveMeal(EMPTY_FOOD, 'frokost', 0)).toBe(EMPTY_FOOD);
     expect(F.moveMeal(EMPTY_FOOD, 'frokost', -1)).toBe(EMPTY_FOOD);
   });
 });
@@ -222,6 +225,18 @@ describe('mat: føringer', () => {
     d = F.removeEntry(d, '2026-11-13', 'a');
     d = F.removeEntry(d, '2026-11-13', 'b');
     expect(d.entries).toEqual({});
+  });
+
+  it('angrer en sletting: føringen kommer tilbake, én gang', () => {
+    const d = withEntries('2026-11-13', [entry('a', 'frokost', 170, { time: '07:00' }), entry('b', 'lunsj', 350, { time: '12:00' })]);
+    const a = d.entries['2026-11-13'][0];
+    const back = F.restoreEntry(F.removeEntry(d, '2026-11-13', 'a'), '2026-11-13', a, 0);
+    expect(back.entries['2026-11-13'].map((e) => e.id)).toEqual(['a', 'b']);
+    expect(F.restoreEntry(back, '2026-11-13', a, 0)).toBe(back);
+    // Den siste føringen den dagen: dagen kommer tilbake.
+    const only = withEntries('2026-11-14', [entry('c', 'middag', 400)]);
+    const c = only.entries['2026-11-14'][0];
+    expect(F.restoreEntry(F.removeEntry(only, '2026-11-14', 'c'), '2026-11-14', c, 3).entries['2026-11-14']).toEqual([c]);
   });
 
   it('«Som i går» kopierer måltidet med nye ID-er', () => {
@@ -331,5 +346,13 @@ describe('mat: lasting og CSV', () => {
       ['2026-11-12', '08:00', 'Lunsj', '', '', '30.0', ''],
       ['2026-11-13', '08:00', 'Frokost', 'Skyr', '1 beger', '17.5', '99'],
     ]);
+  });
+});
+
+describe('bla tilbake', () => {
+  it('første dag er den eldste dagen med noe logget', () => {
+    const e = { id: 'x', time: '08:00', mealId: 'frokost', name: 'Egg', protein: 60, kcal: 70, ref: null, amount: null };
+    expect(firstFoodDay({ entries: {} }, '2026-11-13')).toBe('2026-11-12');
+    expect(firstFoodDay({ entries: { '2026-10-02': [e], '2026-09-01': [], '2026-11-01': [e] } }, '2026-11-13')).toBe('2026-10-02');
   });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
+  firstMonth,
   addMonths,
   amountInputText,
   cleanMerchant,
@@ -25,6 +26,7 @@ import {
   approveSuggestion,
   categorize,
   deletePurchase,
+  restorePurchase,
   importPurchase,
   moveCategory,
   partsAreValid,
@@ -142,6 +144,29 @@ describe('kjøp', () => {
     expect(importPurchase(d, pay('a', 'kr 149,00', 'REMA 1000'))).toBe(d);
   });
 
+  it('angrer en sletting: kjøpet kommer tilbake på sin plass, én gang', () => {
+    let d = importPurchase(EMPTY_MONEY, pay('a', 'kr 149,00', 'REMA 1000'));
+    d = importPurchase(d, pay('b', 'kr 49,00', 'Kiwi', new Date(2026, 9, 18, 9, 0)));
+    const removed = d.purchases.find((p) => p.id === 'a')!;
+    const order = d.purchases.map((p) => p.id);
+    const after = restorePurchase(deletePurchase(d, 'a'), removed);
+    expect(after.purchases.map((p) => p.id)).toEqual(order);
+    expect(restorePurchase(after, removed)).toBe(after);
+  });
+
+  it('angrer på samme plass, også blant kjøp fra samme minutt', () => {
+    let d = importPurchase(EMPTY_MONEY, pay('a', 'kr 10,00', 'Kiwi'));
+    d = importPurchase(d, pay('b', 'kr 20,00', 'Rema'));
+    d = importPurchase(d, pay('c', 'kr 30,00', 'Joker'));
+    const order = d.purchases.map((p) => p.id);
+    const i = order.indexOf('a');
+    const a = d.purchases[i];
+    expect(restorePurchase(deletePurchase(d, 'a'), a, i).purchases.map((p) => p.id)).toEqual(order);
+    // En plass som ikke passer lenger: sorteres inn.
+    const old = { ...a, id: 'z', day: '2026-01-01' };
+    expect(restorePurchase(d, old, 0).purchases.map((p) => p.id).at(-1)).toBe('z');
+  });
+
   it('tar inn et kjøp uten beløp, så det kan fylles inn', () => {
     const d = importPurchase(EMPTY_MONEY, pay('a', '', 'Kiwi'));
     expect(d.purchases[0].amount).toBe(0);
@@ -240,9 +265,10 @@ describe('kategorier', () => {
     d = updateCategory(d, 'hjem', { name: 'Bolig' });
     expect(d.categories.find((c) => c.id === 'hjem')!.name).toBe('Bolig');
     expect(updateCategory(d, 'hjem', { name: '  ' })).toBe(d);
-    d = moveCategory(d, 'transport', -1);
+    d = moveCategory(d, 'transport', 1);
     expect(d.categories.slice(0, 3).map((c) => c.id)).toEqual(['dagligvarer', 'transport', 'spise-ute']);
-    expect(moveCategory(d, 'dagligvarer', -1)).toBe(d);
+    expect(moveCategory(d, 'dagligvarer', 0)).toBe(d);
+    expect(moveCategory(d, 'dagligvarer', 99)).toBe(d);
   });
 });
 
@@ -263,6 +289,7 @@ describe('summer', () => {
       month: '2026-10',
       currency: 'NOK',
       total: 90000,
+      recurring: 0,
       pending: 10000,
       byCategory: [
         { categoryId: 'dagligvarer', amount: 45000 },
@@ -302,5 +329,13 @@ describe('oppsett til Swift', () => {
     expect(config.categories.dagligvarer).toBe('Dagligvarer');
     expect(config.categories.shopping).toBeUndefined();
     expect(config.merchants).toEqual({ REMA: { categoryId: 'dagligvarer' }, KAFE: { name: 'Kafeen' } });
+  });
+});
+
+describe('bla i måneder', () => {
+  it('den eldste måneden med et kjøp, ellers denne måneden', () => {
+    expect(firstMonth({ purchases: [] }, '2026-11-04')).toBe('2026-11');
+    const p = (day: string) => ({ day }) as never;
+    expect(firstMonth({ purchases: [p('2026-10-12'), p('2025-07-01'), p('2026-11-01')] }, '2026-11-04')).toBe('2025-07');
   });
 });

@@ -25,7 +25,7 @@ const HUNDRED: Amount = { kind: 'grams', grams: 100 };
 
 function subFor(source: Source, amount: Amount): string {
   const n = nutrientsFor(source, amount);
-  return [amountText(amount), n ? proteinText(n.protein, true) : ''].filter(Boolean).join(' · ');
+  return [amountText(amount), n ? tr.food.proteinOf(proteinText(n.protein, true)) : ''].filter(Boolean).join(' · ');
 }
 
 export function foodItem(data: Pick<FoodData, 'lastAmount'>, f: Food): LogItem {

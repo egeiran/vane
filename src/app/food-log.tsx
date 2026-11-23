@@ -1,22 +1,22 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AmountPicker } from '@/components/AmountPicker';
 import { Field } from '@/components/Field';
+import { appear, disappear } from '@/components/motion';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
-import { ProteinBar } from '@/components/ProteinBar';
-import { Card, IconButton, PrimaryButton, SectionLabel, TextButton, tick } from '@/components/ui';
+import { Card, Chip, IconButton, PrimaryButton, SectionLabel, TextButton, tick } from '@/components/ui';
 import { tr } from '@/i18n';
 import { dayWhen, relativeWeekday, type DateKey } from '@/lib/dates';
 import {
   amountText,
   canEditFood,
   decimalInput,
-  entriesOn,
   entryTime,
-  goalOn,
   mealById,
   mealName,
   parseKcal,
@@ -70,7 +70,6 @@ export default function FoodLogScreen() {
 
   const meal = mealById(data, mealId);
   const meals = visibleMeals(data).some((m) => m.id === mealId) ? visibleMeals(data) : [...visibleMeals(data), ...(meal ? [meal] : [])];
-  const totals = sumEntries(entriesOn(data, day));
   const when = dayWhen(day, today);
 
   const log = (name: string, n: Nutrients, ref: FoodRef | null, amount: Amount | null) => {
@@ -123,48 +122,37 @@ export default function FoodLogScreen() {
   const title = when === 'today' ? tr.food.logTitle : `${tr.food.logTitle} · ${relativeWeekday(day, today)}`;
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={styles.bar}>
-        {mode.kind === 'list' ? <View style={{ width: 70 }} /> : <TextButton label={tr.common.back} onPress={() => setMode({ kind: 'list' })} />}
-        <Text style={[styles.barTitle, { color: t.text }]} accessibilityRole="header" numberOfLines={1}>
-          {title}
-        </Text>
-        <TextButton label={tr.common.done} bold onPress={close} />
-      </View>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <ScreenHeader
+        title={title}
+        left={mode.kind === 'list' ? [] : [{ label: tr.common.back, onPress: () => setMode({ kind: 'list' }) }]}
+        right={[{ label: tr.common.done, variant: 'done', onPress: close }]}
+      />
 
-      <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
-        <Card style={styles.progress}>
-          <ProteinBar protein={totals.protein} goal={goalOn(data, day)} kcal={data.showKcal ? totals.kcal : null} compact />
-        </Card>
+      {/* Måltidet står fast øverst, så man ser hvor det man legger til havner, også etter rulling. */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        accessibilityRole="radiogroup"
+        accessibilityLabel={tr.food.meal}
+        style={styles.chipBar}
+        contentContainerStyle={styles.chips}>
+        {meals.map((m) => (
+          <Chip key={m.id} label={mealName(m)} on={m.id === mealId} onPress={() => setMealId(m.id)} />
+        ))}
+      </ScrollView>
 
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         {added ? (
-          <View style={[styles.added, { backgroundColor: t.colors.fersken.soft }]} accessibilityLiveRegion="polite">
+          <Animated.View entering={appear} exiting={disappear} style={[styles.added, { backgroundColor: t.colors.fersken.soft }]} accessibilityLiveRegion="polite">
             <Icon name="checkmark" size={14} color={t.colors.fersken.ink} />
             <Text style={[styles.addedText, { color: t.colors.fersken.ink }]} numberOfLines={2}>
               {added.text}
             </Text>
             <TextButton label={tr.food.undo} bold color={t.colors.fersken.ink} onPress={undo} />
-          </View>
+          </Animated.View>
         ) : null}
-
-        <View>
-          <Text style={[styles.label, { color: t.sub }]}>{tr.food.meal}</Text>
-          <View style={styles.chips} accessibilityRole="radiogroup">
-            {meals.map((m) => {
-              const on = m.id === mealId;
-              return (
-                <Pressable
-                  key={m.id}
-                  onPress={() => setMealId(m.id)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: on }}
-                  style={({ pressed }) => [styles.chip, { backgroundColor: on ? t.inverse : t.button, opacity: pressed ? 0.7 : 1 }]}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: on ? t.onInverse : t.text }}>{mealName(m)}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
 
         {mode.kind === 'amount' ? (
           <Card style={styles.panel}>
@@ -204,7 +192,7 @@ export default function FoodLogScreen() {
                     first
                     icon="arrow.uturn.backward"
                     title={when === 'today' ? tr.food.sameAsYesterday : tr.food.sameAsDayBefore}
-                    sub={`${sameAsBefore.map((e) => e.name || tr.food.quickName).join(', ')} · ${proteinText(sumEntries(sameAsBefore).protein)}`}
+                    sub={`${sameAsBefore.map((e) => e.name || tr.food.quickName).join(', ')} · ${tr.food.proteinOf(proteinText(sumEntries(sameAsBefore).protein))}`}
                     onPress={copyPrevious}
                   />
                 ) : null}
@@ -221,7 +209,7 @@ export default function FoodLogScreen() {
                       key={s.key}
                       first={i === 0}
                       name={s.name || tr.food.quickName}
-                      sub={s.amount ? `${amountText(s.amount)} · ${proteinText(s.nutrients.protein, true)}` : proteinText(s.nutrients.protein, true)}
+                      sub={[s.amount ? amountText(s.amount) : '', tr.food.proteinOf(proteinText(s.nutrients.protein, true))].filter(Boolean).join(' · ')}
                       onOpen={() => openSuggestion(s)}
                       onAdd={() => logSuggestion(s)}
                     />
@@ -274,7 +262,7 @@ export default function FoodLogScreen() {
           </>
         )}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -285,7 +273,7 @@ function ActionRow({ icon, title, sub, onPress, first }: { icon: 'number' | 'arr
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${title}. ${sub}`}
-      style={({ pressed }) => [styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }, { opacity: pressed ? 0.6 : 1 }]}>
+      style={({ pressed }) => [styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }, { opacity: pressed ? 0.6 : 1 }]}>
       <View style={[styles.rowIcon, { backgroundColor: t.colors.fersken.soft }]}>
         <Icon name={icon} size={15} color={t.colors.fersken.ink} />
       </View>
@@ -303,7 +291,7 @@ function ActionRow({ icon, title, sub, onPress, first }: { icon: 'number' | 'arr
 function ItemRow({ name, sub, onOpen, onAdd, first }: { name: string; sub: string; onOpen: () => void; onAdd?: () => void; first?: boolean }) {
   const t = useTheme();
   return (
-    <View style={[styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }]}>
+    <View style={[styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }]}>
       <Pressable onPress={onOpen} accessibilityRole="button" accessibilityLabel={`${name}. ${sub}`} style={({ pressed }) => [{ flex: 1, gap: 2, opacity: pressed ? 0.6 : 1 }]}>
         <Text style={[styles.rowName, { color: t.text }]} numberOfLines={2}>
           {name}
@@ -357,15 +345,11 @@ function QuickForm({
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 4 },
-  barTitle: { fontSize: 17, fontWeight: '600', flexShrink: 1, textAlign: 'center' },
   content: { padding: 16, gap: 14 },
-  progress: { padding: 14 },
   added: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingLeft: 14, paddingRight: 4, minHeight: 48 },
   addedText: { flex: 1, fontSize: 15, fontWeight: '600' },
-  label: { fontSize: 13, fontWeight: '600', marginBottom: 8, paddingHorizontal: 4 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { minHeight: 40, borderRadius: 20, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' },
+  chipBar: { flexGrow: 0, flexShrink: 0 },
+  chips: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 10 },
   searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingLeft: 12, paddingRight: 4, minHeight: 46 },
   searchInput: { flex: 1, fontSize: 17, paddingVertical: 10 },
   group: { gap: 8 },

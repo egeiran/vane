@@ -3,19 +3,19 @@
 Små vaner, i ro og mak. En rolig vaneapp for iPhone, uten streaks, poeng eller mas. Med en enkel oversikt over hva pengene går til, og om du får i deg nok protein.
 
 - **Oppstart**: første gang appen åpnes, forteller Vane kort hva den er, lar deg velge moduler og opptil tre vaner, forklarer varslene før iOS spør om lov, og viser hvordan du legger til widgetene. Alt kan hoppes over. De som allerede bruker appen, ser den ikke.
-- **I dag**: huk av daglige vaner (ja/nei eller antall, f.eks. 5 av 8 glass; når målet er nådd, blir tallet en hake som de andre) og ukentlige vaner («3 ganger i uka»).
+- **I dag**: huk av daglige vaner (ja/nei eller antall, f.eks. 5 av 8 glass; ringen og + legger til én, og når målet er nådd, blir tallet en hake som de andre) og ukentlige vaner («3 ganger i uka»). Hold inne på en vane for Endre, Se rutenettet, Endre rekkefølge og Slett, og for vaner med antall også Én mindre, Skriv inn antall og Nullstill.
 - **Dagens mål**: ett eller flere små mål for dagen. Morgenvarselet (standard kl. 07) spør hva du vil få til.
-- **Rett i går**: trykk på en dag i ukestripen for å se den. I dag og i går kan rettes. De eldre dagene i stripen kan bare leses.
-- **Oversikt**: rutenett der fargestyrken viser hvor mye som ble gjort. Uke, 4 uker eller år, for alt samlet og for hver vane.
+- **Bla mellom dager**: dra innholdet sidelengs for forrige eller neste dag, eller trykk på en dag i ukestripa. Stripa viser én uke om gangen (etter ukestart) og kan også dras. Man kan bla tilbake til den første dagen med data. I dag og i går kan rettes; eldre dager kan bare leses og er dempet. Det samme gjelder Mat.
+- **Oversikt**: rutenett der fargestyrken viser hvor mye som ble gjort. Uke, 4 uker eller år, for alt samlet og for hver vane: dra sidelengs for å bytte mellom dem, og bruk pilene rundt datoene for forrige og neste periode. Vanene sorteres under Innstillinger → Vaner (hold inne og dra, eller Endre), og rekkefølgen gjelder I dag og widgetene.
 - **Påminnelser**: per vane, med knappene *Gjort*, *+1* og *Om 1 time* rett i varselet. Kommer ikke hvis vanen allerede er gjort.
 - **Widgets**: «I dag» på hjemskjermen viser én ting om gangen med én knapp: om morgenen «Hva vil du få til i dag?», så første uferdige mål, så neste vane. Huk av rett fra widgeten. «Vane» på låseskjermen viser en ring med vanene som er gjort, og det viktigste akkurat nå ved siden av. Uten mål spør begge fram til kl. 12. Svarer du «Ikke i dag», spør de ikke mer den dagen.
-- **Penger**: hver gang du betaler med Apple Pay, kommer et varsel som spør om kategori. Kjenner Vane stedet, foreslår den kategorien du valgte sist, og du godkjenner med ett trykk uten å åpne appen. Kjøp som ikke er godkjent, ligger under *Venter* (med tall på fanen) til du tar dem. Del opp et kjøp, skriv et notat, eller la et kjøp ikke telle med. Månedens sum per kategori, de siste seks månedene, og alle kjøp med søk. Vipps, kontanter og nettkjøp legger du inn med +. Sju faste kategorier som kan få nytt navn, ikon og farge, skjules og flyttes, og du kan legge til egne. Ingen budsjett og ingen rødfarge.
-- **Faste utgifter**: husleie, strøm og abonnementer legges inn én gang, med beløp, uke, måned eller år, neste trekk og kategori. Penger viser en egen, rolig linje med hva som går ut i måneden og neste trekk. Den telles ikke med i månedens sum, så ingenting telles to ganger. Har et sted ett kjøp i måneden med omtrent samme beløp tre måneder på rad, foreslår Vane det som fast utgift. Valgfritt varsel kl. 09 dagen før et trekk, av som standard.
+- **Penger**: hver gang du betaler med Apple Pay, kommer et varsel som spør om kategori. Kjenner Vane stedet, foreslår den kategorien du valgte sist, og du godkjenner med ett trykk uten å åpne appen. Kjøp som ikke er godkjent, ligger under *Venter* (med tall på fanen) til du tar dem. Del opp et kjøp, skriv et notat, eller la et kjøp ikke telle med. Månedens sum per kategori (dra kortet sidelengs for forrige måned), kjøpene i måneden rett under, de siste seks månedene, og alle kjøp med søk. Sveip et kjøp mot venstre for Slett (et langt sveip sletter med en gang, som i Mail, og «Angre» står nederst en stund), eller hold inne for Endre, Godkjenn, Tell med / Ikke tell med og Slett. Vipps, kontanter og nettkjøp legger du inn med +. Sju faste kategorier som kan få nytt navn, ikon og farge, skjules og flyttes, og du kan legge til egne. Ingen budsjett og ingen rødfarge.
+- **Faste utgifter**: husleie, strøm og abonnementer legges inn én gang, med beløp, uke, måned eller år, neste trekk og kategori. Penger viser en egen, rolig linje med hva som går ut i måneden og neste trekk. Med bryteren «Ta med i månedens sum» legges trekkene som har gått ut, til det man har brukt, som en egen rad i månedskortet. Et trekk som alt er logget som kjøp fra samme sted samme måned, telles ikke to ganger. Bryteren er av som standard. Har et sted ett kjøp i måneden med omtrent samme beløp tre måneder på rad, foreslår Vane det som fast utgift. Valgfritt varsel kl. 09 dagen før et trekk, av som standard.
 - **Mat**: for å få i seg nok protein. Et fast proteinmål i gram per dag. Det settes første gang fanen åpnes, med en hjelper som regner ut fra vekt. Kalorier vises som en sum, uten mål, og kan slås av.
   - **Logging:** et raskt tall, egne matvarer, retter (flere ting med ett trykk) eller søk i Matvaretabellen fra Mattilsynet. Tabellen ligger i appen og virker uten nett.
   - **Loggearket:** viser «Som i går» og det du spiser oftest i måltidet. Det blir åpent etter hvert tillegg, med «Angre». Vane husker mengden du brukte sist.
   - **Måltider:** kan endres som kategoriene i Penger, med tidsrom, og Vane foreslår måltidet ut fra klokka.
-  - **Visning:** på I dag er det en stolpe under vanene, med hake når målet er nådd. Tallet fortsetter å telle. Oversikt viser et rutenett.
+  - **Visning:** hvert måltid er ett kort med navnet og «33 g protein» øverst; tomme måltider er stiplede plassholdere. Protein og kalorier står hver for seg øverst. På I dag er det en stolpe under vanene, med hake når målet er nådd. Tallet fortsetter å telle. Oversikt viser et rutenett. Sveip en føring mot venstre for Slett (med «Angre»), eller hold inne for Flytt til måltid og Kopier til i dag.
   - **Varsler (av som standard):** en kveldssjekk kl. 20, bare når du er under målet, og «Har du logget lunsj?» per måltid.
   - **Ingen** snitt, streaks eller rødfarge.
 - **Dagbok og humør**: én setning og ett humør per dag, i et lite kort på I dag (i dag og i går kan endres). Oversikt viser humøret som fargestyrke (grått for en dag med bare tekst), og setningen når du trykker på en dag. Ingen snitt og ingen trend. Valgfritt kveldsvarsel, av som standard.
@@ -39,7 +39,7 @@ Det gjelder bare Apple Pay i butikk (iPhone eller klokka mot terminal). Vipps, k
 
 ## Bygge og installere uten Mac
 
-Appen bygges i skyen med [EAS](https://expo.dev/eas) og installeres via TestFlight. Du trenger en Expo-konto og en betalt Apple Developer-konto. Xcode trengs ikke.
+Vane er i App Store. Appen bygges i skyen med [EAS](https://expo.dev/eas). Et nytt bygg går først til TestFlight, og derfra sender du det til gjennomgang i App Store Connect. Du trenger en Expo-konto og en betalt Apple Developer-konto. Xcode trengs ikke.
 
 ### Engangsoppsett
 
@@ -68,9 +68,15 @@ På GitHub går du til **Actions → Bygg til iPhone → Run workflow**. Det fun
 
 Jobben sjekker koden (lint, typer og tester) og starter bygget hos EAS. Ferdig bygg havner i TestFlight av seg selv, vanligvis etter 15–30 minutter. Installer TestFlight-appen på iPhonen første gang. Etterpå oppdateres Vane der.
 
+Et bygg i TestFlight når bare testerne, så det er slik du tester en branch før merge. Til App Store kommer det først når du velger bygget i App Store Connect og sender det til gjennomgang.
+
+Når en versjon er godkjent i App Store, tar ikke Apple imot flere bygg med samme versjon. Øk da `version` i `app.json` (for eksempel 1.0.1 → 1.0.2) før neste bygg. Versjonen er ikke med i fingerprinten (`runtimeVersion`), så «Send oppdatering» når fortsatt bygget som er i App Store.
+
 ### Oppdateringer uten nytt bygg (OTA)
 
-Endringer i JavaScript-koden, også i widgetene, kan sendes rett til telefonen: **Actions → Send oppdatering → Run workflow**. Det tar et par minutter. Åpne Vane, lukk den helt og åpne den igjen, så er oppdateringen i bruk.
+Endringer i JavaScript-koden, også i widgetene, kan sendes rett til telefonene: **Actions → Send oppdatering → Run workflow**. Det tar et par minutter. Åpne Vane, lukk den helt og åpne den igjen, så er oppdateringen i bruk.
+
+Oppdateringen går til **alle** som har et bygg som passer, både fra App Store og fra TestFlight (de bruker samme kanal, `production`), uten ny gjennomgang hos Apple. Send den derfor fra `main`, etter at endringen er testet. Vil du teste en branch først, bygg den med «Bygg til iPhone» og installer fra TestFlight. Jobben advarer når den sendes fra en annen branch enn `main`.
 
 Dette virker ikke når en endring trenger ny native kode, som en ny pakke med native kode, eller endringer i `app.json`. Da må du bygge på nytt. Appen sjekker selv at en oppdatering passer bygget på telefonen (`runtimeVersion` med `fingerprint`), så en oppdatering som ikke passer, blir bare ikke brukt.
 
@@ -112,6 +118,7 @@ Appen kan også kjøres i nettleseren (`npx expo start --web`), bare for skjermb
 
 ### Slik henger det sammen
 
+- **Navigasjon og bevegelse:** undersidene og skjemaene har den native headeren (`ScreenHeader`, med `Stack.Title` og `Stack.Toolbar`). Små skjemaer og loggearket er ark med høyder (`presentation: 'formSheet'`), store skjemaer åpner fullt. Et skjema med endringer spør «Forkaste endringene?» før det lukkes (`useDiscardGuard`). Tid og dato velges med iOS sine velgere (`TimeField`, `DateField`). Gestene bruker Gesture Handler og Reanimated, som allerede er med i bygget: `DayPager` og `WeekStrip` (dager), `SwipePager` (måneder og perioder), `SwipeRow` (sveip for Slett som i Mail, med `showUndo` for «Angre»), `SortableList` (dra for å flytte) og `RowMenu` (hold-inne-meny med `Link.Menu`). Mens en rad dras for å flytte, eller en side dras sidelengs, ruller ikke siden (`onDragChange`). Overgangene ligger i `src/components/motion.ts` og følger «Reduser bevegelse». Komponenter som ikke finnes på web, har en `.web.tsx` med en enkel variant, så appen kan kjøres i nettleseren for skjermbilder.
 - **Språk:** `tr` fra `src/i18n` gir teksten på telefonens språk (norsk for nb, nn og no, ellers engelsk). Språket velges når appen starter, og iOS starter appen på nytt når det endres (Innstillinger → Vane → Språk). Widgetene får teksten som props, fordi widget-koden ikke kan importere noe. Swift-tekstene bruker den norske teksten som nøkkel, og den engelske står i `locales/en.json`. Data lagres aldri oversatt: standardkategoriene vises på engelsk så lenge de ikke har fått nytt navn.
 - **Lagring:** `zustand` med SQLite-basert nøkkel/verdi-lager (`expo-sqlite/kv-store`). Ren logikk ligger i `src/lib/state.ts` og `src/lib/habits.ts` og er testet.
 - **Oppstart:** `src/app/onboarding.tsx`. Rotlayouten holder resten av appen bak `Stack.Protected` til `settings.onboarded` er satt (`needsOnboarding` i `src/lib/onboarding.ts`, lest én gang når appen starter). Data fra før oppstarten fantes, får `onboarded: true` i `loadData`. Appen spør ikke om lov til varsler når den starter. Det gjør oppstarten etter en forklaring, og Innstillinger når et varsel slås på.

@@ -50,7 +50,7 @@ Brukeren velger moduler i oppstarten («Hva vil du ha oversikt over?») og kan e
 
 - **Norsk og engelsk fra start.**
 - For hele verden: valuta, ukestart, datoformat og 12/24-timersklokke følger telefonen og kan endres.
-- Lansering når det er ferdig, ingen fast dato. Vaneapper får flest nedlastinger tidlig i januar, så det er verdt å sikte mot hvis vi er nær.
+- Vane er i App Store (status 23. november 2026). Det som står under «Før lansering» i rekkefølgen under og ikke er gjort, kommer som oppdateringer. Vaneapper får flest nedlastinger tidlig i januar, så det er verdt å ha det viktigste klart da.
 
 ## Plattform
 
@@ -64,9 +64,9 @@ Bare Apples språkmodell på telefonen. Ingenting sendes ut. Krever en iPhone me
 
 ## Åpne spørsmål
 
-- **Retting av eldre dager.** I dag kan bare i dag og i går rettes. De fem dagene i ukestripa kan åpnes og leses (13. november 2026), men ikke endres. Det er ikke et ufravikelig prinsipp, men vi venter med å endre det. Alternativer: siste 7 dager for alle, eller eldre dager med Vane+.
+- **Retting av eldre dager.** I dag kan bare i dag og i går rettes. Siden 22. november 2026 (#31) kan man bla tilbake til den første dagen med data og lese den, men ikke endre den. Det er ikke et ufravikelig prinsipp, men vi venter med å endre det. Alternativer: siste 7 dager for alle, eller eldre dager med Vane+.
 - **Mat og Vane+.** Om Mat er gratis, eller om for eksempel søk i Matvaretabellen og «Som i går» krever Vane+, avgjøres sammen med #13.
-- **Matvaretabellen i en betalt app.** Mattilsynet ber om at tabellen oppgis som kilde, og sier at dataene kan lagres lokalt. Det står ingen egen lisens for API-et. Før lansering bør vi spørre matvaretabellen@mattilsynet.no om bruk i en app man betaler for.
+- **Matvaretabellen i en betalt app.** Mattilsynet ber om at tabellen oppgis som kilde, og sier at dataene kan lagres lokalt. Det står ingen egen lisens for API-et. Før Vane+ kommer, bør vi spørre matvaretabellen@mattilsynet.no om bruk i en app man betaler for.
 - **Kategori i App Store:** Produktivitet eller Helse og trening.
 
 ## Rekkefølge
@@ -74,17 +74,21 @@ Bare Apples språkmodell på telefonen. Ingenting sendes ut. Krever en iPhone me
 Veikartet er [issue #4](https://github.com/egeiran/vane/issues/4), med en sjekkliste over alle issuene i den rekkefølgen de bør gjøres (#5–#23).
 
 1. **Grunnmur:** test på ekte iPhone, språk (norsk og engelsk), valuta og ukestart, moduler.
-2. **Før lansering:** oppstart, eksport og import, iCloud, Vane+ og grenser, påminnelser i bakgrunnen, vurdering i App Store, personvern og App Store-siden.
+2. **Neste** (het «Før lansering» til appen kom i App Store): oppstart, eksport og import, iCloud, Vane+ og grenser, påminnelser i bakgrunnen, vurdering i App Store, personvern og App Store-siden. Etiketten er `2 neste`.
 3. **Etter lansering:** Siri og Action-knappen, Apple Helse, faste utgifter, KI.
 
 Dagbok og humør (#19) ble gjort tidligere, i samme runde som oppstarten. Kveldsvarselet er av som standard, og kommer hver kveld når det er på, som morgenvarselet.
 
-Faste utgifter (#21) ble også gjort tidligere, 9. november 2026. De er en egen linje i Penger og telles ikke med i månedens sum. Modulen ligger under Penger og er av til man slår den på. Varselet dagen før kommer kl. 09 og er av som standard. Den er gratis til Vane+ finnes, og #13 legger den bak Vane+ som i tabellen over.
+Faste utgifter (#21) ble også gjort tidligere, 9. november 2026. De er en egen linje i Penger. Fra 23. november 2026 kan de tas med i månedens sum med en bryter (av som standard): trekkene som har gått ut, blir en egen rad i månedskortet, og et trekk som alt er logget som kjøp fra samme sted samme måned, telles ikke to ganger. Modulen ligger under Penger og er av til man slår den på. Varselet dagen før kommer kl. 09 og er av som standard. Den er gratis til Vane+ finnes, og #13 legger den bak Vane+ som i tabellen over.
 Mat (#28) ble lagt til 13. november 2026, som en egen modul med fane. Den er laget for å få i seg nok protein, og følger de samme prinsippene som resten av appen:
 - Protein har et fast mål i gram. Kalorier har ingen mål, bare en sum som kan skjules.
 - Ingen snitt, ingen streaks og ingen rødfarge.
 - Som for vanene kan bare i dag og i går endres.
 - Varslene er av som standard.
 - Widgets, Snarveier og Apple Helse kommer senere.
+
+UX-runden (#31) ble gjort 22.–23. november 2026, etter en gjennomgang med klikkbare forslag: sveip mellom dager og måneder, Uke/Måned/År i Oversikt, native headere og ark, hold-inne-menyer og sveip på rader, dra for å flytte, iOS sine tidsvelgere, rolige overganger, og en tydeligere Mat-side. Appen var da allerede i App Store, så skjermbildene der (#17) bør tas på nytt etter den.
+
+Siden appen er i App Store, når «Send oppdatering» alle brukerne. En branch testes derfor med et bygg i TestFlight, og oppdateringen sendes fra `main`. Data som ligger på brukernes telefoner, må alltid kunne lastes etter en oppdatering.
 
 4. **Senere:** Apple Watch.

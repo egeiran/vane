@@ -1,7 +1,7 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
 import { Card, PrimaryButton, Row, SectionLabel, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
@@ -26,10 +26,6 @@ import { getMoney, replaceMoney } from '@/lib/moneyStore';
 import { getData, replaceData, useStore } from '@/lib/store';
 import { useTheme } from '@/theme';
 
-function back() {
-  if (router.canGoBack()) router.back();
-  else router.replace('/settings');
-}
 
 type Message = { kind: 'error'; error: BackupError | 'read' | 'share' } | { kind: 'done' };
 
@@ -92,15 +88,7 @@ export default function DataScreen() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
-      <View style={styles.bar}>
-        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel={tr.common.back} style={styles.backButton}>
-          <Icon name="chevron.left" size={20} color={t.text} />
-          <Text style={{ fontSize: 17, color: t.text, fontWeight: '500' }}>{tr.common.back}</Text>
-        </Pressable>
-      </View>
-      <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-        {tr.backup.title}
-      </Text>
+      <ScreenHeader title={tr.backup.title} large />
       <Text style={[styles.lead, { color: t.sub }]}>{tr.backup.lead}</Text>
 
       {message ? (
@@ -140,7 +128,8 @@ export default function DataScreen() {
             ))}
           </View>
           <Text style={[styles.body, { color: t.sub }]}>{tr.backup.previewWarning}</Text>
-          <PrimaryButton label={tr.backup.replace} onPress={replace} />
+          {/* Erstatter alle dataene på telefonen: rød, som andre handlinger som ikke kan angres. */}
+          <PrimaryButton label={tr.backup.replace} onPress={replace} destructive />
           <View style={{ alignItems: 'center' }}>
             <TextButton label={tr.common.cancel} color={t.sub} onPress={() => setPending(null)} />
           </View>
@@ -184,9 +173,6 @@ function ActionRow({ label, help, icon, onPress, first }: { label: string; help:
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 40 },
-  bar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingTop: 4 },
-  backButton: { flexDirection: 'row', alignItems: 'center', gap: 2, minHeight: 44, paddingHorizontal: 4 },
-  title: { fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.5, paddingHorizontal: 20, paddingTop: 6, paddingBottom: 6 },
   lead: { fontSize: 15, lineHeight: 21, paddingHorizontal: 20 },
   message: { marginHorizontal: 16, marginTop: 16, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
   preview: { marginHorizontal: 16, marginTop: 16, padding: 18, gap: 10 },

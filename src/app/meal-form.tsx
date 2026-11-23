@@ -1,16 +1,18 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Card, Row, Stepper, SwitchRow, TextButton } from '@/components/ui';
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { useDiscardGuard } from '@/components/useDiscardGuard';
+import { TimeField } from '@/components/TimeField';
+import { Card, Row, SwitchRow, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
 import { minutesOf as minutes, shiftTime } from '@/lib/dates';
 import { DEFAULT_MEALS, mealName } from '@/lib/food';
 import { MAX_FOOD_NAME } from '@/lib/foodState';
 import { foodHome, useFood } from '@/lib/foodStore';
 import { requestPermission } from '@/lib/notifications';
-import { showTime } from '@/lib/region';
 import { useTheme } from '@/theme';
 
 function close() {
@@ -34,6 +36,13 @@ export default function MealFormScreen() {
   const [start, setStart] = useState(existing?.start ?? '12:00');
   const [end, setEnd] = useState(existing?.end ?? '13:00');
   const [remind, setRemind] = useState(existing?.remind ?? false);
+  // Endringer som ikke er lagret: spør før arket lukkes (Avbryt, sveip ned eller tilbake).
+  const [initial] = useState(() => JSON.stringify({ name, hasWindow, start, end, remind }));
+  const allowClose = useDiscardGuard(JSON.stringify({ name, hasWindow, start, end, remind }) !== initial);
+  const done = () => {
+    allowClose();
+    close();
+  };
 
   const canSave = !!name.trim();
 
@@ -44,7 +53,7 @@ export default function MealFormScreen() {
     const input = { name: keepName, start: hasWindow ? start : null, end: hasWindow ? end : null, remind: hasWindow && remind };
     if (existing) updateMeal(existing.id, input);
     else addMeal(input);
-    close();
+    done();
   };
 
   const toggleRemind = (on: boolean) => {
@@ -60,35 +69,32 @@ export default function MealFormScreen() {
         text: tr.common.delete,
         style: 'destructive',
         onPress: () => {
-          close();
+          done();
           deleteMeal(existing.id);
         },
       },
     ]);
 
   // Slutten er alltid etter starten, og starten før slutten.
-  const moveStart = (delta: number) => {
-    const next = shiftTime(start, delta, 0, 23 * 60 + 30);
+  // Tidsrommet holder seg gyldig: flyttes starten forbi slutten, flytter slutten med (og omvendt).
+  const setStartTime = (next: string) => {
     setStart(next);
-    if (minutes(end) <= minutes(next)) setEnd(shiftTime(next, 15, 0, 23 * 60 + 45));
+    if (minutes(end) <= minutes(next)) setEnd(shiftTime(next, 15, 0, 23 * 60 + 59));
   };
-  const moveEnd = (delta: number) => {
-    const next = shiftTime(end, delta, 15, 23 * 60 + 45);
+  const setEndTime = (next: string) => {
     setEnd(next);
     if (minutes(next) <= minutes(start)) setStart(shiftTime(next, -15));
   };
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={styles.bar}>
-        <TextButton label={tr.common.cancel} onPress={close} />
-        <Text style={[styles.barTitle, { color: t.text }]} accessibilityRole="header">
-          {existing ? tr.food.editMeal : tr.food.newMeal}
-        </Text>
-        <TextButton label={existing ? tr.common.save : tr.common.add} bold onPress={save} disabled={!canSave} />
-      </View>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <ScreenHeader
+        title={existing ? tr.food.editMeal : tr.food.newMeal}
+        left={[{ label: tr.common.cancel, onPress: close }]}
+        right={[{ label: existing ? tr.common.save : tr.common.add, variant: 'done', onPress: save, disabled: !canSave }]}
+      />
 
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
           <Text style={[styles.label, { color: t.sub }]} nativeID="meal-name-label">
             {tr.common.name}
@@ -112,11 +118,11 @@ export default function MealFormScreen() {
             <>
               <Row>
                 <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.food.from}</Text>
-                <Stepper value={showTime(start)} minWidth={60} onDecrease={() => moveStart(-15)} onIncrease={() => moveStart(15)} decreaseLabel={tr.common.earlier15} increaseLabel={tr.common.later15} />
+                <TimeField value={start} max="23:30" label={tr.food.from} onChange={setStartTime} />
               </Row>
               <Row>
                 <Text style={{ flex: 1, fontSize: 16, color: t.text }}>{tr.food.to}</Text>
-                <Stepper value={showTime(end)} minWidth={60} onDecrease={() => moveEnd(-15)} onIncrease={() => moveEnd(15)} decreaseLabel={tr.common.earlier15} increaseLabel={tr.common.later15} />
+                <TimeField value={end} min="00:15" label={tr.food.to} onChange={setEndTime} />
               </Row>
             </>
           ) : (
@@ -141,13 +147,11 @@ export default function MealFormScreen() {
           </View>
         ) : null}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 4 },
-  barTitle: { fontSize: 17, fontWeight: '600', flexShrink: 1, textAlign: 'center' },
   content: { padding: 16, gap: 12 },
   card: { padding: 14, gap: 10 },
   label: { fontSize: 13, fontWeight: '600' },

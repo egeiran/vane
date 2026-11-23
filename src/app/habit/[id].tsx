@@ -1,12 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CheckButton } from '@/components/CheckButton';
 import { ColumnGrid, WeekRows, type HeatWeek } from '@/components/HeatGrid';
-import { Icon } from '@/components/Icon';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Card, TextButton, tick } from '@/components/ui';
 import { tr } from '@/i18n';
-import { formatShort, relativeDayName } from '@/lib/dates';
+import { formatShort, relativeDayName, type DateKey } from '@/lib/dates';
 import { weekColumns, weekRows, isFuture, daysInRange, monthLabels } from '@/lib/grid';
 import { amountText, fractionOn, frequencyText, isDone, isWeekly, periodSummary, summaryText, weekCount, weeklyTarget } from '@/lib/habits';
 import { showTime, weekStartOf } from '@/lib/region';
@@ -26,6 +27,8 @@ function back() {
 export default function HabitScreen() {
   const t = useTheme();
   const today = useToday();
+  // Dagen man har trykket på i rutenettet (som i Oversikt).
+  const [picked, setPicked] = useState<DateKey>(today);
   const { id } = useLocalSearchParams<{ id: string }>();
   const data = useData();
   const toggle = useStore((s) => s.toggle);
@@ -56,6 +59,11 @@ export default function HabitScreen() {
     .filter(Boolean)
     .join(' · ');
 
+  const dayLabel = (day: DateKey) => {
+    const f = fractionOn(data, habit, day);
+    return tr.habitDetail.dayState(relativeDayName(day, today), f === null ? 'none' : f >= 1 ? 'done' : f > 0 ? 'partly' : 'not');
+  };
+
   const weeks: HeatWeek[] = weekRows(today, 5, weekStart).map((row) => ({
     label: formatShort(row[0]),
     cells: row.map((day) => {
@@ -65,7 +73,9 @@ export default function HabitScreen() {
         key: day,
         color: future ? 'transparent' : shade(t, c.solid, f),
         today: day === today,
-        label: tr.habitDetail.dayState(relativeDayName(day, today), f === null ? 'none' : f >= 1 ? 'done' : f > 0 ? 'partly' : 'not'),
+        selected: day === picked,
+        label: dayLabel(day),
+        onPress: future ? undefined : () => setPicked(day),
       };
     }),
   }));
@@ -91,13 +101,10 @@ export default function HabitScreen() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
-      <View style={styles.bar}>
-        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel={tr.common.back} style={styles.backButton}>
-          <Icon name="chevron.left" size={20} color={t.text} />
-          <Text style={{ fontSize: 17, color: t.text, fontWeight: '500' }}>{tr.common.back}</Text>
-        </Pressable>
-        <TextButton label={tr.common.edit} onPress={() => router.push({ pathname: '/habit-form', params: { id: habit.id } })} />
-      </View>
+      <ScreenHeader
+        title={habit.name}
+        right={[{ label: tr.common.edit, onPress: () => router.push({ pathname: '/habit-form', params: { id: habit.id } }) }]}
+      />
 
       <View style={styles.header}>
         <View style={{ flex: 1, gap: 4 }}>
@@ -105,12 +112,24 @@ export default function HabitScreen() {
             <View style={[styles.dot, { backgroundColor: c.solid }]} />
             <Text style={{ fontSize: 14, color: t.sub, flexShrink: 1 }}>{meta}</Text>
           </View>
-          <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
+          <Text style={[styles.name, { color: t.text }]} accessibilityRole="header">
             {habit.name}
           </Text>
+          {isCount && value > 0 && !done ? (
+            <View style={{ alignSelf: 'flex-start', marginLeft: -8 }}>
+              <TextButton
+                label={tr.habits.menuLess}
+                color={t.sub}
+                onPress={() => {
+                  tick();
+                  increment(habit.id, today, -1);
+                }}
+              />
+            </View>
+          ) : null}
         </View>
         {isCount && done ? (
-          // Målet er nådd: samme hake som de andre vanene. Trykk trekker fra én, som ringen i «I dag».
+          // Målet er nådd: samme hake som de andre vanene. Trykk trekker fra én, som ringen på I dag.
           <CheckButton
             size={52}
             done
@@ -152,6 +171,9 @@ export default function HabitScreen() {
           <Text style={{ fontSize: 13, color: t.sub }}>{summaryText(periodSummary(data, habit, today, daysInRange(today, 5, weekStart)))}</Text>
         </View>
         <WeekRows weeks={weeks} weekStart={weekStart} />
+        <Text accessibilityLiveRegion="polite" style={[styles.dayLine, { backgroundColor: t.bg, color: t.text }]}>
+          {dayLabel(picked)}
+        </Text>
       </Card>
 
       <Card style={styles.card}>
@@ -176,15 +198,14 @@ export default function HabitScreen() {
 const styles = StyleSheet.create({
   content: { paddingBottom: 40 },
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 4 },
-  backButton: { flexDirection: 'row', alignItems: 'center', gap: 2, minHeight: 44, paddingHorizontal: 4 },
-  header: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 6 },
+  header: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: 20, paddingTop: 4, paddingBottom: 6 },
+  name: { fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.5 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   dot: { width: 10, height: 10, borderRadius: 5 },
-  title: { fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.5 },
   plusOne: { height: 52, borderRadius: 26, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center' },
   card: { marginHorizontal: 16, marginTop: 14, padding: 16, gap: 10 },
   cardHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   cardTitle: { fontSize: 17, fontWeight: '700' },
+  dayLine: { borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, lineHeight: 20, overflow: 'hidden' },
   month: { position: 'absolute', fontSize: 11 },
 });

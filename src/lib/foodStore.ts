@@ -17,6 +17,7 @@ type Actions = {
   addEntry: (day: DateKey, input: F.EntryInput) => string;
   updateEntry: (day: DateKey, id: string, patch: Partial<Omit<FoodEntry, 'id'>>) => void;
   removeEntry: (day: DateKey, id: string) => void;
+  restoreEntry: (day: DateKey, entry: FoodEntry, index: number) => void;
   /** «Som i går». Gir ID-ene til føringene som ble lagt til. */
   copyMeal: (day: DateKey, mealId: string, time: string) => string[];
   addFood: (input: F.FoodInput) => string;
@@ -27,7 +28,7 @@ type Actions = {
   removeDish: (id: string) => void;
   addMeal: (input: F.MealInput) => string;
   updateMeal: (id: string, patch: Partial<Omit<Meal, 'id'>>) => void;
-  moveMeal: (id: string, delta: number) => void;
+  moveMeal: (id: string, to: number) => void;
   deleteMeal: (id: string) => void;
 };
 
@@ -62,6 +63,7 @@ export const useFood = create<FoodStore>()(
         },
         updateEntry: (day, id, patch) => apply((d) => F.updateEntry(d, day, id, patch)),
         removeEntry: (day, id) => apply((d) => F.removeEntry(d, day, id)),
+        restoreEntry: (day, entry, index) => apply((d) => F.restoreEntry(d, day, entry, index)),
         copyMeal: (day, mealId, time) => {
           const ids = previousMeal(pickFood(get()), day, mealId).map(() => newId('e'));
           apply((d) => F.copyMeal(d, day, mealId, time, ids));
@@ -87,7 +89,7 @@ export const useFood = create<FoodStore>()(
           return id;
         },
         updateMeal: (id, patch) => apply((d) => F.updateMeal(d, id, patch)),
-        moveMeal: (id, delta) => apply((d) => F.moveMeal(d, id, delta)),
+        moveMeal: (id, to) => apply((d) => F.moveMeal(d, id, to)),
         deleteMeal: (id) => apply((d) => F.deleteMeal(d, id)),
       };
     },

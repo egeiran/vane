@@ -133,3 +133,19 @@ export function skipGoals(data: Data, day: DateKey): Data {
 export function updateSettings(data: Data, patch: Partial<Settings>): Data {
   return { ...data, settings: { ...data.settings, ...patch } };
 }
+
+/** Flytter elementet på plass `from` til plass `to`. Utenfor lista: uendret. */
+export function moveItem<T>(list: T[], from: number, to: number): T[] {
+  if (from < 0 || from >= list.length || to < 0 || to >= list.length || from === to) return list;
+  const out = [...list];
+  const [item] = out.splice(from, 1);
+  out.splice(to, 0, item);
+  return out;
+}
+
+/** Ny rekkefølge på vanene: vanen `id` flyttes til plass `to`. Rekkefølgen gjelder I dag og widgetene. */
+export function moveHabit(data: Data, id: string, to: number): Data {
+  const from = data.habits.findIndex((h) => h.id === id);
+  const habits = moveItem(data.habits, from, to);
+  return habits === data.habits ? data : { ...data, habits };
+}

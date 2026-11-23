@@ -7,7 +7,7 @@ import { EMPTY_MONEY } from './money';
 import * as M from './moneyState';
 import * as R from './recurring';
 import { newId } from './state';
-import type { Category, MoneyData } from './types';
+import type { Category, MoneyData, Purchase } from './types';
 
 type Actions = {
   addPurchase: (input: M.PurchaseInput) => string;
@@ -16,10 +16,11 @@ type Actions = {
   approveSuggestion: (id: string) => void;
   approveAllSuggestions: () => void;
   deletePurchase: (id: string) => void;
+  restorePurchase: (purchase: Purchase, index?: number) => void;
   renameMerchant: (key: string, name: string) => void;
   addCategory: (input: M.CategoryInput) => string;
   updateCategory: (id: string, patch: Partial<Omit<Category, 'id'>>) => void;
-  moveCategory: (id: string, delta: number) => void;
+  moveCategory: (id: string, to: number) => void;
   markSetupSeen: () => void;
   /** Hovedvalutaen, eller `null` for som telefonen. */
   setCurrency: (currency: string | null) => void;
@@ -27,6 +28,8 @@ type Actions = {
   updateRecurring: (id: string, patch: R.RecurringPatch) => void;
   deleteRecurring: (id: string) => void;
   dismissRecurringSuggestion: (key: string) => void;
+  /** Faste utgifter i månedens sum, eller ikke. */
+  setRecurringInTotal: (on: boolean) => void;
   /** Kjører en ren funksjon på dataene (brukes for køen fra Swift og svar på varsler). */
   apply: (fn: (d: MoneyData) => MoneyData) => void;
 };
@@ -42,6 +45,7 @@ export const pickMoney = (s: MoneyData): MoneyData => ({
   currency: s.currency,
   recurring: s.recurring,
   recurringDismissed: s.recurringDismissed,
+  recurringInTotal: s.recurringInTotal,
 });
 
 /**
@@ -64,6 +68,7 @@ export const useMoney = create<MoneyStore>()(
         approveSuggestion: (id) => apply((d) => M.approveSuggestion(d, id)),
         approveAllSuggestions: () => apply(M.approveAllSuggestions),
         deletePurchase: (id) => apply((d) => M.deletePurchase(d, id)),
+        restorePurchase: (purchase, index) => apply((d) => M.restorePurchase(d, purchase, index)),
         renameMerchant: (key, name) => apply((d) => M.renameMerchant(d, key, name)),
         addCategory: (input) => {
           const id = newId('c');
@@ -71,7 +76,7 @@ export const useMoney = create<MoneyStore>()(
           return id;
         },
         updateCategory: (id, patch) => apply((d) => M.updateCategory(d, id, patch)),
-        moveCategory: (id, delta) => apply((d) => M.moveCategory(d, id, delta)),
+        moveCategory: (id, to) => apply((d) => M.moveCategory(d, id, to)),
         markSetupSeen: () => apply(M.markSetupSeen),
         setCurrency: (currency) => apply((d) => ({ ...d, currency })),
         addRecurring: (input) => {
@@ -82,6 +87,7 @@ export const useMoney = create<MoneyStore>()(
         updateRecurring: (id, patch) => apply((d) => R.updateRecurring(d, id, patch)),
         deleteRecurring: (id) => apply((d) => R.deleteRecurring(d, id)),
         dismissRecurringSuggestion: (key) => apply((d) => R.dismissSuggestion(d, key)),
+        setRecurringInTotal: (on) => apply((d) => ({ ...d, recurringInTotal: on })),
         apply,
       };
     },

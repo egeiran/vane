@@ -1,8 +1,10 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { Field } from '@/components/Field';
 import { Card, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
@@ -75,6 +77,13 @@ export default function FoodFormScreen() {
   const updateFood = useFood((s) => s.updateFood);
   const removeFood = useFood((s) => s.removeFood);
   const [f, setF] = useState(() => initialForm(existing, mvt));
+  // Endringer som ikke er lagret: spør før arket lukkes (Avbryt, sveip ned eller tilbake).
+  const [initial] = useState(() => JSON.stringify(initialForm(existing, mvt)));
+  const allowClose = useDiscardGuard(JSON.stringify(f) !== initial);
+  const done = () => {
+    allowClose();
+    close();
+  };
   const set = (patch: Partial<Form>) => setF((prev) => ({ ...prev, ...patch }));
 
   const protein = parseProtein(f.protein);
@@ -98,7 +107,7 @@ export default function FoodFormScreen() {
     };
     if (existing) updateFood(existing.id, input);
     else addFood(input);
-    close();
+    done();
   };
 
   const confirmDelete = () =>
@@ -109,23 +118,21 @@ export default function FoodFormScreen() {
         text: tr.common.delete,
         style: 'destructive',
         onPress: () => {
-          close();
+          done();
           removeFood(existing.id);
         },
       },
     ]);
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={styles.bar}>
-        <TextButton label={tr.common.cancel} onPress={close} />
-        <Text style={[styles.barTitle, { color: t.text }]} accessibilityRole="header">
-          {existing ? tr.food.foodFormEdit : tr.food.foodFormNew}
-        </Text>
-        <TextButton label={existing ? tr.common.save : tr.common.add} bold onPress={save} disabled={!canSave} />
-      </View>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <ScreenHeader
+        title={existing ? tr.food.foodFormEdit : tr.food.foodFormNew}
+        left={[{ label: tr.common.cancel, onPress: close }]}
+        right={[{ label: existing ? tr.common.save : tr.common.add, variant: 'done', onPress: save, disabled: !canSave }]}
+      />
 
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
           <Text style={[styles.label, { color: t.sub }]} nativeID="food-name-label">
             {tr.common.name}
@@ -166,13 +173,11 @@ export default function FoodFormScreen() {
           </View>
         ) : null}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 4 },
-  barTitle: { fontSize: 17, fontWeight: '600', flexShrink: 1, textAlign: 'center' },
   content: { padding: 16, gap: 12 },
   card: { padding: 14, gap: 10 },
   cardTitle: { fontSize: 17, fontWeight: '700' },

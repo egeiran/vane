@@ -2,7 +2,9 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { UndoToast } from '@/components/UndoToast';
 import { useAppEffects } from '@/lib/effects';
 import { getMoney } from '@/lib/moneyStore';
 import { needsOnboarding } from '@/lib/onboarding';
@@ -31,47 +33,82 @@ export default function RootLayout() {
     SplashScreen.hideAsync();
   }, []);
 
+  // Undersidene har den native headeren: stor tittel som krymper når man ruller, bare pil tilbake,
+  // og knappene (+, Endre) til høyre. Tittel og knapper settes av skjermen selv med `ScreenHeader`.
+  const pushed = {
+    headerShown: true,
+    title: '',
+    headerBackButtonDisplayMode: 'minimal',
+    headerTintColor: t.text,
+    headerShadowVisible: false,
+    headerLargeTitleShadowVisible: false,
+    // På web: tittelen i midten, som på iPhone (der står den midt i baren når den ikke er stor).
+    ...(process.env.EXPO_OS === 'web' ? ({ headerTitleAlign: 'center' } as const) : {}),
+  } as const;
+
+  // Skjemaene har også native header, med Avbryt og Lagre (settes av skjermen med `ScreenHeader`).
+  // Små skjemaer og loggearket er ark med høyder som kan dras (formSheet); store skjemaer åpner fullt.
+  // Ugjennomsiktig header, så innholdet (som måltidsknappene i loggearket) starter under den.
+  const form = {
+    presentation: 'modal',
+    headerShown: true,
+    title: '',
+    headerTransparent: false,
+    headerTintColor: t.text,
+    headerShadowVisible: false,
+    // På web blir et ark en vanlig side med pil tilbake. Ark har Avbryt eller Ferdig i stedet, som på iPhone.
+    ...(process.env.EXPO_OS === 'web' ? ({ headerTitleAlign: 'center', headerLeft: () => null } as const) : {}),
+  } as const;
+  const sheet = (detents: number[]) =>
+    ({ ...form, presentation: 'formSheet', sheetAllowedDetents: detents, sheetGrabberVisible: true, sheetInitialDetentIndex: 0 }) as const;
+
   const base = t.dark ? DarkTheme : DefaultTheme;
   const navTheme = {
     ...base,
     colors: { ...base.colors, background: t.bg, card: t.bg, text: t.text, primary: t.text, border: t.hair },
   };
 
+  // Gestene (sveip mellom dager, sveip på rader, dra for å flytte) trenger roten fra Gesture Handler.
   return (
-    <ThemeProvider value={navTheme}>
-      <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.bg } }}>
-        {/* En ny bruker ser oppstarten først. Også en lenke fra en widget går dit. */}
-        <Stack.Protected guard={!onboarding} redirectTo="/onboarding">
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="habit/[id]" />
-          <Stack.Screen name="goals" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="habit-form" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="purchases" />
-          <Stack.Screen name="categories" />
-          {/* Et annet kjøp (eller et nytt) får sitt eget skjema, også når skjemaet allerede er åpent. */}
-          <Stack.Screen name="purchase-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
-          <Stack.Screen name="category-form" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="currency" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="recurring" />
-          <Stack.Screen name="recurring-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id ?? params?.merchant} />
-          <Stack.Screen name="data" />
-          {/* Et varsel for et annet måltid (eller en annen dag) åpner et nytt ark, med riktig måltid valgt. */}
-          <Stack.Screen name="food-log" options={{ presentation: 'modal' }} getId={({ params }) => `${params?.day ?? ''}:${params?.meal ?? ''}`} />
-          <Stack.Screen name="food-entry" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
-          <Stack.Screen name="food-goal" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="foods" />
-          <Stack.Screen name="food-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id ?? params?.mvt} />
-          <Stack.Screen name="dish-form" options={{ presentation: 'modal' }} getId={({ params }) => params?.id} />
-          <Stack.Screen name="meals" />
-          <Stack.Screen name="meal-form" options={{ presentation: 'modal' }} />
-        </Stack.Protected>
-        <Stack.Protected guard={onboarding}>
-          <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
-        </Stack.Protected>
-        {/* Oppstarten åpner veiviseren for Apple Pay. */}
-        <Stack.Screen name="money-setup" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: t.bg }}>
+      <ThemeProvider value={navTheme}>
+        <StatusBar style="auto" />
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.bg } }}>
+          {/* En ny bruker ser oppstarten først. Også en lenke fra en widget går dit. */}
+          <Stack.Protected guard={!onboarding} redirectTo="/onboarding">
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="habit/[id]" options={pushed} />
+            <Stack.Screen name="habits" options={pushed} />
+            <Stack.Screen name="goals" options={sheet([0.6, 1])} />
+            <Stack.Screen name="habit-form" options={form} />
+            <Stack.Screen name="purchases" options={pushed} />
+            <Stack.Screen name="categories" options={pushed} />
+            {/* Et annet kjøp (eller et nytt) får sitt eget skjema, også når skjemaet allerede er åpent. */}
+            <Stack.Screen name="purchase-form" options={form} getId={({ params }) => params?.id} />
+            <Stack.Screen name="category-form" options={sheet([0.75, 1])} />
+            <Stack.Screen name="currency" options={sheet([0.6, 1])} />
+            <Stack.Screen name="recurring" options={pushed} />
+            <Stack.Screen name="recurring-form" options={form} getId={({ params }) => params?.id ?? params?.merchant} />
+            <Stack.Screen name="data" options={pushed} />
+            {/* Et varsel for et annet måltid (eller en annen dag) åpner et nytt ark, med riktig måltid valgt. */}
+            <Stack.Screen name="food-log" options={sheet([0.6, 1])} getId={({ params }) => `${params?.day ?? ''}:${params?.meal ?? ''}`} />
+            <Stack.Screen name="food-entry" options={sheet([0.75, 1])} getId={({ params }) => params?.id} />
+            <Stack.Screen name="food-goal" options={sheet([0.6, 1])} />
+            <Stack.Screen name="foods" options={pushed} />
+            <Stack.Screen name="food-form" options={form} getId={({ params }) => params?.id ?? params?.mvt} />
+            <Stack.Screen name="dish-form" options={form} getId={({ params }) => params?.id} />
+            <Stack.Screen name="meals" options={pushed} />
+            <Stack.Screen name="meal-form" options={sheet([0.75, 1])} />
+          </Stack.Protected>
+          <Stack.Protected guard={onboarding}>
+            <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
+          </Stack.Protected>
+          {/* Oppstarten åpner veiviseren for Apple Pay. */}
+          <Stack.Screen name="money-setup" options={{ presentation: 'modal' }} />
+        </Stack>
+        {/* «Slettet … Angre» etter en sletting, over alt annet. */}
+        <UndoToast />
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -1,8 +1,10 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { FoodPicker } from '@/components/FoodPicker';
 import { Card, IconButton, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
@@ -29,6 +31,13 @@ export default function DishFormScreen() {
   const removeDish = useFood((s) => s.removeDish);
   const [name, setName] = useState(existing?.name ?? '');
   const [items, setItems] = useState<DishItem[]>(existing?.items ?? []);
+  // Endringer som ikke er lagret: spør før arket lukkes (Avbryt, sveip ned eller tilbake).
+  const [initial] = useState(() => JSON.stringify({ name, items }));
+  const allowClose = useDiscardGuard(JSON.stringify({ name, items }) !== initial);
+  const done = () => {
+    allowClose();
+    close();
+  };
   const [picking, setPicking] = useState(!existing);
 
   const total = dishTotals({ items });
@@ -39,7 +48,7 @@ export default function DishFormScreen() {
     const input = { name: name.trim().slice(0, MAX_FOOD_NAME), items };
     if (existing) updateDish(existing.id, input);
     else addDish(input);
-    close();
+    done();
   };
 
   const confirmDelete = () =>
@@ -50,23 +59,21 @@ export default function DishFormScreen() {
         text: tr.common.delete,
         style: 'destructive',
         onPress: () => {
-          close();
+          done();
           removeDish(existing.id);
         },
       },
     ]);
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={styles.bar}>
-        <TextButton label={tr.common.cancel} onPress={close} />
-        <Text style={[styles.barTitle, { color: t.text }]} accessibilityRole="header">
-          {existing ? tr.food.dishFormEdit : tr.food.dishFormNew}
-        </Text>
-        <TextButton label={existing ? tr.common.save : tr.common.add} bold onPress={save} disabled={!canSave} />
-      </View>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <ScreenHeader
+        title={existing ? tr.food.dishFormEdit : tr.food.dishFormNew}
+        left={[{ label: tr.common.cancel, onPress: close }]}
+        right={[{ label: existing ? tr.common.save : tr.common.add, variant: 'done', onPress: save, disabled: !canSave }]}
+      />
 
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
           <Text style={[styles.label, { color: t.sub }]} nativeID="dish-name-label">
             {tr.common.name}
@@ -87,7 +94,7 @@ export default function DishFormScreen() {
           <Text style={[styles.cardTitle, { color: t.text }]}>{tr.food.ingredients}</Text>
           {items.length ? (
             items.map((item, i) => (
-              <View key={`${item.name}-${i}`} style={[styles.item, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }]}>
+              <View key={`${item.name}-${i}`} style={[styles.item, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }]}>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={{ fontSize: 16, fontWeight: '600', color: t.text }} numberOfLines={2}>
                     {item.name}
@@ -103,7 +110,7 @@ export default function DishFormScreen() {
             <Text style={{ fontSize: 15, color: t.sub }}>{tr.food.dishEmpty}</Text>
           )}
           {items.length ? (
-            <View style={[styles.total, { borderTopColor: t.border }]}>
+            <View style={[styles.total, { borderTopColor: t.separator }]}>
               <Text style={{ fontSize: 16, fontWeight: '700', color: t.text }}>{tr.food.total}</Text>
               <Text style={{ fontSize: 16, fontWeight: '700', color: t.text, fontVariant: ['tabular-nums'] }}>
                 {[proteinText(total.protein, true), data.showKcal && total.kcal !== null ? kcalText(total.kcal) : ''].filter(Boolean).join(' · ')}
@@ -134,13 +141,11 @@ export default function DishFormScreen() {
           </View>
         ) : null}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 4 },
-  barTitle: { fontSize: 17, fontWeight: '600', flexShrink: 1, textAlign: 'center' },
   content: { padding: 16, gap: 12 },
   card: { padding: 14, gap: 10 },
   cardTitle: { fontSize: 17, fontWeight: '700' },

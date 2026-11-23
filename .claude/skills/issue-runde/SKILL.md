@@ -31,7 +31,10 @@ for en runde:
   ikke bygges uten Xcode. I en skyøkt finnes ingen Swift-kompilator. Swift-endringer
   holdes små, ligger i egne commits, og PR-en til `main` ber brukeren kjøre
   «Bygg til iPhone» fra branchen før merge.
-- **Etiketter:** `1 grunnmur`, `2 før lansering`, `3 etter lansering` og
+- **Appen er i App Store.** «Send oppdatering» går til alle brukerne, ikke bare
+  TestFlight. En branch testes derfor med «Bygg til iPhone» (TestFlight), aldri
+  med «Send oppdatering». Den sendes fra `main` etter merge.
+- **Etiketter:** `1 grunnmur`, `2 neste` (før lanseringen: `2 før lansering`), `3 etter lansering` og
   `4 senere` er fasene i veikartet (#4). `swift` betyr nytt bygg (ingen OTA).
   `manuelt` er arbeid utenfor koden. `vane+` er betalt.
 - **Data på telefonen:** lagrede data lastes med `loadData` (`state.ts`) og

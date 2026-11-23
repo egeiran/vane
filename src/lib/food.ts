@@ -1,6 +1,6 @@
 import { getLang, stringsFor, tr, type Lang } from '@/i18n';
 
-import { addDays, atTime, compareKeys, formatTime, minutesOf, todayKey, type DateKey } from './dates';
+import { addDays, atTime, compareKeys, firstDay, formatTime, minutesOf, todayKey, type DateKey } from './dates';
 import { isEditable } from './habits';
 import { tableFood } from './matvaretabellen';
 import type { Amount, Dish, Food, FoodData, FoodEntry, FoodRef, Meal, Nutrients, Portion, Settings } from './types';
@@ -479,4 +479,9 @@ export function foodRows(data: FoodData): string[][] {
     }
   }
   return rows;
+}
+
+/** Den første dagen Mat kan bla tilbake til: den eldste dagen med noe logget. Aldri senere enn i går. */
+export function firstFoodDay(data: Pick<FoodData, 'entries'>, today: DateKey): DateKey {
+  return firstDay(Object.keys(data.entries).filter((d) => data.entries[d]?.length), today);
 }

@@ -1,12 +1,19 @@
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { tr } from '@/i18n';
-import type { DateKey } from '@/lib/dates';
-import { amountText, kcalText, proteinText } from '@/lib/food';
+import { compareKeys, formatTime, type DateKey } from '@/lib/dates';
+import { amountText, kcalText, mealName, proteinText, visibleMeals } from '@/lib/food';
+import { useFood } from '@/lib/foodStore';
 import { showTime } from '@/lib/region';
 import type { FoodEntry } from '@/lib/types';
+import { useToday } from '@/lib/useToday';
 import { useTheme } from '@/theme';
+
+import { RowMenu, type MenuItem } from './RowMenu';
+import { SwipeRow, useSwipeGuard } from './SwipeRow';
+import { showUndo } from './UndoToast';
 
 type Props = {
   entry: FoodEntry;
@@ -16,12 +23,63 @@ type Props = {
   first?: boolean;
 };
 
-/** Én ting i matloggen: navn, mengde og klokkeslett, og protein til høyre. */
+/**
+ * Én ting i matloggen: navn, mengde og klokkeslett, og protein til høyre. Trykk for å endre. Sveip mot
+ * venstre for Slett, og hold inne for Endre, Flytt til måltid, Kopier til i dag og Slett. Eldre dager
+ * kan bare kopieres til i dag.
+ */
 export function FoodEntryRow({ entry: e, day, showKcal, editable, first }: Props) {
   const t = useTheme();
+  const today = useToday();
+  // Hele lista (stabil referanse), filtrert her. En ny liste fra velgeren ville gitt ny tegning hver gang.
+  const allMeals = useFood((s) => s.meals);
+  const meals = visibleMeals({ meals: allMeals });
+  const addEntry = useFood((s) => s.addEntry);
+  const updateEntry = useFood((s) => s.updateEntry);
+  const removeEntry = useFood((s) => s.removeEntry);
+  const restoreEntry = useFood((s) => s.restoreEntry);
   const name = e.name || tr.food.quickName;
   const meta = [showTime(e.time), e.amount ? amountText(e.amount) : '', showKcal && e.kcal !== null ? kcalText(e.kcal) : ''].filter(Boolean).join(' · ');
   const protein = proteinText(e.protein, true);
+  const guard = useSwipeGuard();
+  const wasDragged = guard.wasDragged;
+  const edit = () => {
+    if (!wasDragged()) router.push({ pathname: '/food-entry', params: { day, id: e.id } });
+  };
+
+  const copyToToday = () => {
+    const now = new Date();
+    addEntry(today, { time: formatTime({ hour: now.getHours(), minute: now.getMinutes() }), mealId: e.mealId, name: e.name, protein: e.protein, kcal: e.kcal, ref: e.ref, amount: e.amount });
+    // Kopien havner på en annen dag enn den man ser på: et lett «ferdig» og beskjed til skjermleseren.
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    AccessibilityInfo.announceForAccessibility(tr.food.copiedToToday(name));
+  };
+  // Sletter med en gang, med «Angre» nederst (som Mail), både fra sveip og fra menyen.
+  const remove = () => {
+    const index = (useFood.getState().entries[day] ?? []).findIndex((x) => x.id === e.id);
+    removeEntry(day, e.id);
+    showUndo(tr.common.deleted(name), () => restoreEntry(day, e, index));
+  };
+  const otherMeals = meals.filter((m) => m.id !== e.mealId);
+  const items: MenuItem[] = [
+    ...(editable
+      ? [
+          { label: tr.common.edit, icon: 'pencil' as const, onPress: edit },
+          ...(otherMeals.length
+            ? [
+                {
+                  label: tr.food.moveToMeal,
+                  icon: 'arrow.right.square' as const,
+                  items: otherMeals.map((m) => ({ label: mealName(m), onPress: () => updateEntry(day, e.id, { mealId: m.id }) })),
+                },
+              ]
+            : []),
+        ]
+      : []),
+    ...(compareKeys(day, today) < 0 ? [{ label: tr.food.copyToToday, icon: 'doc.on.doc' as const, onPress: copyToToday }] : []),
+    ...(editable ? [{ label: tr.food.deleteEntry, icon: 'trash' as const, destructive: true, onPress: remove }] : []),
+  ];
+
   const body = (
     <>
       <View style={{ flex: 1, gap: 2 }}>
@@ -35,27 +93,40 @@ export function FoodEntryRow({ entry: e, day, showKcal, editable, first }: Props
       <Text style={[styles.protein, { color: t.text }]}>{protein}</Text>
     </>
   );
-  const style = [styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }];
-  if (!editable) {
-    return (
-      <View style={style} accessible accessibilityLabel={`${name}, ${protein}. ${meta}`}>
-        {body}
-      </View>
-    );
-  }
+  const style = [styles.row, { backgroundColor: t.card }];
+  const separator = !first ? <View style={[styles.separator, { backgroundColor: t.separator }]} /> : null;
+
   return (
-    <Pressable
-      onPress={() => router.push({ pathname: '/food-entry', params: { day, id: e.id } })}
-      accessibilityRole="button"
-      accessibilityLabel={`${name}, ${protein}. ${meta}`}
-      style={({ pressed }) => [...style, { opacity: pressed ? 0.6 : 1 }]}>
-      {body}
-    </Pressable>
+    <SwipeRow enabled={editable} onDelete={remove} guard={guard}>
+      <RowMenu href={{ pathname: '/food-entry', params: { day, id: e.id } }} items={items}>
+        <View>
+          {editable ? (
+            <Pressable
+              onPress={edit}
+              accessibilityRole="button"
+              accessibilityLabel={`${name}, ${protein}. ${meta}`}
+              accessibilityActions={[{ name: 'delete', label: tr.common.delete }]}
+              onAccessibilityAction={(ev) => {
+                if (ev.nativeEvent.actionName === 'delete') remove();
+              }}
+              style={({ pressed }) => [...style, { opacity: pressed ? 0.6 : 1 }]}>
+              {body}
+            </Pressable>
+          ) : (
+            <View style={style} accessible accessibilityLabel={`${name}, ${protein}. ${meta}`}>
+              {body}
+            </View>
+          )}
+          {separator}
+        </View>
+      </RowMenu>
+    </SwipeRow>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 8, paddingHorizontal: 14 },
+  separator: { position: 'absolute', top: 0, left: 14, right: 0, height: StyleSheet.hairlineWidth },
   name: { fontSize: 16, fontWeight: '600' },
   meta: { fontSize: 13 },
   protein: { fontSize: 16, fontWeight: '600', fontVariant: ['tabular-nums'] },

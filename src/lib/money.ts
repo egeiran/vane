@@ -91,6 +91,7 @@ export const EMPTY_MONEY: MoneyData = {
   currency: null,
   recurring: [],
   recurringDismissed: [],
+  recurringInTotal: false,
 };
 
 const NBSP = ' ';
@@ -317,8 +318,13 @@ export type MonthSummary = {
   month: MonthKey;
   /** Hovedvalutaen, som `total`, `pending` og `byCategory` er i. */
   currency: string;
-  /** Brukt i hovedvalutaen, også det som venter. Kjøp som ikke telles med, er ikke med. */
+  /**
+   * Brukt i hovedvalutaen, også det som venter. Kjøp som ikke telles med, er ikke med. Faste
+   * utgifter er med bare når de er slått på i summen (se `withRecurring`).
+   */
   total: number;
+  /** Faste utgifter i `total`, i hovedvalutaen. 0 når de ikke telles med. */
+  recurring: number;
   /** Det som venter på kategori, i hovedvalutaen. */
   pending: number;
   /** Per kategori, størst først. */
@@ -361,7 +367,7 @@ export function monthSummary(data: MoneyData, month: MonthKey): MonthSummary {
   const byCategory = [...sums.entries()]
     .map(([categoryId, amount]) => ({ categoryId, amount }))
     .sort((a, b) => b.amount - a.amount || order(a.categoryId) - order(b.categoryId));
-  return { month, currency, total, pending, byCategory, other, count, skipped };
+  return { month, currency, total, recurring: 0, pending, byCategory, other, count, skipped };
 }
 
 /** De siste `n` månedene til og med denne, eldste først. */
@@ -405,4 +411,9 @@ export function nativePurchaseConfig(data: MoneyData, enabled = true): NativePur
     if (entry.name || entry.categoryId) merchants[key] = entry;
   }
   return { categories, merchants, currency: mainCurrency(data), enabled };
+}
+
+/** Den eldste måneden med et kjøp (eller måneden `today` ligger i). Penger kan ikke bla lenger tilbake. */
+export function firstMonth(data: Pick<MoneyData, 'purchases'>, today: DateKey): MonthKey {
+  return data.purchases.reduce((min, p) => (p.day < min ? p.day : min), today).slice(0, 7);
 }

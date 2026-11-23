@@ -1,5 +1,6 @@
 import { addDays, compareKeys, type DateKey } from './dates';
 import { DEFAULT_MEALS, EMPTY_FOOD, entriesOn, MAX_GOAL, refKey } from './food';
+import { moveItem } from './state';
 import type { Dish, Food, FoodData, FoodEntry, Meal, ProteinGoal } from './types';
 
 /** Rene funksjoner for maten. Lagringen ligger i foodStore.ts. */
@@ -71,6 +72,14 @@ export function updateEntry(data: FoodData, day: DateKey, id: string, patch: Par
   return updated.ref && updated.amount && patch.amount ? { ...next, lastAmount: { ...next.lastAmount, [refKey(updated.ref)]: updated.amount } } : next;
 }
 
+/** «Angre» etter sletting: føringen kommer tilbake på samme plass. Finnes den allerede, skjer ingenting. */
+export function restoreEntry(data: FoodData, day: DateKey, entry: FoodEntry, index: number): FoodData {
+  const list = dayList(data, day);
+  if (list.some((e) => e.id === entry.id)) return data;
+  const i = Math.max(0, Math.min(index, list.length));
+  return putDay(data, day, [...list.slice(0, i), entry, ...list.slice(i)]);
+}
+
 export function removeEntry(data: FoodData, day: DateKey, id: string): FoodData {
   const list = dayList(data, day);
   if (!list.some((e) => e.id === id)) return data;
@@ -138,13 +147,10 @@ export function updateMeal(data: FoodData, id: string, patch: Partial<Omit<Meal,
   };
 }
 
-export function moveMeal(data: FoodData, id: string, delta: number): FoodData {
-  const i = data.meals.findIndex((m) => m.id === id);
-  const j = i + delta;
-  if (i < 0 || j < 0 || j >= data.meals.length) return data;
-  const meals = [...data.meals];
-  [meals[i], meals[j]] = [meals[j], meals[i]];
-  return { ...data, meals };
+/** Flytter måltidet `id` til plass `to` (dra for å flytte). Utenfor lista: uendret. */
+export function moveMeal(data: FoodData, id: string, to: number): FoodData {
+  const meals = moveItem(data.meals, data.meals.findIndex((m) => m.id === id), to);
+  return meals === data.meals ? data : { ...data, meals };
 }
 
 /**

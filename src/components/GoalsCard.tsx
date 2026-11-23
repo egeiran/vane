@@ -25,9 +25,8 @@ export function GoalsCard({ day, when }: { day: DateKey; when: DayWhen }) {
   const toggleGoal = useStore((s) => s.toggleGoal);
 
   if (!goals.length) {
-    if (!isToday) {
-      return <Text style={[styles.note, { color: t.sub }]}>{when === 'yesterday' ? tr.goals.noneYesterday : tr.goals.noneOlder}</Text>;
-    }
+    // Tidligere dager uten mål viser ingenting (I dag viser ikke kortet da heller).
+    if (!isToday) return null;
     if (skipped) {
       // Man har sagt «Ikke i dag» – bare en stille linje, ingen invitasjon.
       return (
@@ -66,7 +65,7 @@ export function GoalsCard({ day, when }: { day: DateKey; when: DayWhen }) {
         </View>
       </View>
       {goals.map((g) => (
-        <View key={g.id} style={[styles.goal, { borderTopColor: t.hair }]}>
+        <View key={g.id} style={[styles.goal, { borderTopColor: t.separator }]}>
           <Text style={[styles.goalText, { color: g.done ? t.sub : t.text }]}>{g.text}</Text>
           <CheckButton
             size={30}
@@ -87,7 +86,6 @@ export function GoalsCard({ day, when }: { day: DateKey; when: DayWhen }) {
 }
 
 const styles = StyleSheet.create({
-  note: { fontSize: 14, paddingHorizontal: 4 },
   skipped: { flexDirection: 'row', alignItems: 'center', paddingLeft: 4, marginVertical: -6 },
   prompt: {
     minHeight: 68,

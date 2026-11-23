@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { tr } from '@/i18n';
 import { amountText, formatNumber, kcalText, MAX_GRAMS, nutrientsFor, parseDecimal, proteinText, takesGrams, type Source } from '@/lib/food';
 import type { Amount } from '@/lib/types';
 import { useTheme } from '@/theme';
 
-import { Stepper } from './ui';
+import { Chip, Stepper } from './ui';
 
 type Props = {
   source: Source;
@@ -57,17 +57,15 @@ export function AmountPicker({ source, options, value, onChange, showKcal }: Pro
           {options.map((o) => {
             const on = same(o, value);
             return (
-              <Pressable
+              <Chip
                 key={optionLabel(o)}
+                label={optionLabel(o)}
+                on={on}
                 onPress={() => {
                   setDraft(null);
                   onChange(o);
                 }}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: on }}
-                style={({ pressed }) => [styles.chip, { backgroundColor: on ? t.inverse : t.button, opacity: pressed ? 0.7 : 1 }]}>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: on ? t.onInverse : t.text }}>{optionLabel(o)}</Text>
-              </Pressable>
+              />
             );
           })}
         </ScrollView>
@@ -123,7 +121,6 @@ export function AmountPicker({ source, options, value, onChange, showKcal }: Pro
 
 const styles = StyleSheet.create({
   chips: { gap: 8, paddingRight: 8 },
-  chip: { minHeight: 40, borderRadius: 20, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   label: { fontSize: 16, fontWeight: '500', flexShrink: 1 },
   input: { width: 110, height: 44, borderRadius: 10, paddingHorizontal: 12, fontSize: 17, textAlign: 'right', fontVariant: ['tabular-nums'] },

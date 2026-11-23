@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { Field } from '@/components/Field';
 import { Card, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
@@ -24,6 +26,13 @@ export default function FoodGoalScreen() {
   const setGoal = useFood((s) => s.setGoal);
   const existing = useFood((s) => currentGoal(s));
   const [grams, setGrams] = useState(existing ? String(existing) : '');
+  // Endringer som ikke er lagret: spør før arket lukkes (Avbryt, sveip ned eller tilbake).
+  const [initial] = useState(() => grams);
+  const allowClose = useDiscardGuard(grams !== initial);
+  const done = () => {
+    allowClose();
+    close();
+  };
   const [weight, setWeight] = useState('');
   const [perKg, setPerKg] = useState(decimalInput(1.6));
 
@@ -36,20 +45,18 @@ export default function FoodGoalScreen() {
   const save = () => {
     if (!canSave) return;
     setGoal(value, today);
-    close();
+    done();
   };
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={styles.bar}>
-        <TextButton label={tr.common.cancel} onPress={close} />
-        <Text style={[styles.barTitle, { color: t.text }]} accessibilityRole="header">
-          {tr.food.goalTitle}
-        </Text>
-        <TextButton label={tr.common.save} bold onPress={save} disabled={!canSave} />
-      </View>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <ScreenHeader
+        title={tr.food.goalTitle}
+        left={[{ label: tr.common.cancel, onPress: close }]}
+        right={[{ label: tr.common.save, variant: 'done', onPress: save, disabled: !canSave }]}
+      />
 
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
           <View style={styles.goalRow}>
             <TextInput
@@ -82,13 +89,11 @@ export default function FoodGoalScreen() {
           <Text style={[styles.help, { color: t.sub, paddingHorizontal: 0 }]}>{tr.food.helperNote}</Text>
         </Card>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 4 },
-  barTitle: { fontSize: 17, fontWeight: '600', flexShrink: 1, textAlign: 'center' },
   content: { padding: 16, gap: 12 },
   card: { padding: 16, gap: 12 },
   cardTitle: { fontSize: 17, fontWeight: '700' },

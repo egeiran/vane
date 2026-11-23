@@ -1,6 +1,6 @@
 import { formatTime, toKey, type DateKey } from './dates';
 import { cleanMerchant, EMPTY_MONEY, isPending, mainCurrency, merchantKey, parseAmount, suggestionFor, UNKNOWN_PLACE } from './money';
-import { newId } from './state';
+import { moveItem, newId } from './state';
 import type { Category, ColorKey, MoneyData, Purchase, PurchasePart } from './types';
 
 /** Rene funksjoner for pengene. Lagringen ligger i moneyStore.ts. */
@@ -62,6 +62,7 @@ export function loadMoney(persisted: unknown): MoneyData {
     imported: p.imported ?? [],
     recurring: p.recurring ?? [],
     recurringDismissed: p.recurringDismissed ?? [],
+    recurringInTotal: p.recurringInTotal === true,
     currency: p.currency !== undefined ? p.currency : persisted ? 'NOK' : null,
   };
 }
@@ -164,6 +165,20 @@ export function deletePurchase(data: MoneyData, id: string): MoneyData {
   return { ...data, purchases: data.purchases.filter((p) => p.id !== id) };
 }
 
+/**
+ * «Angre» etter sletting: kjøpet kommer tilbake på sin plass. `index` er plassen det hadde, så to kjøp
+ * fra samme minutt ikke bytter plass; passer den ikke lenger (lista er endret), sorteres det inn.
+ * Finnes kjøpet allerede, skjer ingenting.
+ */
+export function restorePurchase(data: MoneyData, purchase: Purchase, index?: number): MoneyData {
+  const list = data.purchases;
+  if (list.some((p) => p.id === purchase.id)) return data;
+  const key = sortKey(purchase);
+  const fits =
+    index !== undefined && index >= 0 && index <= list.length && (index === 0 || sortKey(list[index - 1]) >= key) && (index === list.length || sortKey(list[index]) <= key);
+  return { ...data, purchases: fits ? [...list.slice(0, index), purchase, ...list.slice(index)] : insertSorted(list, purchase) };
+}
+
 /** Gir stedet et eget navn, som brukes for alle kjøp derfra. Tomt navn tar bort det egne navnet. */
 export function renameMerchant(data: MoneyData, key: string, name: string): MoneyData {
   if (!key) return data;
@@ -191,14 +206,10 @@ export function updateCategory(data: MoneyData, id: string, patch: Partial<Omit<
   };
 }
 
-/** Flytter en kategori opp (-1) eller ned (+1) i lista. */
-export function moveCategory(data: MoneyData, id: string, delta: number): MoneyData {
-  const i = data.categories.findIndex((c) => c.id === id);
-  const j = i + delta;
-  if (i < 0 || j < 0 || j >= data.categories.length) return data;
-  const categories = [...data.categories];
-  [categories[i], categories[j]] = [categories[j], categories[i]];
-  return { ...data, categories };
+/** Flytter kategorien `id` til plass `to` (dra for å flytte). Utenfor lista: uendret. */
+export function moveCategory(data: MoneyData, id: string, to: number): MoneyData {
+  const categories = moveItem(data.categories, data.categories.findIndex((c) => c.id === id), to);
+  return categories === data.categories ? data : { ...data, categories };
 }
 
 export function markSetupSeen(data: MoneyData): MoneyData {

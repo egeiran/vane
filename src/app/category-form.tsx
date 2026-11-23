@@ -1,11 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Icon } from '@/components/Icon';
-import { Card, TextButton } from '@/components/ui';
+import { Card } from '@/components/ui';
 import { tr } from '@/i18n';
 import { CATEGORY_ICONS, categoryName } from '@/lib/money';
 import { useMoney } from '@/lib/moneyStore';
@@ -29,29 +31,34 @@ export default function CategoryFormScreen() {
   const [name, setName] = useState(existing ? categoryName(existing) : '');
   const [icon, setIcon] = useState<Category['icon']>(existing?.icon ?? 'tag');
   const [color, setColor] = useState<ColorKey>(existing?.color ?? 'himmel');
+  // Endringer som ikke er lagret: spør før arket lukkes (Avbryt, sveip ned eller tilbake).
+  const [initial] = useState(() => JSON.stringify({ name, icon, color }));
+  const allowClose = useDiscardGuard(JSON.stringify({ name, icon, color }) !== initial);
+  const done = () => {
+    allowClose();
+    close();
+  };
   const canSave = name.trim().length > 0;
 
   const save = () => {
     if (!canSave) return;
     if (existing) updateCategory(existing.id, { name: name === categoryName(existing) ? existing.name : name, icon, color });
     else addCategory({ name, icon, color });
-    close();
+    done();
   };
 
   const c = t.colors[color];
   const preview: Category = { id: 'preview', name, icon, color, hidden: false };
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={styles.bar}>
-        <TextButton label={tr.common.cancel} onPress={close} />
-        <Text style={[styles.barTitle, { color: t.text }]} accessibilityRole="header">
-          {existing ? tr.categories.editTitle : tr.categories.new}
-        </Text>
-        <TextButton label={existing ? tr.common.save : tr.common.add} bold onPress={save} disabled={!canSave} />
-      </View>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <ScreenHeader
+        title={existing ? tr.categories.editTitle : tr.categories.new}
+        left={[{ label: tr.common.cancel, onPress: close }]}
+        right={[{ label: existing ? tr.common.save : tr.common.add, variant: 'done', onPress: save, disabled: !canSave }]}
+      />
 
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <View style={{ alignItems: 'center', paddingVertical: 8 }}>
           <CategoryIcon category={preview} size={72} />
         </View>
@@ -115,13 +122,11 @@ export default function CategoryFormScreen() {
           </View>
         </Card>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 4 },
-  barTitle: { fontSize: 17, fontWeight: '600' },
   content: { padding: 16, gap: 12 },
   card: { padding: 14, gap: 10 },
   label: { fontSize: 13, fontWeight: '600' },

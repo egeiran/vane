@@ -97,8 +97,29 @@ export function relativeDayName(key: DateKey, today: DateKey): string {
   return formatLong(key);
 }
 
-/** Ukestripa viser så mange dager bakover. Alle kan åpnes, men bare i dag og i går kan endres. */
-export const STRIP_PAST_DAYS = 5;
+/**
+ * Den første dagen man kan bla tilbake til: den eldste dagen i `days` (dager med data), men aldri
+ * senere enn i går. Alle dagene kan leses, men bare i dag og i går kan endres.
+ */
+export function firstDay(days: Iterable<DateKey>, today: DateKey): DateKey {
+  let first = addDays(today, -1);
+  for (const d of days) if (/^\d{4}-\d{2}-\d{2}$/.test(d) && compareKeys(d, first) < 0) first = d;
+  return first;
+}
+
+/** Alle dagene fra og med `first` til og med `today`, eldst først. */
+export function daysFrom(first: DateKey, today: DateKey): DateKey[] {
+  const n = Math.max(0, daysBetween(first, today));
+  return Array.from({ length: n + 1 }, (_, i) => addDays(first, i));
+}
+
+/** Første dag i hver uke fra uka `first` ligger i, til og med uka `today` ligger i. Eldst først. */
+export function weekStarts(first: DateKey, today: DateKey, weekStart: WeekStart = 'mon'): DateKey[] {
+  const from = startOfWeek(first, weekStart);
+  const to = startOfWeek(today, weekStart);
+  const n = Math.max(0, Math.round(daysBetween(from, to) / 7));
+  return Array.from({ length: n + 1 }, (_, i) => addDays(from, i * 7));
+}
 
 /** I dag, i går eller en eldre dag (som bare kan leses). */
 export type DayWhen = 'today' | 'yesterday' | 'older';
@@ -109,13 +130,12 @@ export function dayWhen(key: DateKey, today: DateKey): DayWhen {
 }
 
 /**
- * Dagen som vises når `picked` er valgt i ukestripa. `null` er alltid i dag. En dag som har gått ut av
- * stripa (appen har ligget over midnatt), eller som ligger fram i tid, blir også i dag.
+ * Dagen som vises når `picked` er valgt. `null` er alltid i dag. En dag fram i tid, eller før `first`
+ * (den første dagen man kan bla til), blir også i dag.
  */
-export function pickedDay(picked: DateKey | null, today: DateKey): DateKey {
+export function pickedDay(picked: DateKey | null, today: DateKey, first: DateKey = addDays(today, -1)): DateKey {
   if (picked === null) return today;
-  const diff = daysBetween(picked, today);
-  return diff >= 0 && diff <= STRIP_PAST_DAYS ? picked : today;
+  return compareKeys(picked, first) >= 0 && compareKeys(picked, today) <= 0 ? picked : today;
 }
 
 /** «i dag», «i går» eller ukedagen inne i en setning: «Ikke fredag». */

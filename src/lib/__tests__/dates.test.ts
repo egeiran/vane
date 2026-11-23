@@ -9,6 +9,9 @@ import {
   inlineDayName,
   isoWeek,
   pickedDay,
+  firstDay,
+  daysFrom,
+  weekStarts,
   relativeDayName,
   shiftTime,
   startOfWeek,
@@ -62,13 +65,32 @@ describe('dates', () => {
     expect(shiftTime('23:45', 15)).toBe('23:45');
   });
 
-  it('ukestripa: dagene bakover kan velges, resten blir i dag', () => {
+  it('valgt dag: fra den første dagen til i dag, resten blir i dag', () => {
     const today = '2026-11-13';
     expect(pickedDay(null, today)).toBe(today);
     expect(pickedDay('2026-11-12', today)).toBe('2026-11-12');
-    expect(pickedDay('2026-11-08', today)).toBe('2026-11-08'); // fem dager bakover
-    expect(pickedDay('2026-11-07', today)).toBe(today); // gått ut av stripa ved midnatt
-    expect(pickedDay('2026-11-14', today)).toBe(today); // i morgen
+    expect(pickedDay('2026-11-11', today)).toBe(today); // uten `first`: bare i går
+    expect(pickedDay('2026-10-01', today, '2026-09-30')).toBe('2026-10-01');
+    expect(pickedDay('2026-09-29', today, '2026-09-30')).toBe(today); // før første dag
+    expect(pickedDay('2026-11-14', today, '2026-09-30')).toBe(today); // i morgen
+  });
+
+  it('første dag med data er den eldste, men aldri senere enn i går', () => {
+    const today = '2026-11-13';
+    expect(firstDay([], today)).toBe('2026-11-12');
+    expect(firstDay(['2026-11-13'], today)).toBe('2026-11-12');
+    expect(firstDay(['2026-11-01', '2026-10-15', '2026-11-10'], today)).toBe('2026-10-15');
+    expect(firstDay(['tull', '2026-10-15'], today)).toBe('2026-10-15');
+  });
+
+  it('dagene og ukene fra første dag til i dag', () => {
+    expect(daysFrom('2026-11-11', '2026-11-13')).toEqual(['2026-11-11', '2026-11-12', '2026-11-13']);
+    expect(daysFrom('2026-11-13', '2026-11-13')).toEqual(['2026-11-13']);
+    // Fredag 13. november, første dag onsdag 28. oktober: ukene fra mandag 26. oktober.
+    expect(weekStarts('2026-10-28', '2026-11-13', 'mon')).toEqual(['2026-10-26', '2026-11-02', '2026-11-09']);
+    expect(weekStarts('2026-10-28', '2026-11-13', 'sun')).toEqual(['2026-10-25', '2026-11-01', '2026-11-08']);
+    // Over 25. oktober (slutt på sommertid i Norge) blir det fortsatt hele uker.
+    expect(weekStarts('2026-10-20', '2026-10-27', 'mon')).toEqual(['2026-10-19', '2026-10-26']);
   });
 
   it('i dag og i går kan endres, eldre dager bare leses', () => {

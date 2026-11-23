@@ -2,11 +2,12 @@ import { afterEach, describe, expect, it } from '@jest/globals';
 
 import { setLang } from '@/i18n';
 
-import { EMPTY_MONEY } from '../money';
+import { EMPTY_MONEY, monthSummary } from '../money';
 import { addPurchase, loadMoney } from '../moneyState';
 import {
   addRecurring,
   chargeAt,
+  chargesBetween,
   deleteRecurring,
   dismissSuggestion,
   MAX_RECURRING_REMINDERS,
@@ -15,12 +16,14 @@ import {
   monthlyAmount,
   nextCharge,
   planRecurringReminders,
+  recurringInMonth,
   recurringOn,
   recurringSummary,
   shiftMonths,
   suggestRecurring,
   updateRecurring,
   upcomingRecurring,
+  withRecurring,
   type RecurringInput,
 } from '../recurring';
 import { DEFAULT_SETTINGS, type MoneyData, type RecurringFrequency } from '../types';
@@ -129,6 +132,70 @@ describe('hva som går ut i måneden', () => {
   });
 });
 
+describe('i månedens sum', () => {
+  const buy = (d: MoneyData, merchant: string, amount: number, day: string, skipped = false) =>
+    addPurchase(d, { amount, merchant, day, time: '12:00', parts: [{ categoryId: 'fritid', amount }], skipped, note: '' });
+
+  it('finner alle trekk i et tidsrom, også før ankeret', () => {
+    expect(chargesBetween(schedule('2026-12-01', 'month'), '2026-09-01', '2026-11-30')).toEqual(['2026-09-01', '2026-10-01', '2026-11-01']);
+    expect(chargesBetween(schedule('2026-11-30', 'week'), '2026-11-01', '2026-11-30')).toEqual(['2026-11-02', '2026-11-09', '2026-11-16', '2026-11-23', '2026-11-30']);
+    expect(chargesBetween(schedule('2025-03-15', 'year'), '2026-01-01', '2026-12-31')).toEqual(['2026-03-15']);
+    expect(chargesBetween(schedule('2025-03-15', 'year'), '2026-04-01', '2026-04-30')).toEqual([]);
+    expect(chargesBetween(schedule('2026-01-31', 'month'), '2026-02-01', '2026-02-28')).toEqual(['2026-02-28']);
+    expect(chargesBetween(schedule('2026-01-31', 'month'), '2026-03-01', '2026-02-28')).toEqual([]);
+  });
+
+  it('tar med trekkene som har vært i måneden, og ikke de som kommer', () => {
+    let d = addRecurring(NOK, input({ name: 'Husleie', amount: 950000, anchor: '2026-12-01' }), 'a');
+    d = addRecurring(d, input({ name: 'Netflix', anchor: '2026-10-20' }), 'b');
+    // 4. november: husleia er trukket den 1., Netflix kommer den 20.
+    expect(recurringInMonth(d, '2026-11', TODAY).map((c) => [c.expense.name, c.day])).toEqual([['Husleie', '2026-11-01']]);
+    expect(recurringInMonth(d, '2026-10', TODAY).map((c) => [c.expense.name, c.day])).toEqual([
+      ['Husleie', '2026-10-01'],
+      ['Netflix', '2026-10-20'],
+    ]);
+    expect(recurringInMonth(d, '2026-12', TODAY)).toEqual([]);
+  });
+
+  it('teller ikke et trekk som er logget som kjøp fra samme sted samme måned', () => {
+    let d = addRecurring(NOK, input({ name: 'Netflix', anchor: '2026-10-20' }), 'a');
+    d = buy(d, 'NETFLIX', 14900, '2026-10-20');
+    expect(recurringInMonth(d, '2026-10', TODAY)).toEqual([]);
+    // Et kjøp som ikke telles med, dekker ikke trekket.
+    const skipped = buy(addRecurring(NOK, input({ name: 'Netflix', anchor: '2026-10-20' }), 'a'), 'Netflix', 14900, '2026-10-20', true);
+    expect(recurringInMonth(skipped, '2026-10', TODAY)).toHaveLength(1);
+    // Fra et forslag: stedet fra kjøpene gjelder, selv om navnet er endret.
+    const fromSuggestion = { ...NOK, recurring: [{ ...addRecurring(NOK, input({ name: 'Strømmetjeneste', merchantKey: 'NETFLIX' }), 'a').recurring[0] }] };
+    expect(recurringInMonth(buy(fromSuggestion, 'Netflix', 14900, '2026-10-20'), '2026-10', TODAY)).toEqual([]);
+    expect(recurringInMonth(fromSuggestion, '2026-10', TODAY)).toHaveLength(1);
+  });
+
+  it('regner hvert kjøp fra stedet som ett trekk, ikke hele måneden', () => {
+    // Trening hver mandag i oktober (4 trekk), og ett av dem er logget som kjøp.
+    let d = addRecurring(NOK, input({ name: 'Trening', amount: 10000, frequency: 'week', anchor: '2026-10-05' }), 'a');
+    expect(recurringInMonth(d, '2026-10', TODAY)).toHaveLength(4);
+    d = buy(d, 'Trening', 10000, '2026-10-12');
+    expect(recurringInMonth(d, '2026-10', TODAY).map((c) => c.day)).toEqual(['2026-10-12', '2026-10-19', '2026-10-26']);
+  });
+
+  it('legger trekkene til summen, og andre valutaer for seg', () => {
+    let d = buy(NOK, 'Kiwi', 50000, '2026-10-05');
+    d = addRecurring(d, input({ name: 'Husleie', amount: 950000, anchor: '2026-12-01' }), 'a');
+    d = { ...d, recurring: [...d.recurring, { ...d.recurring[0], id: 'b', name: 'Spotify', currency: 'EUR', amount: 999 }] };
+    const summary = withRecurring(d, monthSummary(d, '2026-10'), TODAY);
+    expect(summary.total).toBe(1000000);
+    expect(summary.recurring).toBe(950000);
+    expect(summary.other).toEqual({ EUR: 999 });
+    expect(summary.byCategory).toEqual(monthSummary(d, '2026-10').byCategory);
+    // Uten trekk i måneden er summen den samme.
+    const empty = monthSummary(NOK, '2026-10');
+    expect(withRecurring(NOK, empty, TODAY)).toBe(empty);
+    // Før det første kjøpet: ingen trekk.
+    const before = monthSummary(d, '2026-09');
+    expect(withRecurring(d, before, TODAY)).toBe(before);
+  });
+});
+
 describe('legge inn og endre', () => {
   it('legger inn i hovedvalutaen, med navn og notat ryddet', () => {
     const d = addRecurring(NOK, input({ name: '  Netflix ', note: ' Deles med Ola ' }), 'a');
@@ -169,6 +236,7 @@ describe('legge inn og endre', () => {
     const old = loadMoney({ purchases: [], categories: EMPTY_MONEY.categories, merchants: {}, imported: [], setupSeen: true });
     expect(old.recurring).toEqual([]);
     expect(old.recurringDismissed).toEqual([]);
+    expect(old.recurringInTotal).toBe(false);
     expect(loadMoney(undefined).recurring).toEqual([]);
   });
 });

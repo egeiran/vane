@@ -50,7 +50,8 @@ export function JournalCard({ day, when }: { day: DateKey; when: DayWhen }) {
   }, [day]);
 
   return (
-    <View style={[styles.card, { backgroundColor: t.card }]}>
+    // En dag som bare kan leses, er dempet, som vanene.
+    <View style={[styles.card, { backgroundColor: t.card, opacity: editable ? 1 : 0.6 }]}>
       <View style={styles.header}>
         <Text style={[styles.question, { color: t.text }]} accessibilityRole="header">
           {when === 'today'

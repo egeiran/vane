@@ -12,6 +12,8 @@ type Actions = {
   addHabit: (input: HabitInput, today: DateKey) => string;
   updateHabit: (id: string, input: HabitInput) => void;
   deleteHabit: (id: string) => void;
+  /** Ny rekkefølge: vanen `id` flyttes til plass `to`. */
+  moveHabit: (id: string, to: number) => void;
   toggle: (habitId: string, day: DateKey) => void;
   increment: (habitId: string, day: DateKey, delta: number) => void;
   setValue: (habitId: string, day: DateKey, value: number) => void;
@@ -49,6 +51,7 @@ export const useStore = create<Store>()(
         },
         updateHabit: (id, input) => apply((d) => S.updateHabit(d, id, input)),
         deleteHabit: (id) => apply((d) => S.deleteHabit(d, id)),
+        moveHabit: (id, to) => apply((d) => S.moveHabit(d, id, to)),
         toggle: (habitId, day) => apply((d) => S.toggleHabit(d, habitId, day)),
         increment: (habitId, day, delta) => apply((d) => S.incrementHabit(d, habitId, day, delta)),
         setValue: (habitId, day, value) => apply((d) => S.setValue(d, habitId, day, value)),

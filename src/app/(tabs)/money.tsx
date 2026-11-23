@@ -1,34 +1,22 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Icon } from '@/components/Icon';
 import { PurchaseRow } from '@/components/PurchaseRow';
 import { RecurringCard } from '@/components/RecurringCard';
+import { appear, disappear, reflow } from '@/components/motion';
+import { SwipePager } from '@/components/SwipePager';
 import { Card, IconButton, PrimaryButton, SectionLabel, TextButton, tick } from '@/components/ui';
 import { tr } from '@/i18n';
-import {
-  addMonths,
-  capitalize,
-  categoryById,
-  categoryName,
-  formatAmount,
-  isPending,
-  monthName,
-  monthOf,
-  monthShort,
-  monthSummary,
-  pendingPurchases,
-  recentMonths,
-  suggestionFor,
-  type MonthKey,
-} from '@/lib/money';
+import { addMonths, capitalize, categoryById, categoryName, firstMonth, formatAmount, isPending, monthName, monthOf, monthShort, monthSummary, pendingPurchases, recentMonths, suggestionFor, type MonthKey } from '@/lib/money';
 import { useMoney, useMoneyData } from '@/lib/moneyStore';
-import { recurringOn } from '@/lib/recurring';
+import { recurringOn, withRecurring } from '@/lib/recurring';
 import { useStore } from '@/lib/store';
 import { useToday } from '@/lib/useToday';
-import { useTheme } from '@/theme';
+import { hexToRgba, useTheme } from '@/theme';
 
 const RECENT = 5;
 
@@ -41,7 +29,11 @@ export default function MoneyScreen() {
   const showRecurring = useStore((s) => recurringOn(s.settings));
   const current = monthOf(today);
   const [picked, setPicked] = useState<MonthKey>(current);
-  const month = picked > current ? current : picked;
+  // Siden ruller ikke loddrett mens man drar sidelengs.
+  const [dragging, setDragging] = useState(false);
+  // Den eldste måneden med et kjøp. Man kan bla tilbake dit, men ikke lenger.
+  const oldest = firstMonth(data, today);
+  const month = picked > current ? current : picked < oldest ? oldest : picked;
 
   // Første gang fanen åpnes: veiviseren for Snarveier.
   useFocusEffect(
@@ -54,23 +46,32 @@ export default function MoneyScreen() {
 
   const pending = pendingPurchases(data);
   const withSuggestion = pending.filter((p) => suggestionFor(data, p)).length;
-  const summary = monthSummary(data, month);
-  const months = recentMonths(data, today);
+  // Faste utgifter er med i summen bare når de er slått på der (og modulen er på).
+  const inTotal = showRecurring && data.recurringInTotal;
+  const withFixed = (s: ReturnType<typeof monthSummary>) => (inTotal ? withRecurring(data, s, today) : s);
+  const summary = withFixed(monthSummary(data, month));
+  const months = recentMonths(data, today).map(withFixed);
   const maxTotal = Math.max(1, ...months.map((m) => m.total));
   const recent = data.purchases.filter((p) => p.day.startsWith(month) && !isPending(p));
   const hasApplePay = data.purchases.some((p) => p.source === 'applepay');
   const otherCurrencies = Object.entries(summary.other).map(([cur, amount]) => formatAmount(amount, cur));
 
+  // Faste utgifter i stolpene: en dempet, nøytral farge, så kategoriene fortsatt synes.
+  const fixedColor = hexToRgba(t.slate, 0.45);
   const color = (categoryId: string) => {
     const c = categoryById(data, categoryId);
     return c ? t.colors[c.color].solid : t.faint;
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: t.bg }}
+      scrollEnabled={!dragging}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View style={{ gap: 2 }}>
-          <Text style={[styles.sub, { color: t.sub }]}>{capitalize(monthName(current, today))}</Text>
+          <Text style={[styles.sub, { color: t.sub }]}>{capitalize(monthName(month, today))}</Text>
           <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
             {tr.money.title}
           </Text>
@@ -87,7 +88,7 @@ export default function MoneyScreen() {
       ) : null}
 
       {pending.length ? (
-        <View style={styles.section}>
+        <Animated.View entering={appear} exiting={disappear} layout={reflow} style={styles.section}>
           <SectionLabel
             right={
               withSuggestion > 1 ? (
@@ -107,148 +108,194 @@ export default function MoneyScreen() {
           </SectionLabel>
           <Card style={styles.list}>
             {pending.map((p, i) => (
-              <PurchaseRow key={p.id} purchase={p} data={data} today={today} first={i === 0} />
+              <Animated.View key={p.id} exiting={disappear} layout={reflow}>
+                <PurchaseRow purchase={p} data={data} today={today} first={i === 0} />
+              </Animated.View>
             ))}
           </Card>
-        </View>
+        </Animated.View>
       ) : null}
 
-      <Card style={styles.card}>
-        <View style={styles.monthBar}>
-          <IconButton icon="chevron.left" label={tr.money.previousMonth} size={36} background="transparent" onPress={() => setPicked(addMonths(month, -1))} />
-          <Text style={[styles.cardTitle, { color: t.text }]} accessibilityRole="header">
-            {capitalize(monthName(month, today))}
-          </Text>
-          {month < current ? (
-            <IconButton icon="chevron.right" label={tr.money.nextMonth} size={36} background="transparent" onPress={() => setPicked(addMonths(month, 1))} />
+      {/* Resten glir opp når Venter blir kortere eller forsvinner. */}
+      <Animated.View layout={reflow}>
+        {/* Dra månedskortet sidelengs for forrige eller neste måned. Pilene virker fortsatt. */}
+        <SwipePager
+          pageKey={month}
+          canPrev={month > oldest}
+          canNext={month < current}
+          onPrev={() => setPicked(addMonths(month, -1))}
+          onNext={() => setPicked(addMonths(month, 1))}
+          onDragChange={setDragging}>
+          <Card style={styles.card}>
+            <View style={styles.monthBar}>
+              {month > oldest ? (
+                <IconButton icon="chevron.left" label={tr.money.previousMonth} size={36} background="transparent" onPress={() => setPicked(addMonths(month, -1))} />
+              ) : (
+                <View style={{ width: 36 }} />
+              )}
+              <Text style={[styles.cardTitle, { color: t.text }]} accessibilityRole="header">
+                {capitalize(monthName(month, today))}
+              </Text>
+              {month < current ? (
+                <IconButton icon="chevron.right" label={tr.money.nextMonth} size={36} background="transparent" onPress={() => setPicked(addMonths(month, 1))} />
+              ) : (
+                <View style={{ width: 36 }} />
+              )}
+            </View>
+            <Text style={[styles.total, { color: t.text }]} accessibilityLabel={tr.money.spentIn(monthName(month, today), formatAmount(summary.total, summary.currency))}>
+              {formatAmount(summary.total, summary.currency)}
+            </Text>
+
+            {summary.count === 0 ? (
+              <Text style={[styles.body, { color: t.sub, textAlign: 'center' }]}>{tr.money.noPurchasesIn(monthName(month, today))}</Text>
+            ) : null}
+
+            {summary.byCategory.map((row) => {
+              const c = categoryById(data, row.categoryId);
+              const name = c ? categoryName(c) : tr.money.deletedCategory;
+              return (
+                <Pressable
+                  key={row.categoryId}
+                  onPress={() => router.push({ pathname: '/purchases', params: { month, category: row.categoryId } })}
+                  accessibilityRole="button"
+                  accessibilityLabel={tr.money.categoryAmount(name, formatAmount(row.amount, summary.currency))}
+                  style={({ pressed }) => [styles.catRow, { opacity: pressed ? 0.6 : 1 }]}>
+                  <CategoryIcon category={c} size={30} />
+                  <View style={{ flex: 1, gap: 6 }}>
+                    <View style={styles.catTop}>
+                      <Text style={[styles.catName, { color: t.text }]} numberOfLines={1}>
+                        {name}
+                      </Text>
+                      <Text style={[styles.catAmount, { color: t.text }]}>{formatAmount(row.amount, summary.currency)}</Text>
+                    </View>
+                    <View style={[styles.track, { backgroundColor: t.bg }]}>
+                      <View style={[styles.fill, { width: `${(row.amount / Math.max(1, summary.total)) * 100}%`, backgroundColor: color(row.categoryId) }]} />
+                    </View>
+                  </View>
+                </Pressable>
+              );
+            })}
+
+            {summary.recurring ? (
+              <Pressable
+                onPress={() => router.push('/recurring')}
+                accessibilityRole="button"
+                accessibilityLabel={tr.money.categoryAmount(tr.recurring.title, formatAmount(summary.recurring, summary.currency))}
+                style={({ pressed }) => [styles.catRow, { opacity: pressed ? 0.6 : 1 }]}>
+                <View style={[styles.fixedIcon, { backgroundColor: t.button }]}>
+                  <Icon name="arrow.triangle.2.circlepath" size={14} color={t.sub} />
+                </View>
+                <View style={{ flex: 1, gap: 6 }}>
+                  <View style={styles.catTop}>
+                    <Text style={[styles.catName, { color: t.text }]} numberOfLines={1}>
+                      {tr.recurring.title}
+                    </Text>
+                    <Text style={[styles.catAmount, { color: t.text }]}>{formatAmount(summary.recurring, summary.currency)}</Text>
+                  </View>
+                  <View style={[styles.track, { backgroundColor: t.bg }]}>
+                    <View style={[styles.fill, { width: `${(summary.recurring / Math.max(1, summary.total)) * 100}%`, backgroundColor: fixedColor }]} />
+                  </View>
+                </View>
+              </Pressable>
+            ) : null}
+
+            {summary.pending ? (
+              <View style={styles.catRow}>
+                <CategoryIcon size={30} />
+                <View style={{ flex: 1, gap: 6 }}>
+                  <View style={styles.catTop}>
+                    <Text style={[styles.catName, { color: t.sub }]}>{tr.money.pending}</Text>
+                    <Text style={[styles.catAmount, { color: t.sub }]}>{formatAmount(summary.pending, summary.currency)}</Text>
+                  </View>
+                  <View style={[styles.track, { backgroundColor: t.bg }]}>
+                    <View style={[styles.fill, { width: `${(summary.pending / Math.max(1, summary.total)) * 100}%`, backgroundColor: t.faint }]} />
+                  </View>
+                </View>
+              </View>
+            ) : null}
+
+            {otherCurrencies.length || summary.skipped ? (
+              <Text style={[styles.note, { color: t.sub }]}>
+                {[
+                  otherCurrencies.length ? tr.money.otherCurrencies(otherCurrencies.join(', ')) : '',
+                  summary.skipped ? tr.money.skipped(summary.skipped) : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              </Text>
+            ) : null}
+          </Card>
+        </SwipePager>
+
+        {/* Kjøpene i måneden står rett under måneden. */}
+        <View style={styles.section}>
+          <SectionLabel
+            right={
+              recent.length ? (
+                <TextButton label={tr.money.seeAll} onPress={() => router.push({ pathname: '/purchases', params: { month } })} />
+              ) : undefined
+            }>
+            {tr.money.purchasesIn(monthName(month, today))}
+          </SectionLabel>
+          {recent.length ? (
+            <Card style={styles.list}>
+              {recent.slice(0, RECENT).map((p, i) => (
+                <Animated.View key={p.id} exiting={disappear} layout={reflow}>
+                  <PurchaseRow purchase={p} data={data} today={today} first={i === 0} />
+                </Animated.View>
+              ))}
+            </Card>
           ) : (
-            <View style={{ width: 36 }} />
+            <Text style={[styles.note, { color: t.sub, marginHorizontal: 4 }]}>{tr.money.noCategorized}</Text>
           )}
         </View>
-        <Text style={[styles.total, { color: t.text }]} accessibilityLabel={tr.money.spentIn(monthName(month, today), formatAmount(summary.total, summary.currency))}>
-          {formatAmount(summary.total, summary.currency)}
-        </Text>
 
-        {summary.count === 0 ? (
-          <Text style={[styles.body, { color: t.sub, textAlign: 'center' }]}>{tr.money.noPurchasesIn(monthName(month, today))}</Text>
-        ) : null}
+        {/* Faste utgifter: en egen linje, og med i månedens sum når det er slått på. */}
+        {showRecurring ? <RecurringCard data={data} today={today} /> : null}
 
-        {summary.byCategory.map((row) => {
-          const c = categoryById(data, row.categoryId);
-          const name = c ? categoryName(c) : tr.money.deletedCategory;
-          return (
-            <Pressable
-              key={row.categoryId}
-              onPress={() => router.push({ pathname: '/purchases', params: { month, category: row.categoryId } })}
-              accessibilityRole="button"
-              accessibilityLabel={tr.money.categoryAmount(name, formatAmount(row.amount, summary.currency))}
-              style={({ pressed }) => [styles.catRow, { opacity: pressed ? 0.6 : 1 }]}>
-              <CategoryIcon category={c} size={30} />
-              <View style={{ flex: 1, gap: 6 }}>
-                <View style={styles.catTop}>
-                  <Text style={[styles.catName, { color: t.text }]} numberOfLines={1}>
-                    {name}
-                  </Text>
-                  <Text style={[styles.catAmount, { color: t.text }]}>{formatAmount(row.amount, summary.currency)}</Text>
+        <Card style={styles.card}>
+          <Text style={[styles.cardTitle, { color: t.text }]}>{tr.money.lastSixMonths}</Text>
+          {months.map((m) => {
+            const on = m.month === month;
+            const segments = data.categories
+              .map((c) => ({ id: c.id, amount: m.byCategory.find((b) => b.categoryId === c.id)?.amount ?? 0, color: t.colors[c.color].solid }))
+              .filter((s) => s.amount > 0);
+            const unknown = m.byCategory.filter((b) => !categoryById(data, b.categoryId)).reduce((sum, b) => sum + b.amount, 0);
+            return (
+              <Pressable
+                key={m.month}
+                onPress={() => setPicked(m.month)}
+                disabled={m.month < oldest}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={`${monthName(m.month, today)}: ${formatAmount(m.total, m.currency)}`}
+                style={({ pressed }) => [styles.barRow, { opacity: pressed ? 0.6 : 1 }]}>
+                <Text style={[styles.barLabel, { color: on ? t.text : t.sub, fontWeight: on ? '700' : '500' }]}>{monthShort(m.month)}</Text>
+                <View style={styles.barTrack}>
+                  {m.total ? (
+                    <View style={[styles.bar, { width: `${(m.total / maxTotal) * 100}%` }]}>
+                      {segments.map((s) => (
+                        <View key={s.id} style={{ flex: s.amount, backgroundColor: s.color }} />
+                      ))}
+                      {unknown ? <View style={{ flex: unknown, backgroundColor: t.faint }} /> : null}
+                      {m.recurring ? <View style={{ flex: m.recurring, backgroundColor: fixedColor }} /> : null}
+                      {m.pending ? <View style={{ flex: m.pending, backgroundColor: t.empty }} /> : null}
+                    </View>
+                  ) : null}
                 </View>
-                <View style={[styles.track, { backgroundColor: t.bg }]}>
-                  <View style={[styles.fill, { width: `${(row.amount / Math.max(1, summary.total)) * 100}%`, backgroundColor: color(row.categoryId) }]} />
-                </View>
-              </View>
-            </Pressable>
-          );
-        })}
-
-        {summary.pending ? (
-          <View style={styles.catRow}>
-            <CategoryIcon size={30} />
-            <View style={{ flex: 1, gap: 6 }}>
-              <View style={styles.catTop}>
-                <Text style={[styles.catName, { color: t.sub }]}>{tr.money.pending}</Text>
-                <Text style={[styles.catAmount, { color: t.sub }]}>{formatAmount(summary.pending, summary.currency)}</Text>
-              </View>
-              <View style={[styles.track, { backgroundColor: t.bg }]}>
-                <View style={[styles.fill, { width: `${(summary.pending / Math.max(1, summary.total)) * 100}%`, backgroundColor: t.faint }]} />
-              </View>
-            </View>
-          </View>
-        ) : null}
-
-        {otherCurrencies.length || summary.skipped ? (
-          <Text style={[styles.note, { color: t.sub }]}>
-            {[
-              otherCurrencies.length ? tr.money.otherCurrencies(otherCurrencies.join(', ')) : '',
-              summary.skipped ? tr.money.skipped(summary.skipped) : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-          </Text>
-        ) : null}
-      </Card>
-
-      {/* Faste utgifter er en egen linje, ikke en del av månedens sum. */}
-      {showRecurring ? <RecurringCard data={data} today={today} /> : null}
-
-      <Card style={styles.card}>
-        <Text style={[styles.cardTitle, { color: t.text }]}>{tr.money.lastSixMonths}</Text>
-        {months.map((m) => {
-          const on = m.month === month;
-          const segments = data.categories
-            .map((c) => ({ id: c.id, amount: m.byCategory.find((b) => b.categoryId === c.id)?.amount ?? 0, color: t.colors[c.color].solid }))
-            .filter((s) => s.amount > 0);
-          const unknown = m.byCategory.filter((b) => !categoryById(data, b.categoryId)).reduce((sum, b) => sum + b.amount, 0);
-          return (
-            <Pressable
-              key={m.month}
-              onPress={() => setPicked(m.month)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: on }}
-              accessibilityLabel={`${monthName(m.month, today)}: ${formatAmount(m.total, m.currency)}`}
-              style={({ pressed }) => [styles.barRow, { opacity: pressed ? 0.6 : 1 }]}>
-              <Text style={[styles.barLabel, { color: on ? t.text : t.sub, fontWeight: on ? '700' : '500' }]}>{monthShort(m.month)}</Text>
-              <View style={styles.barTrack}>
-                {m.total ? (
-                  <View style={[styles.bar, { width: `${(m.total / maxTotal) * 100}%` }]}>
-                    {segments.map((s) => (
-                      <View key={s.id} style={{ flex: s.amount, backgroundColor: s.color }} />
-                    ))}
-                    {unknown ? <View style={{ flex: unknown, backgroundColor: t.faint }} /> : null}
-                    {m.pending ? <View style={{ flex: m.pending, backgroundColor: t.empty }} /> : null}
-                  </View>
-                ) : null}
-              </View>
-              <Text style={[styles.barAmount, { color: on ? t.text : t.sub }]}>{formatAmount(m.total, m.currency)}</Text>
-            </Pressable>
-          );
-        })}
-      </Card>
-
-      <View style={styles.section}>
-        <SectionLabel
-          right={
-            recent.length ? (
-              <TextButton label={tr.money.seeAll} onPress={() => router.push({ pathname: '/purchases', params: { month } })} />
-            ) : undefined
-          }>
-          {tr.money.purchasesIn(monthName(month, today))}
-        </SectionLabel>
-        {recent.length ? (
-          <Card style={styles.list}>
-            {recent.slice(0, RECENT).map((p, i) => (
-              <PurchaseRow key={p.id} purchase={p} data={data} today={today} first={i === 0} />
-            ))}
-          </Card>
-        ) : (
-          <Text style={[styles.note, { color: t.sub, marginHorizontal: 4 }]}>{tr.money.noCategorized}</Text>
-        )}
-      </View>
-
-      <View style={styles.section}>
-        <Card style={{ overflow: 'hidden' }}>
-          <LinkRow icon="square.grid.2x2" label={tr.money.categories} onPress={() => router.push('/categories')} first />
-          <LinkRow icon="wallet.pass" label={tr.money.applePay} onPress={() => router.push('/money-setup')} />
+                <Text style={[styles.barAmount, { color: on ? t.text : t.sub }]} numberOfLines={1}>{formatAmount(m.total, m.currency)}</Text>
+              </Pressable>
+            );
+          })}
         </Card>
-      </View>
+
+        <View style={styles.section}>
+          <Card style={{ overflow: 'hidden' }}>
+            <LinkRow icon="square.grid.2x2" label={tr.money.categories} onPress={() => router.push('/categories')} first />
+            <LinkRow icon="wallet.pass" label={tr.money.applePay} onPress={() => router.push('/money-setup')} />
+          </Card>
+        </View>
+      </Animated.View>
     </ScrollView>
   );
 }
@@ -261,7 +308,7 @@ function LinkRow({ icon, label, onPress, first }: { icon: 'square.grid.2x2' | 'w
       accessibilityRole="button"
       style={({ pressed }) => [
         styles.linkRow,
-        !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.border },
+        !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator },
         { opacity: pressed ? 0.6 : 1 },
       ]}>
       <Icon name={icon} size={18} color={t.sub} />
@@ -272,6 +319,7 @@ function LinkRow({ icon, label, onPress, first }: { icon: 'square.grid.2x2' | 'w
 }
 
 const styles = StyleSheet.create({
+  fixedIcon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   content: { paddingTop: 8, paddingBottom: 40 },
   header: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 6 },
   sub: { fontSize: 15, lineHeight: 20, fontWeight: '500' },
@@ -281,7 +329,8 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 17, fontWeight: '700' },
   body: { fontSize: 15, lineHeight: 21 },
   note: { fontSize: 13, lineHeight: 18 },
-  list: { paddingHorizontal: 14, paddingVertical: 2 },
+  // Radene går helt ut til kanten av kortet (sveip for å slette) og har marg selv.
+  list: { paddingVertical: 2, overflow: 'hidden' },
   monthBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: -8, marginTop: -6 },
   total: { fontSize: 34, lineHeight: 40, fontWeight: '700', letterSpacing: -0.5, textAlign: 'center', fontVariant: ['tabular-nums'] },
   catRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 },
@@ -294,6 +343,6 @@ const styles = StyleSheet.create({
   barLabel: { width: 34, fontSize: 14 },
   barTrack: { flex: 1, height: 14, justifyContent: 'center' },
   bar: { height: 14, borderRadius: 4, overflow: 'hidden', flexDirection: 'row' },
-  barAmount: { width: 84, textAlign: 'right', fontSize: 14, fontWeight: '600', fontVariant: ['tabular-nums'] },
+  barAmount: { minWidth: 84, textAlign: 'right', fontSize: 14, fontWeight: '600', fontVariant: ['tabular-nums'] },
   linkRow: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
 });

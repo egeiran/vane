@@ -11,11 +11,18 @@ const vaner = (n: number) => `${n} ${n === 1 ? 'vane' : 'vaner'}`;
 export const nb = {
   common: {
     cancel: 'Avbryt',
+    /** Spørsmålet når et skjema med endringer lukkes. */
+    discardTitle: 'Forkaste endringene?',
+    discard: 'Forkast endringer',
+    keepEditing: 'Fortsett å redigere',
     save: 'Lagre',
     add: 'Legg til',
     back: 'Tilbake',
     close: 'Lukk',
     delete: 'Slett',
+    /** Meldingen etter en sletting, med «Angre». */
+    deleted: (name: string) => `Slettet ${name}`,
+    undo: 'Angre',
     edit: 'Endre',
     done: 'Ferdig',
     name: 'Navn',
@@ -24,6 +31,11 @@ export const nb = {
     category: 'Kategori',
     earlier15: '15 minutter tidligere',
     later15: '15 minutter senere',
+    dragToMove: 'Dra for å flytte',
+    moveUp: 'Flytt opp',
+    moveDown: 'Flytt ned',
+    dayBefore: 'Dagen før',
+    dayAfter: 'Dagen etter',
     cannotUndo: 'Dette kan ikke angres.',
   },
 
@@ -81,9 +93,19 @@ export const nb = {
     weekDone: 'Ferdig for uka',
     weekCount: (count: number, target: number) => `${count} av ${target} denne uka`,
     reminder: (time: string) => `Påminnelse ${time}`,
-    minusOne: (name: string, amount: string) => `${name}: ${amount}. Trykk for å trekke fra én.`,
     gridHint: 'Viser rutenettet for vanen',
     addOne: (unit: string) => `Legg til én ${unit}`.trim(),
+    /** Hold-inne-menyen på en vane. */
+    menuLess: 'Én mindre',
+    menuEnterCount: 'Skriv inn antall',
+    menuEnterCountTitle: (name: string) => `Antall for ${name}`,
+    menuReset: 'Nullstill',
+    menuOverview: 'Se rutenettet',
+    menuReorder: 'Endre rekkefølge',
+    pageTitle: 'Vaner',
+    pageHelp: 'Hold inne og dra, eller trykk Endre, for å flytte en vane. Rekkefølgen gjelder I dag og widgetene.',
+    plusOne: (name: string, amount: string) => `${name}: ${amount}. Trykk for å legge til én.`,
+    minusOne: (name: string, amount: string) => `${name}: ${amount}. Målet er nådd. Trykk for å trekke fra én.`,
     count: vaner,
   },
 
@@ -92,8 +114,6 @@ export const nb = {
     yesterdayTitle: 'I går',
     newHabit: 'Ny vane',
     backToToday: 'Til i dag',
-    yesterdayNote: 'Du kan rette i går. Eldre dager kan bare leses.',
-    olderNote: 'Denne dagen kan bare leses. I dag og i går kan endres.',
     emptyTitle: 'Ingen vaner ennå',
     emptyText: 'Start med én liten ting du vil gjøre hver dag. Du kan alltid legge til flere senere.',
     addFirst: 'Legg til en vane',
@@ -117,8 +137,6 @@ export const nb = {
     alsoHabits: (n: number) => `Du har også ${vaner(n)} i dag.`,
     skip: 'Ikke i dag',
     // Kortet på «I dag»
-    noneYesterday: 'Ingen mål satt i går.',
-    noneOlder: 'Ingen mål satt den dagen.',
     noneToday: 'Ingen mål i dag.',
     addAnyway: 'Legg til likevel',
     setGoals: 'Sett mål for dagen',
@@ -187,6 +205,11 @@ export const nb = {
     rangeWeek: 'Denne uka',
     rangeMonth: 'Siste fire uker',
     rangeYear: 'Siste 12 måneder',
+    earlier: 'Tidligere periode',
+    previousPeriod: 'Forrige periode',
+    nextPeriod: 'Neste periode',
+    /** En eldre periode: «12. okt – 8. nov». */
+    span: (from: string, to: string) => `${from} – ${to}`,
     period: 'Periode',
     segWeek: 'Uke',
     segMonth: '4 uker',
@@ -426,6 +449,8 @@ export const nb = {
     unknownPlace: 'Ukjent sted',
     // Rader
     notCounted: 'Ikke talt med',
+    menuCount: 'Tell med',
+    menuSkip: 'Ikke tell med',
     amountMissing: 'Beløp mangler',
     rowLabel: (name: string, amount: string, meta: string) => `${name}, ${amount}, ${meta}`,
     approve: (category: string) => `Godkjenn ${category}`,
@@ -487,8 +512,6 @@ export const nb = {
     hidden: 'Skjult',
     show: (name: string) => `Vis ${name}`,
     hide: (name: string) => `Skjul ${name}`,
-    moveUp: (name: string) => `Flytt ${name} opp`,
-    moveDown: (name: string) => `Flytt ${name} ned`,
     help: 'Skjulte kategorier er borte fra valgene og varslene. Gamle kjøp beholder dem.',
     new: 'Ny kategori',
     editTitle: 'Endre kategori',
@@ -502,7 +525,10 @@ export const nb = {
     next: (name: string, day: string) => `Neste trekk: ${name}, ${day}`,
     empty: 'Husleie, strøm og abonnementer. Legg dem inn én gang, så ser du hva som går ut hver måned.',
     suggestionCount: (n: number) => (n === 1 ? 'Ett forslag fra kjøpene dine' : `${n} forslag fra kjøpene dine`),
-    notCounted: 'Faste utgifter telles ikke med i månedens sum, så ingenting telles to ganger.',
+    inTotal: 'Ta med i månedens sum',
+    inTotalOn: 'Trekkene som har gått ut, legges til det du har brukt den måneden, også i måneder før du la dem inn (tilbake til det første kjøpet ditt). Er et trekk alt logget som kjøp fra samme sted, telles det ikke to ganger.',
+    inTotalOff: 'Faste utgifter står for seg selv og er ikke med i det du har brukt.',
+    inTotalNote: 'Med i månedens sum',
     frequency: { week: 'Hver uke', month: 'Hver måned', year: 'Hvert år' },
     frequencyPick: { week: 'Uke', month: 'Måned', year: 'År' },
     rowMeta: (frequency: string, day: string) => `${frequency} · neste ${day}`,
@@ -540,8 +566,9 @@ export const nb = {
   food: {
     title: 'Mat',
     protein: 'Protein',
-    /** «92 / 140 g» */
-    ofGoal: (value: string, goal: string) => `${value} / ${goal} g`,
+    /** «/ 140 g» etter dagens sum. */
+    ofGoalSuffix: (goal: string) => `/ ${goal} g`,
+    kcalUnit: 'kcal',
     /** Skjermleser: «Protein: 92 av 140 gram». */
     progressLabel: (value: string, goal: string | null) => (goal ? `Protein: ${value} av ${goal} gram` : `Protein: ${value} gram`),
     goalReached: 'Målet er nådd',
@@ -589,6 +616,9 @@ export const nb = {
     undo: 'Angre',
     source: 'Kilde: Matvaretabellen 2026, Mattilsynet (matvaretabellen.no)',
     per100: (protein: string) => `${protein} protein per 100 g`,
+    /** «33 g protein»: summen i et måltid og proteinet i en matvare. */
+    proteinOf: (amount: string) => `${amount} protein`,
+    kcalLabel: 'Kalorier',
     dish: 'Rett',
     // Mengden
     amount: 'Mengde',
@@ -605,8 +635,15 @@ export const nb = {
     quickNamePlaceholder: 'F.eks. Kantina',
     // Føringen
     entryTitle: 'Endre',
+    entryMissing: 'Føringen finnes ikke lenger',
+    entryMissingText: 'Den kan ha blitt slettet.',
+    entryLocked: 'Denne dagen kan ikke endres',
+    entryLockedText: 'Bare i dag og i går kan endres. Eldre dager kan leses på Mat-fanen.',
     time: 'Klokkeslett',
     deleteEntry: 'Slett',
+    moveToMeal: 'Flytt til måltid',
+    copyToToday: 'Kopier til i dag',
+    copiedToToday: (name: string) => `${name} er lagt til i dag`,
     // Matvarer og retter
     foods: 'Matvarer',
     dishes: 'Retter',

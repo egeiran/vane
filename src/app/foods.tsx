@@ -1,17 +1,14 @@
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
-import { Card, PrimaryButton, SectionLabel, TextButton } from '@/components/ui';
+import { Card, PrimaryButton, SectionLabel } from '@/components/ui';
 import { tr } from '@/i18n';
 import { dishItem, foodItem } from '@/lib/foodItems';
-import { foodHome, useFoodData } from '@/lib/foodStore';
+import { useFoodData } from '@/lib/foodStore';
 import { useTheme } from '@/theme';
 
-function back() {
-  if (router.canGoBack()) router.back();
-  else router.replace(foodHome());
-}
 
 /** Egne matvarer og retter. Trykk for å endre. */
 export default function FoodsScreen() {
@@ -22,18 +19,10 @@ export default function FoodsScreen() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
-      <View style={styles.bar}>
-        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel={tr.common.back} style={styles.backButton}>
-          <Icon name="chevron.left" size={20} color={t.text} />
-          <Text style={{ fontSize: 17, color: t.text, fontWeight: '500' }}>{tr.common.back}</Text>
-        </Pressable>
-      </View>
-      <Text style={[styles.title, { color: t.text }]} accessibilityRole="header">
-        {tr.food.foodsAndDishes}
-      </Text>
+      <ScreenHeader title={tr.food.foodsAndDishes} large right={[{ label: tr.common.add, icon: 'plus', items: [{ label: tr.food.newFood, icon: 'carrot', onPress: () => router.push('/food-form') }, { label: tr.food.newDish, icon: 'fork.knife', onPress: () => router.push('/dish-form') }] }]} />
 
       <View style={styles.section}>
-        <SectionLabel right={<TextButton label={tr.common.add} bold onPress={() => router.push('/food-form')} />}>{tr.food.foods}</SectionLabel>
+        <SectionLabel>{tr.food.foods}</SectionLabel>
         {foods.length ? (
           <Card style={styles.list}>
             {foods.map((f, i) => (
@@ -46,7 +35,7 @@ export default function FoodsScreen() {
       </View>
 
       <View style={styles.section}>
-        <SectionLabel right={<TextButton label={tr.common.add} bold onPress={() => router.push('/dish-form')} />}>{tr.food.dishes}</SectionLabel>
+        <SectionLabel>{tr.food.dishes}</SectionLabel>
         {dishes.length ? (
           <Card style={styles.list}>
             {dishes.map((d, i) => (
@@ -74,7 +63,7 @@ function ListRow({ name, sub, onPress, first }: { name: string; sub: string; onP
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${name}. ${sub}`}
-      style={({ pressed }) => [styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.hair }, { opacity: pressed ? 0.6 : 1 }]}>
+      style={({ pressed }) => [styles.row, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }, { opacity: pressed ? 0.6 : 1 }]}>
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={{ fontSize: 16, fontWeight: '600', color: t.text }} numberOfLines={1}>
           {name}
@@ -90,9 +79,6 @@ function ListRow({ name, sub, onPress, first }: { name: string; sub: string; onP
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 40 },
-  bar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingTop: 4 },
-  backButton: { flexDirection: 'row', alignItems: 'center', gap: 2, minHeight: 44, paddingHorizontal: 4 },
-  title: { fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.5, paddingHorizontal: 20, paddingTop: 6, paddingBottom: 4 },
   section: { paddingHorizontal: 16, paddingTop: 18, gap: 8 },
   list: { paddingHorizontal: 14 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 8 },

@@ -144,8 +144,10 @@ export type Purchase = {
 export type RecurringFrequency = 'week' | 'month' | 'year';
 
 /**
- * En fast utgift: husleie, strøm, et abonnement. Den telles ikke med i kjøpene, så ingenting telles
- * to ganger. Neste trekk regnes ut fra `anchor` (se `nextCharge`), så den 31. ikke flytter seg.
+ * En fast utgift: husleie, strøm, et abonnement. Den er ikke et kjøp. Den telles med i månedens sum
+ * bare når `MoneyData.recurringInTotal` er på, og da ikke en måned der et kjøp fra samme sted
+ * allerede teller (se `recurringInMonth`), så ingenting telles to ganger. Neste trekk regnes ut fra
+ * `anchor` (se `nextCharge`), så den 31. ikke flytter seg.
  */
 export type RecurringExpense = {
   id: string;
@@ -187,6 +189,8 @@ export type MoneyData = {
   recurring: RecurringExpense[];
   /** Steder man har sagt «Ikke foreslå» til, så de ikke foreslås som fast utgift igjen. */
   recurringDismissed: string[];
+  /** Faste utgifter telles med i månedens sum (bryteren på Faste utgifter). Av som standard. */
+  recurringInTotal: boolean;
 };
 
 /**
