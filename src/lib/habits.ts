@@ -143,6 +143,11 @@ export function isEditable(day: DateKey, today: DateKey): boolean {
 }
 
 /** «Hver dag», «3 ganger i uka» eller dagene i ukas rekkefølge: «Man, Ons, Fre» / «Søn, Man, Ons». */
+/** Vanen gjelder alle dager i uka (hver dag, eller alle sju dagene valgt). */
+export function isEveryDay(h: Pick<Habit, 'schedule'>): boolean {
+  return h.schedule.kind === 'daily' || (h.schedule.kind === 'days' && h.schedule.days.every(Boolean));
+}
+
 export function frequencyText(h: Habit, weekStart: WeekStart = 'mon'): string {
   switch (h.schedule.kind) {
     case 'daily':

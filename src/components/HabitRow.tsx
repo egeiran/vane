@@ -3,7 +3,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { tr } from '@/i18n';
 import type { DateKey } from '@/lib/dates';
-import { amountText, frequencyText, isDone, isWeekly, valueOn, weekCount, weeklyTarget } from '@/lib/habits';
+import { amountText, frequencyText, isDone, isEveryDay, isWeekly, valueOn, weekCount, weeklyTarget } from '@/lib/habits';
 import { showTime, weekStartOf } from '@/lib/region';
 import { useStore } from '@/lib/store';
 import type { Habit } from '@/lib/types';
@@ -52,11 +52,14 @@ export function HabitRow({ habit, day, showReminder, editable = true }: Props) {
 
   const isCount = habit.type === 'count' && !isWeekly(habit);
   const done = isDone(habit, value);
+  // Under navnet: antallet, påminnelsen i dag, eller hvilke dager. «Hver dag» står ikke (det er støy).
   const meta = isCount
     ? amountText(habit, value)
     : showReminder && habit.reminder && remindersOn
       ? tr.habits.reminder(showTime(habit.reminder))
-      : frequencyText(habit, weekStart);
+      : isEveryDay(habit)
+        ? ''
+        : frequencyText(habit, weekStart);
 
   // Hold inne: for vaner med antall kommer «Én mindre», «Skriv inn antall» og «Nullstill» først.
   const countItems: MenuItem[] =
@@ -131,9 +134,11 @@ export function HabitRow({ habit, day, showReminder, editable = true }: Props) {
           <Text style={[styles.name, { color: t.text }]} numberOfLines={1}>
             {habit.name}
           </Text>
-          <Text style={[styles.meta, { color: done ? c.ink : t.sub }]} numberOfLines={1}>
-            {meta}
-          </Text>
+          {meta ? (
+            <Text style={[styles.meta, { color: done ? c.ink : t.sub }]} numberOfLines={1}>
+              {meta}
+            </Text>
+          ) : null}
         </Pressable>
         {isCount && !done && editable ? (
           <IconButton

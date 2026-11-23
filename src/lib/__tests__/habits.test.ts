@@ -6,6 +6,7 @@ import {
   firstDataDay,
   frequencyText,
   isEditable,
+  isEveryDay,
   isScheduled,
   periodSummary,
   restingHabitsOn,
@@ -67,6 +68,12 @@ describe('planlegging', () => {
   it('beskriver hvor ofte', () => {
     const d = setup();
     expect(d.habits.map((h) => frequencyText(h))).toEqual(['Hver dag', 'Hver dag', '3 ganger i uka', 'Man, Ons, Fre']);
+  });
+
+  it('vet når en vane gjelder alle dager, også med alle sju valgt', () => {
+    const d = setup();
+    expect(d.habits.map((h) => isEveryDay(h))).toEqual([true, true, false, false]);
+    expect(isEveryDay({ schedule: { kind: 'days', days: [true, true, true, true, true, true, true] } })).toBe(true);
   });
 });
 
