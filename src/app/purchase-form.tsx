@@ -4,6 +4,7 @@ import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DateField } from '@/components/DateField';
+import { AmountInput } from '@/components/AmountInput';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { CategoryIcon } from '@/components/CategoryIcon';
@@ -188,21 +189,17 @@ export default function PurchaseFormScreen() {
 
       <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={styles.card}>
-          <View style={styles.amountRow}>
-            {/* «$149» på engelsk, «149 kr» på norsk: tegnet og tallet møtes på midten. */}
-            {unitFirst ? <Text style={[styles.unit, { color: t.sub, textAlign: 'right' }]}>{unit}</Text> : null}
-            <TextInput
-              value={f.amount}
-              onChangeText={(a) => set({ amount: a })}
-              placeholder="0"
-              placeholderTextColor={t.faint}
-              keyboardType="decimal-pad"
-              autoFocus={!existing}
-              accessibilityLabel={tr.purchaseForm.amountIn(unit)}
-              style={[styles.amountInput, { color: t.text }, unitFirst && { textAlign: 'left' }]}
-            />
-            {unitFirst ? null : <Text style={[styles.unit, { color: t.sub }]}>{unit}</Text>}
-          </View>
+          {/* «$149» på engelsk, «149 kr» på norsk, midt i kortet. */}
+          <AmountInput
+            value={f.amount}
+            onChangeText={(a) => set({ amount: a })}
+            placeholder="0"
+            unit={unit}
+            unitFirst={unitFirst}
+            keyboardType="decimal-pad"
+            autoFocus={!existing}
+            accessibilityLabel={tr.purchaseForm.amountIn(unit)}
+          />
           {existing ? (
             <Text style={[styles.help, { color: t.sub, textAlign: 'center' }]}>
               {`${existing.source === 'applepay' ? tr.purchaseForm.sourceApplePay : tr.purchaseForm.sourceManual} · ${purchaseWhen(existing, today)}`}
@@ -305,10 +302,6 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, fontWeight: '600' },
   help: { fontSize: 13, lineHeight: 18, flex: 1 },
   input: { height: 44, borderRadius: 10, paddingHorizontal: 12, fontSize: 17 },
-  // Tallet slutter midt på, og «kr» begynner der.
-  amountRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8, paddingTop: 6 },
-  amountInput: { flex: 1, fontSize: 44, fontWeight: '700', textAlign: 'right', fontVariant: ['tabular-nums'] },
-  unit: { flex: 1, fontSize: 24, fontWeight: '600' },
   dayRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
   dayText: { minWidth: 120, textAlign: 'center', fontSize: 15, fontWeight: '600' },
   splitRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
