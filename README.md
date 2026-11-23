@@ -70,6 +70,8 @@ Jobben sjekker koden (lint, typer og tester) og starter bygget hos EAS. Ferdig b
 
 Et bygg i TestFlight når bare testerne, så det er slik du tester en branch før merge. Til App Store kommer det først når du velger bygget i App Store Connect og sender det til gjennomgang.
 
+Når en versjon er godkjent i App Store, tar ikke Apple imot flere bygg med samme versjon. Øk da `version` i `app.json` (for eksempel 1.0.1 → 1.0.2) før neste bygg. Versjonen er ikke med i fingerprinten (`runtimeVersion`), så «Send oppdatering» når fortsatt bygget som er i App Store.
+
 ### Oppdateringer uten nytt bygg (OTA)
 
 Endringer i JavaScript-koden, også i widgetene, kan sendes rett til telefonene: **Actions → Send oppdatering → Run workflow**. Det tar et par minutter. Åpne Vane, lukk den helt og åpne den igjen, så er oppdateringen i bruk.

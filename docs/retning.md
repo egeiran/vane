@@ -74,7 +74,7 @@ Bare Apples språkmodell på telefonen. Ingenting sendes ut. Krever en iPhone me
 Veikartet er [issue #4](https://github.com/egeiran/vane/issues/4), med en sjekkliste over alle issuene i den rekkefølgen de bør gjøres (#5–#23).
 
 1. **Grunnmur:** test på ekte iPhone, språk (norsk og engelsk), valuta og ukestart, moduler.
-2. **Før lansering:** oppstart, eksport og import, iCloud, Vane+ og grenser, påminnelser i bakgrunnen, vurdering i App Store, personvern og App Store-siden.
+2. **Neste** (het «Før lansering» til appen kom i App Store): oppstart, eksport og import, iCloud, Vane+ og grenser, påminnelser i bakgrunnen, vurdering i App Store, personvern og App Store-siden. Etiketten er `2 neste`.
 3. **Etter lansering:** Siri og Action-knappen, Apple Helse, faste utgifter, KI.
 
 Dagbok og humør (#19) ble gjort tidligere, i samme runde som oppstarten. Kveldsvarselet er av som standard, og kommer hver kveld når det er på, som morgenvarselet.
