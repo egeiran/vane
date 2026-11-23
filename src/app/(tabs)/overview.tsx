@@ -31,6 +31,8 @@ export default function OverviewScreen() {
   const today = useToday();
   const data = useData();
   const [range, setRange] = useState<Range>('month');
+  // Siden ruller ikke loddrett mens man drar sidelengs.
+  const [dragging, setDragging] = useState(false);
   // Perioden: 0 er den som slutter i dag, 1 er perioden før, osv. Én periode for hele siden.
   const [offset, setOffset] = useState(0);
   const [picked, setPicked] = useState<DateKey>(today);
@@ -146,7 +148,11 @@ export default function OverviewScreen() {
   );
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: t.bg }}
+      scrollEnabled={!dragging}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={[styles.sub, { color: t.sub }]}>{offset ? tr.overview.earlier : rangeTitle(range)}</Text>
@@ -189,6 +195,7 @@ export default function OverviewScreen() {
 
       {/* Dra sidelengs for de andre valgene øverst: Uke, Måned og År. */}
       <SwipePager
+        onDragChange={setDragging}
         pageKey={range}
         canPrev={rangeIndex > 0}
         canNext={rangeIndex < RANGES.length - 1}

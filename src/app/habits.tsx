@@ -22,9 +22,15 @@ export default function HabitsScreen() {
   const weekStart = useStore((s) => weekStartOf(s.settings));
   const remindersOn = useStore((s) => s.settings.remindersEnabled);
   const [editing, setEditing] = useState(false);
+  // Siden ruller ikke mens en rad dras.
+  const [dragging, setDragging] = useState(false);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: t.bg }}
+      scrollEnabled={!dragging}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={styles.content}>
       <ScreenHeader
         title={tr.habits.pageTitle}
         large
@@ -42,6 +48,7 @@ export default function HabitsScreen() {
               keyOf={(h) => h.id}
               rowHeight={62}
               editing={editing}
+              onDragChange={setDragging}
               onMove={moveHabit}
               renderRow={(h, handle) => {
                 const meta = [frequencyText(h, weekStart), remindersOn && h.reminder ? tr.habits.reminder(showTime(h.reminder)) : ''].filter(Boolean).join(' · ');

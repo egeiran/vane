@@ -15,6 +15,8 @@ type Props = {
   onPrev: () => void;
   /** Nyere periode: dra mot venstre. */
   onNext: () => void;
+  /** Når et drag sidelengs begynner og slutter: skjermen slår av rullingen så lenge. */
+  onDragChange?: (dragging: boolean) => void;
   children: ReactNode;
 };
 
@@ -25,14 +27,17 @@ const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
  * følger fingeren, gir etter i kanten der det ikke finnes mer, glir ut og kommer inn fra den andre
  * siden. Et loddrett drag går til rullingen som før. Med «Reduser bevegelse» tones det bare.
  */
-export function SwipePager({ pageKey, canPrev, canNext, onPrev, onNext, children }: Props) {
+export function SwipePager({ pageKey, canPrev, canNext, onPrev, onNext, onDragChange, children }: Props) {
   const { width } = useWindowDimensions();
   const reduced = useReducedMotion();
   const x = useSharedValue(0);
   const opacity = useSharedValue(1);
   // -1: nyere kommer inn fra høyre. 1: eldre kommer inn fra venstre.
   const from = useSharedValue(0);
+  // Draget er i gang (startet), så rullingen kan slås på igjen når det slutter.
+  const dragged = useSharedValue(false);
 
+  const dragChange = (dragging: boolean) => onDragChange?.(dragging);
   const go = (dir: number) => {
     tick();
     if (dir > 0) onPrev();
@@ -59,6 +64,18 @@ export function SwipePager({ pageKey, canPrev, canNext, onPrev, onNext, children
   const pan = Gesture.Pan()
     .activeOffsetX([-12, 12])
     .failOffsetY([-10, 10])
+    .onStart(() => {
+      'worklet';
+      dragged.set(true);
+      scheduleOnRN(dragChange, true);
+    })
+    .onFinalize(() => {
+      'worklet';
+      // Også når draget avbrytes: rullingen skal alltid tilbake.
+      if (!dragged.get()) return;
+      dragged.set(false);
+      scheduleOnRN(dragChange, false);
+    })
     .onUpdate((e) => {
       'worklet';
       const blocked = (e.translationX > 0 && !canPrev) || (e.translationX < 0 && !canNext);

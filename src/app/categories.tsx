@@ -21,9 +21,15 @@ export default function CategoriesScreen() {
   const moveCategory = useMoney((s) => s.moveCategory);
   const updateCategory = useMoney((s) => s.updateCategory);
   const [editing, setEditing] = useState(false);
+  // Siden ruller ikke mens en rad dras.
+  const [dragging, setDragging] = useState(false);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: t.bg }}
+      scrollEnabled={!dragging}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={styles.content}>
       <ScreenHeader
         title={tr.categories.title}
         large
@@ -39,7 +45,8 @@ export default function CategoriesScreen() {
           keyOf={(c) => c.id}
           rowHeight={60}
           editing={editing}
-          onMove={moveCategory}
+          onDragChange={setDragging}
+              onMove={moveCategory}
           renderRow={(c, handle) => (
             <View style={styles.row}>
               <Pressable

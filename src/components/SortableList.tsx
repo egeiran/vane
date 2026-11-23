@@ -18,6 +18,11 @@ type Props<T> = {
   /** Endre-modus: håndtaket (≡) vises, og man drar i det. */
   editing: boolean;
   onMove: (id: string, to: number) => void;
+  /**
+   * Når en rad løftes og slippes. Skjermen slår av rullingen så lenge (`scrollEnabled`), så siden ikke
+   * ruller samtidig som raden dras.
+   */
+  onDragChange?: (dragging: boolean) => void;
   /** Raden. `handle` er håndtaket, som raden legger til høyre (det er `null` utenfor Endre-modus). */
   renderRow: (item: T, handle: ReactNode) => ReactNode;
 };
@@ -27,7 +32,7 @@ type Props<T> = {
  * eller trykk Endre og dra i håndtaket. De andre radene glir unna, og det kommer et lett tikk når
  * raden løftes og når den passerer en plass. Rekkefølgen lagres når raden slippes.
  */
-export function SortableList<T>({ items, keyOf, rowHeight: baseHeight, editing, onMove, renderRow }: Props<T>) {
+export function SortableList<T>({ items, keyOf, rowHeight: baseHeight, editing, onMove, onDragChange, renderRow }: Props<T>) {
   const t = useTheme();
   // Radene står fast i høyden (de flyttes med transform), så høyden følger tekststørrelsen.
   const { fontScale } = useWindowDimensions();
@@ -44,7 +49,16 @@ export function SortableList<T>({ items, keyOf, rowHeight: baseHeight, editing, 
   return (
     <View style={{ height: ids.length * rowHeight }}>
       {items.map((item, i) => (
-        <SortableRow key={ids[i]} id={ids[i]} index={i} count={ids.length} height={rowHeight} positions={positions} editing={editing} onMove={onMove}>
+        <SortableRow
+          key={ids[i]}
+          id={ids[i]}
+          index={i}
+          count={ids.length}
+          height={rowHeight}
+          positions={positions}
+          editing={editing}
+          onMove={onMove}
+          onDragChange={onDragChange}>
           {(handle) => renderRow(item, handle)}
         </SortableRow>
       ))}
@@ -67,6 +81,7 @@ function SortableRow({
   positions,
   editing,
   onMove,
+  onDragChange,
   children,
 }: {
   id: string;
@@ -76,6 +91,7 @@ function SortableRow({
   positions: SharedValue<Record<string, number>>;
   editing: boolean;
   onMove: (id: string, to: number) => void;
+  onDragChange?: (dragging: boolean) => void;
   children: (handle: ReactNode) => ReactNode;
 }) {
   const t = useTheme();
@@ -84,6 +100,7 @@ function SortableRow({
   const y = useSharedValue(index * height);
   const start = useSharedValue(0);
   const drop = (to: number) => onMove(id, to);
+  const dragChange = (dragging: boolean) => onDragChange?.(dragging);
 
   const configure = (g: LegacyPanGesture) =>
     g
@@ -93,6 +110,7 @@ function SortableRow({
         start.set((positions.get()[id] ?? 0) * height);
         y.set(start.get());
         scheduleOnRN(lift);
+        scheduleOnRN(dragChange, true);
       })
       .onUpdate((e) => {
         'worklet';
@@ -115,6 +133,7 @@ function SortableRow({
       })
       .onFinalize(() => {
         'worklet';
+        if (active.get()) scheduleOnRN(dragChange, false);
         active.set(false);
       });
 

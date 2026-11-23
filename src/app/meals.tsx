@@ -22,9 +22,15 @@ export default function MealsScreen() {
   const moveMeal = useFood((s) => s.moveMeal);
   const updateMeal = useFood((s) => s.updateMeal);
   const [editing, setEditing] = useState(false);
+  // Siden ruller ikke mens en rad dras.
+  const [dragging, setDragging] = useState(false);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: t.bg }}
+      scrollEnabled={!dragging}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={styles.content}>
       <ScreenHeader
         title={tr.food.mealsTitle}
         large
@@ -40,7 +46,8 @@ export default function MealsScreen() {
           keyOf={(m) => m.id}
           rowHeight={60}
           editing={editing}
-          onMove={moveMeal}
+          onDragChange={setDragging}
+              onMove={moveMeal}
           renderRow={(m, handle) => {
             const name = mealName(m);
             const window = m.start && m.end ? tr.food.mealWindow(showTime(m.start), showTime(m.end)) : tr.food.noWindow;

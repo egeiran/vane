@@ -29,6 +29,8 @@ export default function MoneyScreen() {
   const showRecurring = useStore((s) => recurringOn(s.settings));
   const current = monthOf(today);
   const [picked, setPicked] = useState<MonthKey>(current);
+  // Siden ruller ikke loddrett mens man drar sidelengs.
+  const [dragging, setDragging] = useState(false);
   // Den eldste måneden med et kjøp. Man kan bla tilbake dit, men ikke lenger.
   const oldest = firstMonth(data, today);
   const month = picked > current ? current : picked < oldest ? oldest : picked;
@@ -62,7 +64,11 @@ export default function MoneyScreen() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: t.bg }}
+      scrollEnabled={!dragging}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View style={{ gap: 2 }}>
           <Text style={[styles.sub, { color: t.sub }]}>{capitalize(monthName(month, today))}</Text>
@@ -113,7 +119,8 @@ export default function MoneyScreen() {
       {/* Resten glir opp når Venter blir kortere eller forsvinner. */}
       <Animated.View layout={reflow}>
         {/* Dra månedskortet sidelengs for forrige eller neste måned. Pilene virker fortsatt. */}
-        <SwipePager pageKey={month} canPrev={month > oldest} canNext={month < current} onPrev={() => setPicked(addMonths(month, -1))} onNext={() => setPicked(addMonths(month, 1))}>
+        <SwipePager
+        onDragChange={setDragging} pageKey={month} canPrev={month > oldest} canNext={month < current} onPrev={() => setPicked(addMonths(month, -1))} onNext={() => setPicked(addMonths(month, 1))}>
           <Card style={styles.card}>
             <View style={styles.monthBar}>
               {month > oldest ? (
