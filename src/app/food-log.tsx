@@ -9,7 +9,6 @@ import { Field } from '@/components/Field';
 import { appear, disappear } from '@/components/motion';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
-import { ProteinBar } from '@/components/ProteinBar';
 import { Card, Chip, IconButton, PrimaryButton, SectionLabel, TextButton, tick } from '@/components/ui';
 import { tr } from '@/i18n';
 import { dayWhen, relativeWeekday, type DateKey } from '@/lib/dates';
@@ -17,9 +16,7 @@ import {
   amountText,
   canEditFood,
   decimalInput,
-  entriesOn,
   entryTime,
-  goalOn,
   mealById,
   mealName,
   parseKcal,
@@ -73,7 +70,6 @@ export default function FoodLogScreen() {
 
   const meal = mealById(data, mealId);
   const meals = visibleMeals(data).some((m) => m.id === mealId) ? visibleMeals(data) : [...visibleMeals(data), ...(meal ? [meal] : [])];
-  const totals = sumEntries(entriesOn(data, day));
   const when = dayWhen(day, today);
 
   const log = (name: string, n: Nutrients, ref: FoodRef | null, amount: Amount | null) => {
@@ -148,10 +144,6 @@ export default function FoodLogScreen() {
       </ScrollView>
 
       <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
-        <Card style={styles.progress}>
-          <ProteinBar protein={totals.protein} goal={goalOn(data, day)} kcal={data.showKcal ? totals.kcal : null} compact />
-        </Card>
-
         {added ? (
           <Animated.View entering={appear} exiting={disappear} style={[styles.added, { backgroundColor: t.colors.fersken.soft }]} accessibilityLiveRegion="polite">
             <Icon name="checkmark" size={14} color={t.colors.fersken.ink} />
@@ -354,7 +346,6 @@ function QuickForm({
 
 const styles = StyleSheet.create({
   content: { padding: 16, gap: 14 },
-  progress: { padding: 14 },
   added: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingLeft: 14, paddingRight: 4, minHeight: 48 },
   addedText: { flex: 1, fontSize: 15, fontWeight: '600' },
   chipBar: { flexGrow: 0, flexShrink: 0 },
