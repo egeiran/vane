@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { UndoToast } from '@/components/UndoToast';
 import { useAppEffects } from '@/lib/effects';
 import { getMoney } from '@/lib/moneyStore';
 import { needsOnboarding } from '@/lib/onboarding';
@@ -105,6 +106,8 @@ export default function RootLayout() {
           {/* Oppstarten åpner veiviseren for Apple Pay. */}
           <Stack.Screen name="money-setup" options={{ presentation: 'modal' }} />
         </Stack>
+        {/* «Slettet … Angre» etter en sletting, over alt annet. */}
+        <UndoToast />
       </ThemeProvider>
     </GestureHandlerRootView>
   );

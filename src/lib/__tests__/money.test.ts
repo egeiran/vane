@@ -26,6 +26,7 @@ import {
   approveSuggestion,
   categorize,
   deletePurchase,
+  restorePurchase,
   importPurchase,
   moveCategory,
   partsAreValid,
@@ -141,6 +142,16 @@ describe('kjøp', () => {
     expect(importPurchase(d, pay('a', 'kr 149,00', 'REMA 1000'))).toBe(d);
     d = deletePurchase(d, 'a');
     expect(importPurchase(d, pay('a', 'kr 149,00', 'REMA 1000'))).toBe(d);
+  });
+
+  it('angrer en sletting: kjøpet kommer tilbake på sin plass, én gang', () => {
+    let d = importPurchase(EMPTY_MONEY, pay('a', 'kr 149,00', 'REMA 1000'));
+    d = importPurchase(d, pay('b', 'kr 49,00', 'Kiwi', new Date(2026, 9, 18, 9, 0)));
+    const removed = d.purchases.find((p) => p.id === 'a')!;
+    const order = d.purchases.map((p) => p.id);
+    const after = restorePurchase(deletePurchase(d, 'a'), removed);
+    expect(after.purchases.map((p) => p.id)).toEqual(order);
+    expect(restorePurchase(after, removed)).toBe(after);
   });
 
   it('tar inn et kjøp uten beløp, så det kan fylles inn', () => {

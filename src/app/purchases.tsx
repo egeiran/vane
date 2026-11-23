@@ -2,7 +2,10 @@ import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import Animated from 'react-native-reanimated';
+
 import { HeaderSearch } from '@/components/HeaderSearch';
+import { disappear, reflow } from '@/components/motion';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { PurchaseRow } from '@/components/PurchaseRow';
 import { Card, Chip, SectionLabel } from '@/components/ui';
@@ -73,7 +76,9 @@ export default function PurchasesScreen() {
           <SectionLabel>{relativeDayName(day, today)}</SectionLabel>
           <Card style={styles.list}>
             {items.map((p, i) => (
-              <PurchaseRow key={p.id} purchase={p} data={data} today={today} first={i === 0} timeOnly />
+              <Animated.View key={p.id} exiting={disappear} layout={reflow}>
+                <PurchaseRow purchase={p} data={data} today={today} first={i === 0} timeOnly />
+              </Animated.View>
             ))}
           </Card>
         </View>
@@ -94,6 +99,7 @@ const styles = StyleSheet.create({
   chips: { gap: 8, paddingHorizontal: 16, paddingTop: 12 },
   empty: { fontSize: 15, textAlign: 'center', marginTop: 40 },
   section: { paddingHorizontal: 16, paddingTop: 18, gap: 8 },
-  list: { paddingHorizontal: 14, paddingVertical: 2 },
+  // Radene går helt ut til kanten av kortet (sveip for å slette) og har marg selv.
+  list: { paddingVertical: 2, overflow: 'hidden' },
   more: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: 16, marginTop: 12 },
 });

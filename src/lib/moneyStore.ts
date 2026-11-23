@@ -7,7 +7,7 @@ import { EMPTY_MONEY } from './money';
 import * as M from './moneyState';
 import * as R from './recurring';
 import { newId } from './state';
-import type { Category, MoneyData } from './types';
+import type { Category, MoneyData, Purchase } from './types';
 
 type Actions = {
   addPurchase: (input: M.PurchaseInput) => string;
@@ -16,6 +16,7 @@ type Actions = {
   approveSuggestion: (id: string) => void;
   approveAllSuggestions: () => void;
   deletePurchase: (id: string) => void;
+  restorePurchase: (purchase: Purchase) => void;
   renameMerchant: (key: string, name: string) => void;
   addCategory: (input: M.CategoryInput) => string;
   updateCategory: (id: string, patch: Partial<Omit<Category, 'id'>>) => void;
@@ -67,6 +68,7 @@ export const useMoney = create<MoneyStore>()(
         approveSuggestion: (id) => apply((d) => M.approveSuggestion(d, id)),
         approveAllSuggestions: () => apply(M.approveAllSuggestions),
         deletePurchase: (id) => apply((d) => M.deletePurchase(d, id)),
+        restorePurchase: (purchase) => apply((d) => M.restorePurchase(d, purchase)),
         renameMerchant: (key, name) => apply((d) => M.renameMerchant(d, key, name)),
         addCategory: (input) => {
           const id = newId('c');

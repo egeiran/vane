@@ -20,6 +20,9 @@ export const nb = {
     back: 'Tilbake',
     close: 'Lukk',
     delete: 'Slett',
+    /** Meldingen etter en sletting, med «Angre». */
+    deleted: (name: string) => `Slettet ${name}`,
+    undo: 'Angre',
     edit: 'Endre',
     done: 'Ferdig',
     name: 'Navn',
@@ -202,6 +205,8 @@ export const nb = {
     rangeWeek: 'Denne uka',
     rangeMonth: 'Siste fire uker',
     rangeYear: 'Siste 12 måneder',
+    earlier: 'Tidligere periode',
+    previousPeriod: 'Forrige periode', nextPeriod: 'Neste periode',
     /** En eldre periode: «12. okt – 8. nov». */
     span: (from: string, to: string) => `${from} – ${to}`,
     period: 'Periode',

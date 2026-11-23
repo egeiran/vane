@@ -11,9 +11,9 @@ import type { FoodEntry } from '@/lib/types';
 import { useToday } from '@/lib/useToday';
 import { useTheme } from '@/theme';
 
-import { confirmDestructive } from './confirm';
 import { RowMenu, type MenuItem } from './RowMenu';
-import { SwipeRow } from './SwipeRow';
+import { SwipeRow, useSwipeGuard } from './SwipeRow';
+import { showUndo } from './UndoToast';
 
 type Props = {
   entry: FoodEntry;
@@ -37,10 +37,15 @@ export function FoodEntryRow({ entry: e, day, showKcal, editable, first }: Props
   const addEntry = useFood((s) => s.addEntry);
   const updateEntry = useFood((s) => s.updateEntry);
   const removeEntry = useFood((s) => s.removeEntry);
+  const restoreEntry = useFood((s) => s.restoreEntry);
   const name = e.name || tr.food.quickName;
   const meta = [showTime(e.time), e.amount ? amountText(e.amount) : '', showKcal && e.kcal !== null ? kcalText(e.kcal) : ''].filter(Boolean).join(' · ');
   const protein = proteinText(e.protein, true);
-  const edit = () => router.push({ pathname: '/food-entry', params: { day, id: e.id } });
+  const guard = useSwipeGuard();
+  const wasDragged = guard.wasDragged;
+  const edit = () => {
+    if (!wasDragged()) router.push({ pathname: '/food-entry', params: { day, id: e.id } });
+  };
 
   const copyToToday = () => {
     const now = new Date();
@@ -49,8 +54,12 @@ export function FoodEntryRow({ entry: e, day, showKcal, editable, first }: Props
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     AccessibilityInfo.announceForAccessibility(tr.food.copiedToToday(name));
   };
-  // Samme spørsmål som i skjemaet.
-  const remove = () => confirmDestructive(tr.food.deleteConfirm(name), undefined, tr.common.delete, () => removeEntry(day, e.id));
+  // Sletter med en gang, med «Angre» nederst (som Mail), både fra sveip og fra menyen.
+  const remove = () => {
+    const index = (useFood.getState().entries[day] ?? []).findIndex((x) => x.id === e.id);
+    removeEntry(day, e.id);
+    showUndo(tr.common.deleted(name), () => restoreEntry(day, e, index));
+  };
   const otherMeals = meals.filter((m) => m.id !== e.mealId);
   const items: MenuItem[] = [
     ...(editable
@@ -84,10 +93,11 @@ export function FoodEntryRow({ entry: e, day, showKcal, editable, first }: Props
       <Text style={[styles.protein, { color: t.text }]}>{protein}</Text>
     </>
   );
-  const style = [styles.row, { backgroundColor: t.card }, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }];
+  const style = [styles.row, { backgroundColor: t.card }];
+  const separator = !first ? <View style={[styles.separator, { backgroundColor: t.separator }]} /> : null;
 
   return (
-    <SwipeRow enabled={editable} actions={[{ label: tr.food.deleteEntry, color: t.danger, onPress: remove }]}>
+    <SwipeRow enabled={editable} onDelete={remove} guard={guard}>
       <RowMenu href={{ pathname: '/food-entry', params: { day, id: e.id } }} items={items}>
         <View>
           {editable ? (
@@ -99,6 +109,7 @@ export function FoodEntryRow({ entry: e, day, showKcal, editable, first }: Props
               {body}
             </View>
           )}
+          {separator}
         </View>
       </RowMenu>
     </SwipeRow>
@@ -106,7 +117,8 @@ export function FoodEntryRow({ entry: e, day, showKcal, editable, first }: Props
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 8, paddingHorizontal: 14 },
+  separator: { position: 'absolute', top: 0, left: 14, right: 0, height: StyleSheet.hairlineWidth },
   name: { fontSize: 16, fontWeight: '600' },
   meta: { fontSize: 13 },
   protein: { fontSize: 16, fontWeight: '600', fontVariant: ['tabular-nums'] },

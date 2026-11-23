@@ -227,6 +227,18 @@ describe('mat: føringer', () => {
     expect(d.entries).toEqual({});
   });
 
+  it('angrer en sletting: føringen kommer tilbake, én gang', () => {
+    const d = withEntries('2026-11-13', [entry('a', 'frokost', 170, { time: '07:00' }), entry('b', 'lunsj', 350, { time: '12:00' })]);
+    const a = d.entries['2026-11-13'][0];
+    const back = F.restoreEntry(F.removeEntry(d, '2026-11-13', 'a'), '2026-11-13', a, 0);
+    expect(back.entries['2026-11-13'].map((e) => e.id)).toEqual(['a', 'b']);
+    expect(F.restoreEntry(back, '2026-11-13', a, 0)).toBe(back);
+    // Den siste føringen den dagen: dagen kommer tilbake.
+    const only = withEntries('2026-11-14', [entry('c', 'middag', 400)]);
+    const c = only.entries['2026-11-14'][0];
+    expect(F.restoreEntry(F.removeEntry(only, '2026-11-14', 'c'), '2026-11-14', c, 3).entries['2026-11-14']).toEqual([c]);
+  });
+
   it('«Som i går» kopierer måltidet med nye ID-er', () => {
     const d = withEntries('2026-11-12', [entry('a', 'frokost', 170), entry('b', 'frokost', 10), entry('c', 'lunsj', 350)]);
     expect(previousMeal(d, '2026-11-13', 'frokost').map((e) => e.id)).toEqual(['a', 'b']);

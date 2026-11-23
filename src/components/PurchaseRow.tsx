@@ -10,10 +10,10 @@ import type { MoneyData, Purchase } from '@/lib/types';
 import { useTheme } from '@/theme';
 
 import { CategoryIcon } from './CategoryIcon';
-import { confirmDestructive } from './confirm';
 import { Icon } from './Icon';
 import { RowMenu, type MenuItem } from './RowMenu';
-import { SwipeRow } from './SwipeRow';
+import { SwipeRow, useSwipeGuard } from './SwipeRow';
+import { showUndo } from './UndoToast';
 import { tick } from './ui';
 
 type Props = {
@@ -31,6 +31,7 @@ export function PurchaseRow({ purchase: p, data, today, first, timeOnly }: Props
   const approve = useMoney((s) => s.approveSuggestion);
   const updatePurchase = useMoney((s) => s.updatePurchase);
   const deletePurchase = useMoney((s) => s.deletePurchase);
+  const restorePurchase = useMoney((s) => s.restorePurchase);
   const pending = isPending(p);
   const suggestion = pending ? suggestionFor(data, p) : null;
   const biggest = p.parts.length ? p.parts.reduce((a, b) => (b.amount > a.amount ? b : a)) : null;
@@ -50,8 +51,14 @@ export function PurchaseRow({ purchase: p, data, today, first, timeOnly }: Props
   const when = timeOnly ? showTime(p.time) : purchaseWhen(p, today);
   const meta = [when, what, p.note].filter(Boolean).join(' · ');
   const amount = p.amount ? formatAmount(p.amount, p.currency) : tr.money.amountMissing;
+  const guard = useSwipeGuard();
+  const wasDragged = guard.wasDragged;
   const edit = () => router.push({ pathname: '/purchase-form', params: { id: p.id } });
-  const remove = () => confirmDestructive(tr.purchaseForm.deleteTitle, tr.purchaseForm.deleteBody, tr.common.delete, () => deletePurchase(p.id));
+  // Sletter med en gang, med «Angre» nederst (som Mail), både fra sveip og fra menyen.
+  const remove = () => {
+    deletePurchase(p.id);
+    showUndo(tr.common.deleted(name), () => restorePurchase(p));
+  };
   // Hold inne: Endre, godkjenn forslaget, tell med eller ikke, og slett.
   const items: MenuItem[] = [
     { label: tr.common.edit, icon: 'pencil', onPress: edit },
@@ -63,11 +70,14 @@ export function PurchaseRow({ purchase: p, data, today, first, timeOnly }: Props
   ];
 
   return (
-    <SwipeRow actions={[{ label: tr.common.delete, color: t.danger, onPress: remove }]}>
+    <SwipeRow onDelete={remove} guard={guard}>
       <RowMenu href={{ pathname: '/purchase-form', params: { id: p.id } }} items={items}>
-        <View style={[styles.wrap, { backgroundColor: t.card }, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.separator }]}>
+        <View style={[styles.wrap, { backgroundColor: t.card }]}>
+          {!first ? <View style={[styles.separator, { backgroundColor: t.separator }]} /> : null}
           <Pressable
-            onPress={edit}
+            onPress={() => {
+              if (!wasDragged()) edit();
+            }}
             accessibilityRole="button"
             accessibilityLabel={tr.money.rowLabel(name, amount, meta)}
             style={({ pressed }) => [styles.row, { opacity: pressed ? 0.6 : p.skipped ? 0.55 : 1 }]}>
@@ -85,6 +95,7 @@ export function PurchaseRow({ purchase: p, data, today, first, timeOnly }: Props
           {suggestion ? (
             <Pressable
               onPress={() => {
+                if (wasDragged()) return;
                 tick();
                 approve(p.id);
               }}
@@ -106,7 +117,8 @@ export function PurchaseRow({ purchase: p, data, today, first, timeOnly }: Props
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingVertical: 4 },
+  wrap: { paddingVertical: 4, paddingHorizontal: 14 },
+  separator: { position: 'absolute', top: 0, left: 14, right: 0, height: StyleSheet.hairlineWidth },
   row: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12 },
   name: { fontSize: 16, fontWeight: '600' },
   meta: { fontSize: 13 },

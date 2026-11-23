@@ -228,7 +228,9 @@ export default function MoneyScreen() {
           {recent.length ? (
             <Card style={styles.list}>
               {recent.slice(0, RECENT).map((p, i) => (
-                <PurchaseRow key={p.id} purchase={p} data={data} today={today} first={i === 0} />
+                <Animated.View key={p.id} exiting={disappear} layout={reflow}>
+                  <PurchaseRow purchase={p} data={data} today={today} first={i === 0} />
+                </Animated.View>
               ))}
             </Card>
           ) : (
@@ -315,7 +317,8 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 17, fontWeight: '700' },
   body: { fontSize: 15, lineHeight: 21 },
   note: { fontSize: 13, lineHeight: 18 },
-  list: { paddingHorizontal: 14, paddingVertical: 2 },
+  // Radene går helt ut til kanten av kortet (sveip for å slette) og har marg selv.
+  list: { paddingVertical: 2, overflow: 'hidden' },
   monthBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: -8, marginTop: -6 },
   total: { fontSize: 34, lineHeight: 40, fontWeight: '700', letterSpacing: -0.5, textAlign: 'center', fontVariant: ['tabular-nums'] },
   catRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 },

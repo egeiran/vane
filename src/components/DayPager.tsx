@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View, type FlatList as RNFlatList, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 // Gesture Handler sin liste, så sveip på en rad (SwipeRow) og bladingen ikke slåss om samme drag.
-import { FlatList } from 'react-native-gesture-handler';
+import { FlatList, type NativeGesture } from 'react-native-gesture-handler';
 
 import type { DateKey } from '@/lib/dates';
 
 import { hexToRgba, useTheme } from '@/theme';
 
+import { PagerGestureContext } from './SwipeRow';
 import { tick } from './ui';
 
 type Props = {
@@ -29,6 +30,11 @@ type Props = {
 export function DayPager({ days, day, onChange, renderDay }: Props) {
   const t = useTheme();
   const [width, setWidth] = useState(0);
+  // Gesten til lista, så en rad som dras mot venstre (SwipeRow), går foran bladingen.
+  const [gesture, setGesture] = useState<NativeGesture | null>(null);
+  // Lista sier fra hver gang den tegnes; bare en ny gest (ny `handlerTag`) skal gi ny tegning, ellers
+  // går det i ring. På web kalles den uten sjekk, så der sendes den ikke (radene trenger den ikke).
+  const updateGesture = (g: NativeGesture) => setGesture((prev) => (prev?.handlerTag === g.handlerTag ? prev : g));
   const list = useRef<RNFlatList<DateKey>>(null);
   const index = Math.max(0, days.indexOf(day));
   // Siden som ligger i ro. Oppdateres når bladingen stopper, og når dagen velges utenfra.
@@ -56,7 +62,9 @@ export function DayPager({ days, day, onChange, renderDay }: Props) {
   return (
     <View style={{ flex: 1 }} onLayout={(e) => setWidth(Math.round(e.nativeEvent.layout.width))}>
       {width ? (
+        <PagerGestureContext value={gesture}>
         <FlatList
+          onGestureUpdate_CAN_CAUSE_INFINITE_RERENDER={process.env.EXPO_OS === 'web' ? undefined : updateGesture}
           ref={list}
           key={width}
           data={days}
@@ -78,6 +86,7 @@ export function DayPager({ days, day, onChange, renderDay }: Props) {
           scrollEventThrottle={process.env.EXPO_OS === 'web' ? 16 : undefined}
           renderItem={({ item }) => <View style={{ width, flex: 1 }}>{renderDay(item)}</View>}
         />
+        </PagerGestureContext>
       ) : null}
       {/* Kanten under ukestripa: en hårlinje, som i Kalender, og en myk toning, så innholdet som
           rulles opp, går tydelig inn under stripa i stedet for å bli kuttet. */}

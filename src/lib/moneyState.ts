@@ -165,6 +165,12 @@ export function deletePurchase(data: MoneyData, id: string): MoneyData {
   return { ...data, purchases: data.purchases.filter((p) => p.id !== id) };
 }
 
+/** «Angre» etter sletting: kjøpet kommer tilbake på sin plass. Finnes det allerede, skjer ingenting. */
+export function restorePurchase(data: MoneyData, purchase: Purchase): MoneyData {
+  if (data.purchases.some((p) => p.id === purchase.id)) return data;
+  return { ...data, purchases: insertSorted(data.purchases, purchase) };
+}
+
 /** Gir stedet et eget navn, som brukes for alle kjøp derfra. Tomt navn tar bort det egne navnet. */
 export function renameMerchant(data: MoneyData, key: string, name: string): MoneyData {
   if (!key) return data;
