@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { View, type FlatList as RNFlatList, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { StyleSheet, View, type FlatList as RNFlatList, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 // Gesture Handler sin liste, så sveip på en rad (SwipeRow) og bladingen ikke slåss om samme drag.
 import { FlatList } from 'react-native-gesture-handler';
 
 import type { DateKey } from '@/lib/dates';
+
+import { hexToRgba, useTheme } from '@/theme';
 
 import { tick } from './ui';
 
@@ -25,6 +27,7 @@ type Props = {
  * uten animasjon over lengre hopp.
  */
 export function DayPager({ days, day, onChange, renderDay }: Props) {
+  const t = useTheme();
   const [width, setWidth] = useState(0);
   const list = useRef<RNFlatList<DateKey>>(null);
   const index = Math.max(0, days.indexOf(day));
@@ -76,6 +79,19 @@ export function DayPager({ days, day, onChange, renderDay }: Props) {
           renderItem={({ item }) => <View style={{ width, flex: 1 }}>{renderDay(item)}</View>}
         />
       ) : null}
+      {/* Kanten under ukestripa: en hårlinje, som i Kalender, og en myk toning, så innholdet som
+          rulles opp, går tydelig inn under stripa i stedet for å bli kuttet. */}
+      <View
+        pointerEvents="none"
+        style={[
+          styles.edge,
+          { borderTopColor: t.separator, backgroundImage: `linear-gradient(to bottom, ${hexToRgba(t.bg, 1)}, ${hexToRgba(t.bg, 0)})` },
+        ]}
+      />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  edge: { position: 'absolute', top: 0, left: 0, right: 0, height: 14, borderTopWidth: StyleSheet.hairlineWidth },
+});
