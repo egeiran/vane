@@ -39,7 +39,7 @@ Det gjelder bare Apple Pay i butikk (iPhone eller klokka mot terminal). Vipps, k
 
 ## Bygge og installere uten Mac
 
-Appen bygges i skyen med [EAS](https://expo.dev/eas) og installeres via TestFlight. Du trenger en Expo-konto og en betalt Apple Developer-konto. Xcode trengs ikke.
+Vane er i App Store. Appen bygges i skyen med [EAS](https://expo.dev/eas). Et nytt bygg går først til TestFlight, og derfra sender du det til gjennomgang i App Store Connect. Du trenger en Expo-konto og en betalt Apple Developer-konto. Xcode trengs ikke.
 
 ### Engangsoppsett
 
@@ -68,9 +68,13 @@ På GitHub går du til **Actions → Bygg til iPhone → Run workflow**. Det fun
 
 Jobben sjekker koden (lint, typer og tester) og starter bygget hos EAS. Ferdig bygg havner i TestFlight av seg selv, vanligvis etter 15–30 minutter. Installer TestFlight-appen på iPhonen første gang. Etterpå oppdateres Vane der.
 
+Et bygg i TestFlight når bare testerne, så det er slik du tester en branch før merge. Til App Store kommer det først når du velger bygget i App Store Connect og sender det til gjennomgang.
+
 ### Oppdateringer uten nytt bygg (OTA)
 
-Endringer i JavaScript-koden, også i widgetene, kan sendes rett til telefonen: **Actions → Send oppdatering → Run workflow**. Det tar et par minutter. Åpne Vane, lukk den helt og åpne den igjen, så er oppdateringen i bruk.
+Endringer i JavaScript-koden, også i widgetene, kan sendes rett til telefonene: **Actions → Send oppdatering → Run workflow**. Det tar et par minutter. Åpne Vane, lukk den helt og åpne den igjen, så er oppdateringen i bruk.
+
+Oppdateringen går til **alle** som har et bygg som passer, både fra App Store og fra TestFlight (de bruker samme kanal, `production`), uten ny gjennomgang hos Apple. Send den derfor fra `main`, etter at endringen er testet. Vil du teste en branch først, bygg den med «Bygg til iPhone» og installer fra TestFlight. Jobben advarer når den sendes fra en annen branch enn `main`.
 
 Dette virker ikke når en endring trenger ny native kode, som en ny pakke med native kode, eller endringer i `app.json`. Da må du bygge på nytt. Appen sjekker selv at en oppdatering passer bygget på telefonen (`runtimeVersion` med `fingerprint`), så en oppdatering som ikke passer, blir bare ikke brukt.
 

@@ -1,5 +1,9 @@
-# Sender endringer i appen (og widgetene) rett til telefonen, uten nytt bygg.
+# Sender endringer i appen (og widgetene) rett til telefonene, uten nytt bygg.
 # Start den fra GitHub: Actions → «Send oppdatering» → Run workflow.
+#
+# Vane er i App Store: oppdateringen går til alle som har et bygg som passer, både fra App Store
+# og TestFlight, uten ny gjennomgang hos Apple. Send den fra main, etter at endringen er testet.
+# En branch testes med «Bygg til iPhone» (TestFlight).
 #
 # Virker bare for endringer i JavaScript-koden. Har du lagt til en ny pakke med native kode, eller
 # endret app.json, må du bygge på nytt med «Bygg til iPhone». Oppdateringen blir da liggende urørt,
@@ -34,6 +38,12 @@ jobs:
             echo "::error::Mangler EXPO_TOKEN. Lag en token på https://expo.dev/settings/access-tokens og legg den inn under Settings → Secrets and variables → Actions."
             exit 1
           fi
+
+      - name: Advar når det ikke er main
+        if: github.ref != 'refs/heads/main'
+        env:
+          REF: ${{ github.ref_name }}
+        run: echo "::warning::Sendes fra $REF, ikke main. Oppdateringen går til alle i App Store som har et bygg som passer."
 
       - uses: actions/checkout@v4
 

@@ -18,15 +18,17 @@ Closes #N
 Del av #N   <!-- når bare en del av issuet er gjort -->
 
 ## Før merge
-1. <Har runden Swift, app.json eller nye native pakker:> Kjør **Actions → Bygg til
-   iPhone** fra branchen `<branch>` og test punktene under «Må testes på telefon».
-   Bygget er den første som kompilerer Swift-koden.
+1. Kjør **Actions → Bygg til iPhone** fra branchen `<branch>` og test punktene
+   under «Må testes på telefon». Bygget går bare til TestFlight. <Har runden
+   Swift, app.json eller nye native pakker: bygget er den første som kompilerer
+   Swift-koden.> Ikke «Send oppdatering» fra branchen: den går til alle i App Store.
 2. Merge med **Create a merge commit**, ikke squash, så `main` får én commit per
    issue.
 
 ## Etter merge
-- <Nytt bygg til TestFlight fra main, eller «Send oppdatering» hvis runden bare
-  endret JavaScript. Si hvilket, og hvorfor.>
+- <«Send oppdatering» fra main hvis runden bare endret JavaScript (går rett til
+  alle i App Store), ellers nytt bygg fra main til TestFlight og så til
+  gjennomgang i App Store Connect. Si hvilket, og hvorfor.>
 
 ## Issuene
 | Issue | Commit | Hva som er endret |

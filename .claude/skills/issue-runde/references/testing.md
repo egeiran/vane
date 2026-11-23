@@ -177,4 +177,6 @@ resultat. Typisk:
   eller Innstillinger → Vane → Språk),
 - delingsark, filvelger, dialoger fra iOS.
 
-Bygget gjør brukeren selv, fra branchen, med «Bygg til iPhone» i GitHub Actions.
+Bygget gjør brukeren selv, fra branchen, med «Bygg til iPhone» i GitHub Actions. Det går
+bare til TestFlight. «Send oppdatering» fra en branch går til alle i App Store, så det
+brukes ikke til testing.
