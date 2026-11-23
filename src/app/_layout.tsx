@@ -41,12 +41,23 @@ export default function RootLayout() {
     headerTintColor: t.text,
     headerShadowVisible: false,
     headerLargeTitleShadowVisible: false,
+    // På web: tittelen i midten, som på iPhone (der står den midt i baren når den ikke er stor).
+    ...(process.env.EXPO_OS === 'web' ? ({ headerTitleAlign: 'center' } as const) : {}),
   } as const;
 
   // Skjemaene har også native header, med Avbryt og Lagre (settes av skjermen med `ScreenHeader`).
   // Små skjemaer og loggearket er ark med høyder som kan dras (formSheet); store skjemaer åpner fullt.
   // Ugjennomsiktig header, så innholdet (som måltidsknappene i loggearket) starter under den.
-  const form = { presentation: 'modal', headerShown: true, title: '', headerTransparent: false, headerTintColor: t.text, headerShadowVisible: false } as const;
+  const form = {
+    presentation: 'modal',
+    headerShown: true,
+    title: '',
+    headerTransparent: false,
+    headerTintColor: t.text,
+    headerShadowVisible: false,
+    // På web blir et ark en vanlig side med pil tilbake. Ark har Avbryt eller Ferdig i stedet, som på iPhone.
+    ...(process.env.EXPO_OS === 'web' ? ({ headerTitleAlign: 'center', headerLeft: () => null } as const) : {}),
+  } as const;
   const sheet = (detents: number[]) =>
     ({ ...form, presentation: 'formSheet', sheetAllowedDetents: detents, sheetGrabberVisible: true, sheetInitialDetentIndex: 0 }) as const;
 
@@ -66,7 +77,7 @@ export default function RootLayout() {
           <Stack.Protected guard={!onboarding} redirectTo="/onboarding">
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="habit/[id]" options={pushed} />
-          <Stack.Screen name="habits" options={pushed} />
+            <Stack.Screen name="habits" options={pushed} />
             <Stack.Screen name="goals" options={sheet([0.6, 1])} />
             <Stack.Screen name="habit-form" options={form} />
             <Stack.Screen name="purchases" options={pushed} />
