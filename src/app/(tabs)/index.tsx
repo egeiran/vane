@@ -13,7 +13,10 @@ import { Card, IconButton, PrimaryButton, SectionLabel, TextButton } from '@/com
 import { WeekStrip } from '@/components/WeekStrip';
 import { tr } from '@/i18n';
 import { daysFrom, dayWhen, formatLong, inlineDayName, isoWeek, pickedDay, relativeWeekday, type DateKey } from '@/lib/dates';
+import { entriesOn } from '@/lib/food';
+import { useFood } from '@/lib/foodStore';
 import { dailyHabitsOn, firstDataDay, frequencyText, isDone, restingHabitsOn, weeklyHabitsOn } from '@/lib/habits';
+import { journalOn } from '@/lib/journal';
 import { showsWeekNumber, weekStartOf } from '@/lib/region';
 import { useStore } from '@/lib/store';
 import { useToday } from '@/lib/useToday';
@@ -69,10 +72,17 @@ function DayPage({ day, today }: { day: DateKey; today: DateKey }) {
   const editable = when !== 'older';
 
   const habits = useStore((s) => s.habits);
-  const journalOn = useStore((s) => s.settings.modules.journal);
+  const journalModule = useStore((s) => s.settings.modules.journal);
   const foodOn = useStore((s) => !!s.settings.modules.food);
   const weekStart = useStore((s) => weekStartOf(s.settings));
   const logs = useStore((s) => s.logs[day]);
+  // Tidligere dager viser bare det som finnes: et tomt mål- eller dagbokkort er støy der.
+  const hasGoals = useStore((s) => (s.goals[day]?.length ?? 0) > 0);
+  const hasJournal = useStore((s) => {
+    const e = journalOn(s, day);
+    return !!e && (e.mood !== null || !!e.text.trim());
+  });
+  const hasFood = useFood((s) => entriesOn(s, day).length > 0);
   const daily = dailyHabitsOn(habits, day);
   const resting = restingHabitsOn(habits, day);
   const weekly = weeklyHabitsOn(habits, day);
@@ -89,14 +99,15 @@ function DayPage({ day, today }: { day: DateKey; today: DateKey }) {
       contentContainerStyle={styles.content}>
       {/* Det som tones inn (som haken), gjør det bare når man endrer noe, ikke når dagen åpnes. */}
       <LayoutAnimationConfig skipEntering>
-        {!isToday ? <Text style={[styles.note, { color: t.sub }]}>{editable ? tr.today.yesterdayNote : tr.today.olderNote}</Text> : null}
+        {isToday || hasGoals ? (
+          <View style={styles.section}>
+            <GoalsCard day={day} when={when} />
+          </View>
+        ) : null}
 
-        <View style={styles.section}>
-          <GoalsCard day={day} when={when} />
-        </View>
-
-        {/* Dagboken er en modul. Er den av, er kortet borte, men det som er skrevet, ligger der. */}
-        {journalOn ? (
+        {/* Dagboken er en modul. Er den av, er kortet borte, men det som er skrevet, ligger der. I går
+            kan den fortsatt skrives i; eldre dager viser den bare når noe er skrevet. */}
+        {journalModule && (editable || hasJournal) ? (
           <View style={styles.section}>
             <JournalCard day={day} when={when} />
           </View>
@@ -134,7 +145,7 @@ function DayPage({ day, today }: { day: DateKey; today: DateKey }) {
         ) : null}
 
         {/* Mat er en modul. Er den av, er kortet borte, men det som er logget, ligger der. */}
-        {foodOn ? (
+        {foodOn && (editable || hasFood) ? (
           <View style={styles.section}>
             <FoodCard day={day} today={today} />
           </View>

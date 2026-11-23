@@ -12,7 +12,7 @@ import { ProteinBar } from '@/components/ProteinBar';
 import { Card, IconButton, PrimaryButton, TextButton } from '@/components/ui';
 import { WeekStrip } from '@/components/WeekStrip';
 import { tr } from '@/i18n';
-import { daysFrom, dayWhen, formatLong, pickedDay, type DateKey } from '@/lib/dates';
+import { daysFrom, formatLong, pickedDay, type DateKey } from '@/lib/dates';
 import { canEditFood, entriesOn, firstFoodDay, fractionOn, goalOn, mealGroups, mealName, proteinText, sumEntries } from '@/lib/food';
 import { useFoodData } from '@/lib/foodStore';
 import { weekStartOf } from '@/lib/region';
@@ -64,7 +64,6 @@ export default function FoodScreen() {
 function FoodDay({ day, today }: { day: DateKey; today: DateKey }) {
   const t = useTheme();
   const food = useFoodData();
-  const when = dayWhen(day, today);
   const editable = canEditFood(day, today);
 
   const totals = sumEntries(entriesOn(food, day));
@@ -75,7 +74,6 @@ function FoodDay({ day, today }: { day: DateKey; today: DateKey }) {
 
   return (
     <ScrollView style={{ flex: 1 }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
-      {when !== 'today' ? <Text style={[styles.note, { color: t.sub }]}>{editable ? tr.today.yesterdayNote : tr.today.olderNote}</Text> : null}
       {!food.goals.length ? (
         <Card style={styles.setup}>
           <Text style={[styles.setupTitle, { color: t.text }]}>{tr.food.setupTitle}</Text>
@@ -158,7 +156,6 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 14 },
   date: { fontSize: 15, lineHeight: 20, fontWeight: '500' },
   title: { fontSize: 34, lineHeight: 40, fontWeight: '700', letterSpacing: -0.5 },
-  note: { fontSize: 14, lineHeight: 20, marginHorizontal: 20, marginTop: 4 },
   setup: { marginHorizontal: 16, marginTop: 18, padding: 20, gap: 10 },
   setupTitle: { fontSize: 19, fontWeight: '700' },
   setupText: { fontSize: 15, lineHeight: 21 },

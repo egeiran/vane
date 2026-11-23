@@ -111,8 +111,6 @@ export const nb = {
     yesterdayTitle: 'I går',
     newHabit: 'Ny vane',
     backToToday: 'Til i dag',
-    yesterdayNote: 'Du kan rette i går. Eldre dager kan bare leses.',
-    olderNote: 'Denne dagen kan bare leses. I dag og i går kan endres.',
     emptyTitle: 'Ingen vaner ennå',
     emptyText: 'Start med én liten ting du vil gjøre hver dag. Du kan alltid legge til flere senere.',
     addFirst: 'Legg til en vane',
@@ -136,8 +134,6 @@ export const nb = {
     alsoHabits: (n: number) => `Du har også ${vaner(n)} i dag.`,
     skip: 'Ikke i dag',
     // Kortet på «I dag»
-    noneYesterday: 'Ingen mål satt i går.',
-    noneOlder: 'Ingen mål satt den dagen.',
     noneToday: 'Ingen mål i dag.',
     addAnyway: 'Legg til likevel',
     setGoals: 'Sett mål for dagen',
