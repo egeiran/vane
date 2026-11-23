@@ -12,13 +12,16 @@ type Props = {
   onSelect: (day: DateKey) => void;
   /** Hvor sterk prikken under dagen er, 0–1. Uten den: hvor mye av vanene og målene som ble gjort. */
   dot?: (day: DateKey) => number | null;
+  /** I morgen kan åpnes (på I dag, for å sette mål). Ellers vises den bare. */
+  tomorrow?: boolean;
 };
 
 /**
  * Fem dager bakover, i dag og i morgen. Alle dagene bakover kan åpnes, men bare i dag og i går kan
- * endres (det sjekker skjermene selv). Prikken under er sterkere jo mer som ble gjort den dagen.
+ * endres (det sjekker skjermene selv). I morgen kan åpnes med `tomorrow`. Prikken under er sterkere
+ * jo mer som ble gjort den dagen.
  */
-export function WeekStrip({ today, selected, onSelect, dot }: Props) {
+export function WeekStrip({ today, selected, onSelect, dot, tomorrow = false }: Props) {
   const t = useTheme();
   const data = useData();
   const days = Array.from({ length: STRIP_PAST_DAYS + 2 }, (_, i) => addDays(today, i - STRIP_PAST_DAYS));
@@ -31,14 +34,15 @@ export function WeekStrip({ today, selected, onSelect, dot }: Props) {
         const isToday = offset === 0;
         const editable = offset === 0 || offset === -1;
         const avg = offset > 0 ? null : dot ? dot(day) : dayStats(data, day).average;
+        const disabled = offset > 0 && !tomorrow;
         return (
           <View key={day} style={styles.day}>
             <Text style={[styles.letter, { color: t.sub }]}>{tr.dates.weekdayLetters[weekdayIndex(day)]}</Text>
             <Pressable
-              disabled={offset > 0}
+              disabled={disabled}
               onPress={() => onSelect(day)}
               accessibilityRole="button"
-              accessibilityState={{ selected: isSel, disabled: offset > 0 }}
+              accessibilityState={{ selected: isSel, disabled }}
               accessibilityLabel={
                 offset > 0 ? tr.dates.tomorrow : editable ? relativeDayName(day, today) : tr.dates.readOnly(relativeDayName(day, today))
               }

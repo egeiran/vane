@@ -74,6 +74,23 @@ export function goalsOn(data: Pick<Data, 'goals'>, day: DateKey): Goal[] {
   return data.goals[day] ?? [];
 }
 
+/** Mål kan settes for i dag og så mange dager fram: i morgen og resten av neste uke. */
+export const GOAL_DAYS_AHEAD = 7;
+
+/**
+ * Om målene for `day` kan legges til og fjernes: i dag og fram til `GOAL_DAYS_AHEAD`. Målene i går
+ * kan bare hukes av (`isEditable`), og mål fram i tid hukes av når dagen kommer.
+ */
+export function canPlanGoals(day: DateKey, today: DateKey): boolean {
+  const ahead = daysBetween(today, day);
+  return ahead >= 0 && ahead <= GOAL_DAYS_AHEAD;
+}
+
+/** Dagene målskjermen lar deg velge: i dag og de neste `GOAL_DAYS_AHEAD` dagene. */
+export function goalDays(today: DateKey): DateKey[] {
+  return Array.from({ length: GOAL_DAYS_AHEAD + 1 }, (_, i) => addDays(today, i));
+}
+
 /** Daglige vaner som ikke er gjort, i den rekkefølgen de bør tas: de med påminnelse først, etter klokkeslett. */
 export function openHabitsOn(data: Data, day: DateKey): Habit[] {
   const open = dailyHabitsOn(data.habits, day).filter((h) => !isDone(h, valueOn(data, h.id, day)));

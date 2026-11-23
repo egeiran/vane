@@ -109,6 +109,17 @@ describe('hjemskjermen', () => {
     expect(buildTodayProps(setup(), tomorrow, new Date(2026, 9, 18)).goalPrompt).toBe(true);
   });
 
+  it('mål satt på forhånd for i morgen vises i oppslaget for i morgen, ikke i dag', () => {
+    const tomorrow = '2026-10-18';
+    const d = addGoal(setup(), tomorrow, 'Handle til middag', 'g2');
+    expect(buildTodayProps(d, DAY, at(20)).goals).toEqual([]);
+    expect(buildTodayProps(d, tomorrow, new Date(2026, 9, 18))).toMatchObject({
+      goalPrompt: false,
+      goals: [{ id: 'g2', text: 'Handle til middag', done: false }],
+    });
+    expect(buildLockProps(d, tomorrow, new Date(2026, 9, 18, 8))).toMatchObject({ mode: 'goals', main: 'Handle til middag' });
+  });
+
   it('sender med verdier, påminnelse og farger for hver vane', () => {
     const d = setValue(addHabit(setup(), { ...base, name: 'Vann', type: 'count', target: 8, unit: 'glass' }, '2026-10-01', 'water'), 'water', DAY, 5);
     const props = buildTodayProps(d, DAY, at(8));

@@ -89,48 +89,55 @@ export function formatShort(key: DateKey): string {
   return tr.dates.short(d.getDate(), tr.dates.monthsShort[d.getMonth()]);
 }
 
-/** «I dag», «I går» eller «Fredag 9. oktober». */
+/** «I dag», «I går», «I morgen» eller «Fredag 9. oktober». */
 export function relativeDayName(key: DateKey, today: DateKey): string {
   const diff = daysBetween(key, today);
   if (diff === 0) return tr.dates.today;
   if (diff === 1) return tr.dates.yesterday;
+  if (diff === -1) return tr.dates.tomorrow;
   return formatLong(key);
 }
 
-/** Ukestripa viser så mange dager bakover. Alle kan åpnes, men bare i dag og i går kan endres. */
+/**
+ * Ukestripa viser så mange dager bakover, og i morgen. Alle dagene bakover kan åpnes, men bare i dag
+ * og i går kan endres. I morgen kan åpnes på I dag, for å sette mål.
+ */
 export const STRIP_PAST_DAYS = 5;
 
-/** I dag, i går eller en eldre dag (som bare kan leses). */
-export type DayWhen = 'today' | 'yesterday' | 'older';
+/** Fram i tid, i dag, i går eller en eldre dag (som bare kan leses). */
+export type DayWhen = 'future' | 'today' | 'yesterday' | 'older';
 
 export function dayWhen(key: DateKey, today: DateKey): DayWhen {
   const diff = daysBetween(key, today);
-  return diff <= 0 ? 'today' : diff === 1 ? 'yesterday' : 'older';
+  return diff < 0 ? 'future' : diff === 0 ? 'today' : diff === 1 ? 'yesterday' : 'older';
 }
 
 /**
  * Dagen som vises når `picked` er valgt i ukestripa. `null` er alltid i dag. En dag som har gått ut av
- * stripa (appen har ligget over midnatt), eller som ligger fram i tid, blir også i dag.
+ * stripa (appen har ligget over midnatt) blir også i dag, og det gjør i morgen når `tomorrow` er av.
  */
-export function pickedDay(picked: DateKey | null, today: DateKey): DateKey {
+export function pickedDay(picked: DateKey | null, today: DateKey, tomorrow = false): DateKey {
   if (picked === null) return today;
   const diff = daysBetween(picked, today);
-  return diff >= 0 && diff <= STRIP_PAST_DAYS ? picked : today;
+  return diff >= (tomorrow ? -1 : 0) && diff <= STRIP_PAST_DAYS ? picked : today;
 }
 
-/** «i dag», «i går» eller ukedagen inne i en setning: «Ikke fredag». */
+/** «i dag», «i går», «i morgen» eller ukedagen inne i en setning: «Ikke fredag», «på fredag». */
 export function inlineDayName(key: DateKey, today: DateKey): string {
-  const when = dayWhen(key, today);
-  if (when === 'today') return tr.dates.todayInline;
-  if (when === 'yesterday') return tr.dates.yesterdayInline;
-  return tr.dates.weekdayInline(tr.dates.weekdayLong[weekdayIndex(key)]);
+  const diff = daysBetween(key, today);
+  if (diff === 0) return tr.dates.todayInline;
+  if (diff === 1) return tr.dates.yesterdayInline;
+  if (diff === -1) return tr.dates.tomorrowInline;
+  const weekday = tr.dates.weekdayLong[weekdayIndex(key)];
+  return diff < 0 ? tr.dates.onWeekday(weekday) : tr.dates.weekdayInline(weekday);
 }
 
-/** «I dag», «I går» eller bare ukedagen: «Fredag». */
+/** «I dag», «I går», «I morgen» eller bare ukedagen: «Fredag». */
 export function relativeWeekday(key: DateKey, today: DateKey): string {
   const diff = daysBetween(key, today);
   if (diff === 0) return tr.dates.today;
   if (diff === 1) return tr.dates.yesterday;
+  if (diff === -1) return tr.dates.tomorrow;
   return tr.dates.weekday(tr.dates.weekdayLong[weekdayIndex(key)]);
 }
 

@@ -1,9 +1,13 @@
 import { describe, expect, it } from '@jest/globals';
 
+import { addDays } from '../dates';
 import {
+  canPlanGoals,
   dailyHabitsOn,
   dayStats,
   frequencyText,
+  GOAL_DAYS_AHEAD,
+  goalDays,
   isEditable,
   isScheduled,
   periodSummary,
@@ -163,5 +167,18 @@ describe('retting', () => {
     expect(isEditable('2026-10-16', TODAY)).toBe(true);
     expect(isEditable('2026-10-15', TODAY)).toBe(false);
     expect(isEditable('2026-10-18', TODAY)).toBe(false);
+  });
+
+  it('mål kan settes for i dag og en uke fram, ikke for dager som har vært', () => {
+    expect(canPlanGoals(TODAY, TODAY)).toBe(true);
+    expect(canPlanGoals('2026-10-18', TODAY)).toBe(true);
+    expect(canPlanGoals(addDays(TODAY, GOAL_DAYS_AHEAD), TODAY)).toBe(true);
+    expect(canPlanGoals(addDays(TODAY, GOAL_DAYS_AHEAD + 1), TODAY)).toBe(false);
+    expect(canPlanGoals('2026-10-16', TODAY)).toBe(false);
+    expect(canPlanGoals('ikke en dag', TODAY)).toBe(false);
+    const days = goalDays(TODAY);
+    expect(days).toHaveLength(GOAL_DAYS_AHEAD + 1);
+    expect(days[0]).toBe(TODAY);
+    expect(days[1]).toBe('2026-10-18');
   });
 });

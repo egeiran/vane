@@ -62,7 +62,10 @@ export const nb = {
     /** Inne i en setning: «Ikke i dag», «Ikke fredag». */
     todayInline: 'i dag',
     yesterdayInline: 'i går',
+    tomorrowInline: 'i morgen',
     weekdayInline: (weekday: string) => weekday,
+    /** En dag fram i tid, inne i en setning: «Hva vil du få til på fredag?» */
+    onWeekday: (weekday: string) => `på ${weekday}`,
     /** 12-timersklokke, når telefonen bruker det. */
     time12: (hour: number, minute: string, pm: boolean) => `${hour}:${minute} ${pm ? 'p.m.' : 'a.m.'}`,
   },
@@ -94,6 +97,7 @@ export const nb = {
     backToToday: 'Til i dag',
     yesterdayNote: 'Du kan rette i går. Eldre dager kan bare leses.',
     olderNote: 'Denne dagen kan bare leses. I dag og i går kan endres.',
+    tomorrowNote: 'Du kan sette mål for i morgen. Vanene hukes av når dagen kommer.',
     emptyTitle: 'Ingen vaner ennå',
     emptyText: 'Start med én liten ting du vil gjøre hver dag. Du kan alltid legge til flere senere.',
     addFirst: 'Legg til en vane',
@@ -108,13 +112,21 @@ export const nb = {
   goals: {
     title: 'Dagens mål',
     morning: 'God morgen.',
-    question: 'Hva vil du få til i dag?',
+    titleTomorrow: 'Mål for i morgen',
+    /** `weekday` er `dates.weekdayLong`: «Mål for fredag». */
+    titleOn: (weekday: string) => `Mål for ${weekday}`,
+    /** `day` er «i dag», «i morgen» eller «på fredag» (`inlineDayName`). */
+    questionOn: (day: string) => `Hva vil du få til ${day}?`,
     placeholder: 'F.eks. ringe bestemor',
     add: 'Legg til mål',
-    help: 'Små ting du kan bli ferdig med i dag. Ett er nok, tre er mye.',
+    helpOn: (day: string) => `Små ting du kan bli ferdig med ${day}. Ett er nok, tre er mye.`,
     remove: (text: string) => `Fjern ${text}`,
     yesterdayLabel: 'I GÅR',
-    alsoHabits: (n: number) => `Du har også ${vaner(n)} i dag.`,
+    todayLabel: 'I DAG',
+    alsoHabits: (n: number, day: string) => `Du har også ${vaner(n)} ${day}.`,
+    /** Dagene øverst på målskjermen: «Fre 27.» */
+    dayChip: (weekday: string, day: number) => `${weekday} ${day}.`,
+    dayGoals: (n: number) => `${n} mål`,
     skip: 'Ikke i dag',
     // Kortet på «I dag»
     noneYesterday: 'Ingen mål satt i går.',
@@ -123,8 +135,13 @@ export const nb = {
     addAnyway: 'Legg til likevel',
     setGoals: 'Sett mål for dagen',
     setGoalsSub: 'Små ting du vil få gjort i dag',
+    setGoalsTomorrow: 'Sett mål for i morgen',
+    setGoalsTomorrowSub: 'Små ting du vil få gjort i morgen',
     cardLabelToday: 'DAGENS MÅL',
     cardLabelYesterday: 'MÅL I GÅR',
+    cardLabelTomorrow: 'MÅL I MORGEN',
+    /** Et mål fram i tid kan ikke hukes av ennå. */
+    notYet: (text: string) => `${text}, hukes av når dagen kommer`,
     cardLabelOlder: 'MÅL',
   },
 

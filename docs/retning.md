@@ -87,4 +87,6 @@ Mat (#28) ble lagt til 13. november 2026, som en egen modul med fane. Den er lag
 - Varslene er av som standard.
 - Widgets, Snarveier og Apple Helse kommer senere.
 
+Mål på forhånd ble lagt til 23. november 2026. Dagens mål kan settes for i dag og opptil en uke fram (i morgen ligger i ukestripa, resten velges på målskjermen). Mål fram i tid kan legges til og fjernes, men hukes av først når dagen kommer. Vanene kan ikke hukes av på forhånd.
+
 4. **Senere:** Apple Watch.

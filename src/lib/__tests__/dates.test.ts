@@ -10,6 +10,7 @@ import {
   isoWeek,
   pickedDay,
   relativeDayName,
+  relativeWeekday,
   shiftTime,
   startOfWeek,
   weekdayIndex,
@@ -71,6 +72,15 @@ describe('dates', () => {
     expect(pickedDay('2026-11-14', today)).toBe(today); // i morgen
   });
 
+  it('ukestripa på I dag: i morgen kan også velges, men ikke dager lenger fram', () => {
+    const today = '2026-11-13';
+    expect(pickedDay('2026-11-14', today, true)).toBe('2026-11-14');
+    expect(pickedDay('2026-11-15', today, true)).toBe(today);
+    expect(pickedDay('2026-11-08', today, true)).toBe('2026-11-08');
+    // Over midnatt blir i morgen i dag.
+    expect(pickedDay('2026-11-14', '2026-11-14', true)).toBe('2026-11-14');
+  });
+
   it('i dag og i går kan endres, eldre dager bare leses', () => {
     const today = '2026-11-13';
     expect(dayWhen(today, today)).toBe('today');
@@ -79,5 +89,16 @@ describe('dates', () => {
     expect(inlineDayName(today, today)).toBe('i dag');
     expect(inlineDayName('2026-11-12', today)).toBe('i går');
     expect(inlineDayName('2026-11-10', today)).toBe('tirsdag');
+  });
+
+  it('dager fram i tid', () => {
+    const today = '2026-11-13'; // fredag
+    expect(dayWhen('2026-11-14', today)).toBe('future');
+    expect(dayWhen('2026-11-20', today)).toBe('future');
+    expect(inlineDayName('2026-11-14', today)).toBe('i morgen');
+    expect(inlineDayName('2026-11-17', today)).toBe('på tirsdag');
+    expect(relativeDayName('2026-11-14', today)).toBe('I morgen');
+    expect(relativeWeekday('2026-11-14', today)).toBe('I morgen');
+    expect(relativeWeekday('2026-11-17', today)).toBe('Tirsdag');
   });
 });

@@ -7,7 +7,7 @@ import { useStore } from '@/lib/store';
 import type { Goal } from '@/lib/types';
 import { useTheme } from '@/theme';
 
-import { CheckButton } from './CheckButton';
+import { CheckButton, CheckCircle } from './CheckButton';
 import { Icon } from './Icon';
 import { TextButton, tick } from './ui';
 
@@ -15,17 +15,20 @@ const NO_GOALS: Goal[] = [];
 
 /**
  * Dagens mål på I dag-skjermen. For i går kan målene bare hukes av, ikke endres. Eldre dager kan
- * bare leses.
+ * bare leses. For i morgen kan målene settes og endres, og de hukes av når dagen kommer.
  */
 export function GoalsCard({ day, when }: { day: DateKey; when: DayWhen }) {
   const isToday = when === 'today';
+  const future = when === 'future';
   const t = useTheme();
   const goals = useStore((s) => s.goals[day] ?? NO_GOALS);
   const skipped = useStore((s) => !!s.goalsSkipped[day]);
   const toggleGoal = useStore((s) => s.toggleGoal);
+  // I dag åpner målskjermen uten dag, som varselet og widgetene.
+  const openGoals = () => router.push(isToday ? '/goals' : { pathname: '/goals', params: { day } });
 
   if (!goals.length) {
-    if (!isToday) {
+    if (!isToday && !future) {
       return <Text style={[styles.note, { color: t.sub }]}>{when === 'yesterday' ? tr.goals.noneYesterday : tr.goals.noneOlder}</Text>;
     }
     if (skipped) {
@@ -33,53 +36,70 @@ export function GoalsCard({ day, when }: { day: DateKey; when: DayWhen }) {
       return (
         <View style={styles.skipped}>
           <Text style={{ flex: 1, fontSize: 14, color: t.sub }}>{tr.goals.noneToday}</Text>
-          <TextButton label={tr.goals.addAnyway} color={t.sub} onPress={() => router.push('/goals')} />
+          <TextButton label={tr.goals.addAnyway} color={t.sub} onPress={openGoals} />
         </View>
       );
     }
     return (
       <Pressable
-        onPress={() => router.push('/goals')}
+        onPress={openGoals}
         accessibilityRole="button"
         style={({ pressed }) => [styles.prompt, { borderColor: t.border, opacity: pressed ? 0.7 : 1 }]}>
         <View style={[styles.promptIcon, { backgroundColor: t.button }]}>
           <Icon name="plus" size={16} color={t.text} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: t.text }}>{tr.goals.setGoals}</Text>
-          <Text style={{ fontSize: 13, color: t.sub }}>{tr.goals.setGoalsSub}</Text>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: t.text }}>{future ? tr.goals.setGoalsTomorrow : tr.goals.setGoals}</Text>
+          <Text style={{ fontSize: 13, color: t.sub }}>{future ? tr.goals.setGoalsTomorrowSub : tr.goals.setGoalsSub}</Text>
         </View>
       </Pressable>
     );
   }
 
   const done = goals.filter((g) => g.done).length;
+  const label = isToday
+    ? tr.goals.cardLabelToday
+    : when === 'yesterday'
+      ? tr.goals.cardLabelYesterday
+      : future
+        ? tr.goals.cardLabelTomorrow
+        : tr.goals.cardLabelOlder;
   return (
     <View style={[styles.card, { backgroundColor: t.card }]}>
       <View style={styles.header}>
-        <Text style={[styles.label, { color: t.sub }]}>{isToday ? tr.goals.cardLabelToday : when === 'yesterday' ? tr.goals.cardLabelYesterday : tr.goals.cardLabelOlder}</Text>
+        <Text style={[styles.label, { color: t.sub }]}>{label}</Text>
         <View style={styles.headerRight}>
-          <Text style={{ fontSize: 13, color: t.sub }}>
-            {tr.today.doneOf(done, goals.length)}
-          </Text>
-          {isToday ? <TextButton label={tr.common.edit} bold onPress={() => router.push('/goals')} /> : null}
+          {/* Fram i tid er ingenting gjort ennå, så «0 av 2» sier ingenting. */}
+          {future ? null : (
+            <Text style={{ fontSize: 13, color: t.sub }}>
+              {tr.today.doneOf(done, goals.length)}
+            </Text>
+          )}
+          {isToday || future ? <TextButton label={tr.common.edit} bold onPress={openGoals} /> : null}
         </View>
       </View>
       {goals.map((g) => (
         <View key={g.id} style={[styles.goal, { borderTopColor: t.hair }]}>
           <Text style={[styles.goalText, { color: g.done ? t.sub : t.text }]}>{g.text}</Text>
-          <CheckButton
-            size={30}
-            done={g.done}
-            color={t.inverse}
-            checkColor={t.onInverse}
-            label={g.text}
-            disabled={when === 'older'}
-            onPress={() => {
-              tick();
-              toggleGoal(day, g.id);
-            }}
-          />
+          {future ? (
+            // En svak ring: målet hukes av når dagen kommer.
+            <View style={styles.notYet} accessible accessibilityLabel={tr.goals.notYet(g.text)}>
+              <CheckCircle done={false} color={t.border} size={30} />
+            </View>
+          ) : (
+            <CheckButton
+              size={30}
+              done={g.done}
+              color={t.inverse}
+              checkColor={t.onInverse}
+              label={g.text}
+              disabled={when === 'older'}
+              onPress={() => {
+                tick();
+                toggleGoal(day, g.id);
+              }}
+            />
+          )}
         </View>
       ))}
     </View>
@@ -107,4 +127,5 @@ const styles = StyleSheet.create({
   label: { fontSize: 12, fontWeight: '700', letterSpacing: 0.7 },
   goal: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12, borderTopWidth: StyleSheet.hairlineWidth },
   goalText: { flex: 1, fontSize: 17, lineHeight: 22, fontWeight: '600' },
+  notYet: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 });

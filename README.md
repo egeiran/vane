@@ -4,8 +4,8 @@ Små vaner, i ro og mak. En rolig vaneapp for iPhone, uten streaks, poeng eller 
 
 - **Oppstart**: første gang appen åpnes, forteller Vane kort hva den er, lar deg velge moduler og opptil tre vaner, forklarer varslene før iOS spør om lov, og viser hvordan du legger til widgetene. Alt kan hoppes over. De som allerede bruker appen, ser den ikke.
 - **I dag**: huk av daglige vaner (ja/nei eller antall, f.eks. 5 av 8 glass; når målet er nådd, blir tallet en hake som de andre) og ukentlige vaner («3 ganger i uka»).
-- **Dagens mål**: ett eller flere små mål for dagen. Morgenvarselet (standard kl. 07) spør hva du vil få til.
-- **Rett i går**: trykk på en dag i ukestripen for å se den. I dag og i går kan rettes. De eldre dagene i stripen kan bare leses.
+- **Dagens mål**: ett eller flere små mål for dagen. Morgenvarselet (standard kl. 07) spør hva du vil få til. Mål kan også settes på forhånd, for i morgen og opptil en uke fram: trykk på i morgen i ukestripen, eller velg dagen øverst på målskjermen. De hukes av når dagen kommer, og vises i widgetene fra midnatt.
+- **Rett i går**: trykk på en dag i ukestripen for å se den. I dag og i går kan rettes. De eldre dagene i stripen kan bare leses. I morgen viser målene og vanene for dagen, dempet.
 - **Oversikt**: rutenett der fargestyrken viser hvor mye som ble gjort. Uke, 4 uker eller år, for alt samlet og for hver vane.
 - **Påminnelser**: per vane, med knappene *Gjort*, *+1* og *Om 1 time* rett i varselet. Kommer ikke hvis vanen allerede er gjort.
 - **Widgets**: «I dag» på hjemskjermen viser én ting om gangen med én knapp: om morgenen «Hva vil du få til i dag?», så første uferdige mål, så neste vane. Huk av rett fra widgeten. «Vane» på låseskjermen viser en ring med vanene som er gjort, og det viktigste akkurat nå ved siden av. Uten mål spør begge fram til kl. 12. Svarer du «Ikke i dag», spør de ikke mer den dagen.

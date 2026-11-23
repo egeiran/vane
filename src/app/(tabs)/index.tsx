@@ -20,13 +20,15 @@ export default function TodayScreen() {
   const t = useTheme();
   const today = useToday();
   // `null` er alltid i dag, også når appen har ligget i bakgrunnen over midnatt (for eksempel når
-  // kveldsvarselet åpner den). Dagene i ukestripa kan velges i tillegg; bare i går kan endres.
+  // kveldsvarselet åpner den). Dagene i ukestripa kan velges i tillegg; bare i går kan endres. I morgen
+  // kan velges for å sette mål: vanene vises, men hukes av når dagen kommer.
   const [picked, setPicked] = useState<DateKey | null>(null);
-  const day = pickedDay(picked, today);
+  const day = pickedDay(picked, today, true);
   const pick = (d: DateKey) => setPicked(d === today ? null : d);
   const when = dayWhen(day, today);
   const isToday = when === 'today';
-  const editable = when !== 'older';
+  const future = when === 'future';
+  const editable = isToday || when === 'yesterday';
 
   const habits = useStore((s) => s.habits);
   const journalOn = useStore((s) => s.settings.modules.journal);
@@ -61,17 +63,20 @@ export default function TodayScreen() {
         )}
       </View>
 
-      <WeekStrip today={today} selected={day} onSelect={pick} />
+      <WeekStrip today={today} selected={day} onSelect={pick} tomorrow />
       {!isToday ? (
-        <Text style={[styles.note, { color: t.sub }]}>{editable ? tr.today.yesterdayNote : tr.today.olderNote}</Text>
+        <Text style={[styles.note, { color: t.sub }]}>
+          {future ? tr.today.tomorrowNote : editable ? tr.today.yesterdayNote : tr.today.olderNote}
+        </Text>
       ) : null}
 
       <View style={styles.section}>
         <GoalsCard day={day} when={when} />
       </View>
 
-      {/* Dagboken er en modul. Er den av, er kortet borte, men det som er skrevet, ligger der. */}
-      {journalOn ? (
+      {/* Dagboken er en modul. Er den av, er kortet borte, men det som er skrevet, ligger der. I morgen
+          har ingen dagbok ennå. */}
+      {journalOn && !future ? (
         <View style={styles.section}>
           {/* Ny dag gir nytt kort, så det som er skrevet, lagres før det byttes. */}
           <JournalCard key={day} day={day} when={when} />
@@ -86,11 +91,12 @@ export default function TodayScreen() {
         </Card>
       ) : null}
 
+      {/* I morgen vises vanene dempet, uten «0 av 3»: de hukes av når dagen kommer. */}
       {daily.length > 0 || resting.length > 0 ? (
-        <View style={styles.section}>
-          <SectionLabel right={daily.length ? tr.today.doneOf(doneCount, daily.length) : undefined}>{tr.today.daily}</SectionLabel>
+        <View style={[styles.section, future && styles.ahead]}>
+          <SectionLabel right={daily.length && !future ? tr.today.doneOf(doneCount, daily.length) : undefined}>{tr.today.daily}</SectionLabel>
           {daily.map((h) => (
-            <HabitRow key={h.id} habit={h} day={day} showReminder={isToday} editable={editable} />
+            <HabitRow key={h.id} habit={h} day={day} showReminder={isToday || future} editable={editable} />
           ))}
           {resting.length ? (
             <Text style={[styles.note, styles.resting, { color: t.sub }]}>
@@ -101,7 +107,7 @@ export default function TodayScreen() {
       ) : null}
 
       {weekly.length > 0 ? (
-        <View style={styles.section}>
+        <View style={[styles.section, future && styles.ahead]}>
           <SectionLabel right={showsWeekNumber(weekStart) ? tr.dates.week(isoWeek(day)) : undefined}>{tr.today.thisWeek}</SectionLabel>
           {weekly.map((h) => (
             <WeeklyRow key={h.id} habit={h} day={day} editable={editable} />
@@ -109,8 +115,9 @@ export default function TodayScreen() {
         </View>
       ) : null}
 
-      {/* Mat er en modul. Er den av, er kortet borte, men det som er logget, ligger der. */}
-      {foodOn ? (
+      {/* Mat er en modul. Er den av, er kortet borte, men det som er logget, ligger der. I morgen er det
+          ingenting å logge ennå. */}
+      {foodOn && !future ? (
         <View style={styles.section}>
           <FoodCard day={day} today={today} />
         </View>
@@ -133,6 +140,7 @@ const styles = StyleSheet.create({
   note: { fontSize: 14, lineHeight: 20, marginHorizontal: 20, marginTop: 8 },
   resting: { marginHorizontal: 4, marginTop: 2 },
   section: { paddingHorizontal: 16, paddingTop: 18, gap: 8 },
+  ahead: { opacity: 0.6 },
   empty: { marginHorizontal: 16, marginTop: 18, padding: 20, gap: 12 },
   emptyTitle: { fontSize: 19, fontWeight: '700' },
   emptyText: { fontSize: 15, lineHeight: 21 },
