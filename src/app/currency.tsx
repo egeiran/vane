@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { Sheet } from '@/components/Sheet';
 import { Icon } from '@/components/Icon';
 import { Card, Row, tick } from '@/components/ui';
 import { tr } from '@/i18n';
@@ -46,7 +47,7 @@ export default function CurrencyScreen() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg }}>
+    <Sheet>
       <ScreenHeader title={tr.currency.title} right={[{ label: tr.common.done, variant: 'done', onPress: close }]} />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <Card style={{ overflow: 'hidden' }}>
@@ -57,7 +58,7 @@ export default function CurrencyScreen() {
         </Card>
         <Text style={[styles.footnote, { color: t.sub }]}>{tr.currency.help}</Text>
       </ScrollView>
-    </View>
+    </Sheet>
   );
 }
 

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AmountInput } from '@/components/AmountInput';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { Sheet } from '@/components/Sheet';
 import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { Field } from '@/components/Field';
 import { Card, TextButton } from '@/components/ui';
@@ -50,7 +51,7 @@ export default function FoodGoalScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg }}>
+    <Sheet>
       <ScreenHeader
         title={tr.food.goalTitle}
         left={[{ label: tr.common.cancel, onPress: close }]}
@@ -88,7 +89,7 @@ export default function FoodGoalScreen() {
           <Text style={[styles.help, { color: t.sub, paddingHorizontal: 0 }]}>{tr.food.helperNote}</Text>
         </Card>
       </ScrollView>
-    </View>
+    </Sheet>
   );
 }
 
