@@ -4,6 +4,7 @@ import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { Sheet } from '@/components/Sheet';
 import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { AmountPicker } from '@/components/AmountPicker';
 import { Field } from '@/components/Field';
@@ -97,7 +98,7 @@ export default function FoodEntryScreen() {
     ]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg }}>
+    <Sheet>
       <ScreenHeader
         title={entry.name || tr.food.quickName}
         left={[{ label: tr.common.cancel, onPress: close }]}
@@ -140,7 +141,7 @@ export default function FoodEntryScreen() {
           <TextButton label={tr.food.deleteEntry} color={t.danger} onPress={confirmDelete} />
         </View>
       </ScrollView>
-    </View>
+    </Sheet>
   );
 }
 

@@ -4,6 +4,7 @@ import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { Sheet } from '@/components/Sheet';
 import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { TimeField } from '@/components/TimeField';
 import { Card, Row, SwitchRow, TextButton } from '@/components/ui';
@@ -87,7 +88,7 @@ export default function MealFormScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg }}>
+    <Sheet>
       <ScreenHeader
         title={existing ? tr.food.editMeal : tr.food.newMeal}
         left={[{ label: tr.common.cancel, onPress: close }]}
@@ -147,7 +148,7 @@ export default function MealFormScreen() {
           </View>
         ) : null}
       </ScrollView>
-    </View>
+    </Sheet>
   );
 }
 

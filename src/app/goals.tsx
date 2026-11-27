@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { Sheet } from '@/components/Sheet';
 import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { IconButton, TextButton } from '@/components/ui';
 import { tr } from '@/i18n';
@@ -52,7 +53,7 @@ export default function GoalsScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg }}>
+    <Sheet>
       <ScrollView
         automaticallyAdjustKeyboardInsets
         keyboardShouldPersistTaps="handled"
@@ -134,7 +135,7 @@ export default function GoalsScreen() {
           </View>
         ) : null}
       </ScrollView>
-    </View>
+    </Sheet>
   );
 }
 

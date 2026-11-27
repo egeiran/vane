@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { Sheet } from '@/components/Sheet';
 import { useDiscardGuard } from '@/components/useDiscardGuard';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Icon } from '@/components/Icon';
@@ -51,7 +52,7 @@ export default function CategoryFormScreen() {
   const preview: Category = { id: 'preview', name, icon, color, hidden: false };
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg }}>
+    <Sheet>
       <ScreenHeader
         title={existing ? tr.categories.editTitle : tr.categories.new}
         left={[{ label: tr.common.cancel, onPress: close }]}
@@ -122,7 +123,7 @@ export default function CategoryFormScreen() {
           </View>
         </Card>
       </ScrollView>
-    </View>
+    </Sheet>
   );
 }
 

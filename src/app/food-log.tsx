@@ -8,6 +8,7 @@ import { AmountPicker } from '@/components/AmountPicker';
 import { Field } from '@/components/Field';
 import { appear, disappear } from '@/components/motion';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { Sheet } from '@/components/Sheet';
 import { Icon } from '@/components/Icon';
 import { Card, Chip, IconButton, PrimaryButton, SectionLabel, TextButton, tick } from '@/components/ui';
 import { tr } from '@/i18n';
@@ -122,7 +123,7 @@ export default function FoodLogScreen() {
   const title = when === 'today' ? tr.food.logTitle : `${tr.food.logTitle} · ${relativeWeekday(day, today)}`;
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg }}>
+    <Sheet>
       <ScreenHeader
         title={title}
         left={mode.kind === 'list' ? [] : [{ label: tr.common.back, onPress: () => setMode({ kind: 'list' }) }]}
@@ -262,7 +263,7 @@ export default function FoodLogScreen() {
           </>
         )}
       </ScrollView>
-    </View>
+    </Sheet>
   );
 }
 
